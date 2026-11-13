@@ -1,0 +1,169 @@
+# Governed delivery with Claude Code
+
+A small codebase, and the Claude Code setup that governs how changes to it are made. [OpenSpec](https://github.com/Fission-AI/OpenSpec)
+says what to build: a change with a proposal, tasks, and requirements with scenarios. Around it, this
+repository adds how it gets built: a coordinator command that delivers a change end to end, subagents that
+read on a cheaper model and cannot write, a reviewer that is never told the author's reasons, hooks and
+checks that enforce what prompts can only ask for, and a plugin that carries it to another repository. It is
+built for a team: a brief starts as a GitHub issue, its change is refined in a reviewed pull request, several
+people can deliver at once, each in a folder of their own, and pull requests are the only way into `main`.
+
+The codebase itself, Ticketdesk, is deliberately small: the rules a support desk uses to set a ticket's
+priority and its response deadline in business hours. It is there so the workflow has something real to
+govern.
+
+## The history is the point
+
+Each stage is a branch merged into `main`, and each merge message is written like a pull request: In plain
+terms, What changed, Tests, Review findings. The stages are in the order the problems showed up, and each
+one exists because the stage before it left something unguarded.
+
+```bash
+git log --first-parent --reverse --format='%h %s' main   # the stages
+git log --graph --format='%h %s%n%b' main                # everything, with the reasons
+```
+
+| # | Stage | The problem it answers |
+|---|---|---|
+| 1 | Start with a plain `CLAUDE.md` | (none yet) |
+| 2 | `headless-agent` | Specified work waits for someone to sit in a session |
+| 3 | `lessons-from-unattended-runs` | An unwatched run can believe it succeeded when it has not; the script trusted its report |
+| 4 | `enforce-not-describe` | Lessons written as prose are followed most of the time, and `CLAUDE.md` only grows |
+| 5 | `deliver-command` | Two definitions of how a specification gets built, and reading fills the builder's context |
+| 6 | `missing-gates` | Two deliveries at once, defects fixed without being reproduced, criteria reworded to fit the code |
+| 7 | `independent-review` | The author is the worst-placed reviewer, and an explained change gets reviewed as explained |
+| 8 | `read-only-hook` | "Reads only" was a sentence in a prompt, and Bash reaches everything |
+| 9 | `parallel-survey` | The builder discovered the code's shape halfway through building |
+| 10 | `package-as-plugin` | The workflow could not travel, and a plugin's subagents ignore `hooks` |
+| 11 | `headless-permissions` | An unattended run would have been refused the commands its own gates use |
+| 12 | `spec-reader-without-a-shell` | The read-only hook kept needing fixes to model git, for a shell the spec-reader did not need |
+| 13 | `team-delivery` | Everything assumed one person on one machine: one delivery at a time, a local main, no pull requests |
+| 14 | `openspec` | A home-made spec format and numbering, with no refinement step, where an established framework does the job |
+
+Some findings in the history came from checking the checks. The first UTC gate could not fail (`grep`
+given a directory without `-r`). With the hook's character scan disabled every hook test still passed, so
+none depended on it. `git grep -O`, which starts a program, got through the reviewer's allowlist. Its fix
+checked how an argument began, so the spec-reader still let `-iOvim` and `--open=vim` through: git reads
+short options in bundles and accepts any unambiguous prefix of a long one. Each is in the commit that fixed
+it. The last fix was to stop patching: the spec-reader lost its shell, and the profile that kept needing
+fixes went with it (stage 12).
+
+## What it demonstrates
+
+| Area | Where to look |
+|---|---|
+| **CLAUDE.md at three levels**: project, directory (loaded on demand), and a rule as a pointer at its check | [`CLAUDE.md`](CLAUDE.md), [`src/CLAUDE.md`](src/CLAUDE.md), [ADR 0001](docs/adr/0001-a-rule-points-at-what-enforces-it.md) |
+| **Coordinator and subagents**: one command running a lifecycle, with grounding delegated | [`deliver.md`](.claude/commands/deliver.md), [ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md) |
+| **Parallel subagents with isolated context**: spec-reader and Explore in one message | [`deliver.md` step 1](.claude/commands/deliver.md) |
+| **Model routing**: reading on Sonnet, review on the session's model | [`spec-reader.md`](.claude/agents/spec-reader.md), [`independent-reviewer.md`](.claude/agents/independent-reviewer.md) |
+| **Review without the author's rationale**, pinned to one commit | [`independent-reviewer.md`](.claude/agents/independent-reviewer.md), [ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md) |
+| **A tool list instead of a guard**: the spec-reader has no shell, so nothing needs to hold it | [`spec-reader.md`](.claude/agents/spec-reader.md), [ADR 0006](docs/adr/0006-an-agent-that-can-do-without-a-shell-gets-none.md) |
+| **PreToolUse hooks that fail closed**, scoped to one subagent, with their own tests | [`read_only_bash.py`](.claude/hooks/read_only_bash.py), [tests](.claude/hooks/test_read_only_bash.py), [ADR 0004](docs/adr/0004-a-restriction-is-a-hook-not-a-sentence.md) |
+| **Permissions**: allow and deny rules for the project | [`.claude/settings.json`](.claude/settings.json) |
+| **Headless Claude Code**: `claude -p`, JSON output, an allowlist of tools, a turn limit, the build as the judge | [`scripts/agent.sh`](scripts/agent.sh) |
+| **Plugin and marketplace**, generated from the project, validated, with a drift check | [`plugin/`](plugin), [`package_plugin.py`](tools/package_plugin.py), [ADR 0005](docs/adr/0005-the-plugin-is-generated-from-the-project.md) |
+| **Specs with an established framework**: OpenSpec changes and specs, its own checks (`validate`, `validate --archived`, the `verify` workflow), and one check of ours: every scenario has a test | [`openspec/`](openspec), [`specs.mjs`](tools/specs.mjs), [tests](tools/specs.test.js), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
+| **Refinement as a pull request**: a change reaches main only through review, and its issue is then labelled ready | [`refined.yml`](.github/workflows/refined.yml), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
+| **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml), [an example change](openspec/changes/public-holidays) |
+| **A team, the way Git works**: a folder per delivery, starting offline, one issue per change saying who has it, one step that assigns and checks that only look | [`start-delivery.sh`](scripts/start-delivery.sh), [`claim-delivery.sh`](scripts/claim-delivery.sh), [`finish-delivery.sh`](scripts/finish-delivery.sh), [tests](tools/delivery.test.js), [ADR 0007](docs/adr/0007-a-team-delivers-the-way-git-works.md) |
+| **CI on GitHub**: the build and the ownership check on every pull request, and unattended deliveries started by a label | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml) |
+| **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), branch protection (below) |
+
+## Run it
+
+Needs Node 22.12 or later and Python 3. The build installs OpenSpec, pinned in `package.json`, if it is
+missing.
+
+```bash
+./build.sh
+```
+
+The build is the whole gate: syntax, the UTC rule, OpenSpec's own validation (including that nothing is
+archived half-done), that OpenSpec's verify skill is installed, scenario coverage, the tests, the plugin's
+drift check, and the hook's tests.
+
+OpenSpec's skills in a Claude Code session (`/openspec-propose` and the others) run the `openspec` command, so
+install the same version for your machine:
+
+```bash
+npm install --global @fission-ai/openspec@2.0.0
+```
+
+To see the workflow work on a real change, the change `public-holidays` is approved and has not been built:
+
+```bash
+./scripts/agent.sh public-holidays    # unattended: its own folder, /deliver run headless, then the build
+```
+
+or start it by hand and work in the folder it prints, in a Claude Code session:
+
+```bash
+./scripts/start-delivery.sh public-holidays    # then, in that folder: /deliver public-holidays
+./scripts/finish-delivery.sh                   # from that folder, once /deliver has finished
+```
+
+To propose a new change, `/openspec-propose <what you want>`, and name it after its issue: `57-bank-holidays`.
+
+## Setting it up for a team
+
+1. Put the repository on GitHub. In the branch protection for `main`, require a pull request, one approval,
+   the `build` and `claimed` checks, and branches to be up to date before merging.
+2. Everyone sets OpenSpec's workflows to include `verify`, once per machine, so `openspec update` keeps it:
+
+   ```bash
+   openspec config set workflows '["propose","explore","apply","update","sync","archive","verify"]'
+   openspec config set profile custom
+   ```
+
+3. Start every piece of work as a GitHub issue with a brief. Propose its change on a branch, named after the
+   issue (`57-bank-holidays`), and open a pull request: that is the refinement. Once it is approved and
+   merged, the change is ready and the `refined` workflow labels the issue `ready`. Whoever the issue is
+   assigned to has the work.
+4. For deliveries on GitHub's machines (the `deliver` label), add the secret `ANTHROPIC_API_KEY`, a bot
+   account's token as the secret `DELIVERY_TOKEN`, and that account's login as the variable `DELIVERY_BOT`.
+   [`deliver.yml`](.github/workflows/deliver.yml) says why each is needed.
+
+## What has and has not been verified
+
+- **Verified by the build:** every gate, each shown failing on a planted breach before it was trusted;
+  the hook's allow and refuse lists, its agent-type mode and its failure handling; each read-only agent's
+  tool list; the plugin matching a fresh build of `.claude/`.
+- **Verified against a stand-in team:** starting, claiming, finishing and an unattended run, with a shared
+  repository on disk and pretend `gh` and `claude` commands ([`tools/delivery.test.js`](tools/delivery.test.js)):
+  offline starts, a second person starting the same change, a refused assignment, two people on one issue,
+  a change not yet archived, and a run in CI for the person assigned.
+- **Verified against OpenSpec 2.0.0 itself:** the specs and the change pass `openspec validate --strict`,
+  and archiving the change in a throwaway copy updated the main spec as the scripts expect; archiving it with
+  tasks undone made `validate --archived` fail; `openspec instructions` returns the project's risk rules and
+  its build and archive guidance.
+- **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
+- **Not yet verified in a live session:** `/deliver` end to end, Claude Code firing the reviewer's hook, and
+  the packaged plugin's hook. Running `./scripts/agent.sh public-holidays` exercises the first two.
+- **Run on GitHub:** the `build` workflow, on the repository's first push (13 November 2026), which ran
+  `./build.sh` on GitHub's machines and passed.
+- **Not yet run on GitHub:** the `claimed` check (it runs on a delivery's pull request), the `deliver` and
+  `refined` workflows, branch protection, and the real `gh` behind the scripts.
+- **Not yet used in a session:** OpenSpec's own skills, including `verify`, and the archive guidance's
+  "please confirm the intent" question, which depends on the AI following it.
+
+## Layout
+
+```
+.claude/
+  agents/        spec-reader, independent-reviewer
+  commands/      deliver
+  hooks/         read_only_bash.py and its tests
+  skills/        links to OpenSpec's skills
+  settings.json  permissions
+.agents/skills/  OpenSpec's skills, shared by any AI tool (generated by openspec init and update)
+docs/adr/        why each decision was made
+openspec/
+  specs/         how the system works now, requirement by requirement
+  changes/       approved changes still to deliver, and archive/ for delivered ones
+.github/         the build and claimed checks, the ready label, and deliveries started by a label
+plugin/          a marketplace with one plugin, generated from .claude/
+scripts/         start, claim and finish a delivery; agent.sh runs one unattended
+src/, test/      Ticketdesk and its tests
+tools/           specs.mjs, package_plugin.py, and the stand-in gh and claude for tests
+build.sh         the gate
+```
