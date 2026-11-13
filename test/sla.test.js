@@ -62,12 +62,13 @@ test('[response-deadline] No list of holidays', () => {
     ['2026-11-11T10:00:00Z', 'low', '2026-11-18T10:00:00.000Z'],
   ];
   for (const [openedAt, priority, expected] of cases) {
-    assert.equal(responseDueAt(new Date(openedAt), priority).toISOString(), expected, openedAt);
-    assert.equal(responseDueAt(new Date(openedAt), priority, []).toISOString(), expected, openedAt);
+    for (const holidays of [undefined, null, []]) {
+      assert.equal(responseDueAt(new Date(openedAt), priority, holidays).toISOString(), expected, openedAt);
+    }
   }
 
   // An opening time that is not a date gave an invalid date before, and still does
-  for (const holidays of [undefined, []]) {
+  for (const holidays of [undefined, null, []]) {
     const due = responseDueAt(new Date('not a date'), 'urgent', holidays);
     assert.ok(Number.isNaN(due.getTime()));
   }
@@ -75,7 +76,7 @@ test('[response-deadline] No list of holidays', () => {
 
 test('a holiday not written as YYYY-MM-DD is refused, not ignored', () => {
   const openedAt = new Date('2026-11-09T10:00:00Z');
-  for (const holidays of [[new Date('2026-11-10')], ['2026-11-10T00:00:00Z'], ['10/11/2026'], ['2026-11-10 '], '2026-11-10']) {
+  for (const holidays of [[new Date('2026-11-10')], ['2026-11-10T00:00:00Z'], ['10/11/2026'], ['2026-11-10 '], '2026-11-10', ['2026-11-31'], ['2026-02-30'], {}]) {
     assert.throws(() => responseDueAt(openedAt, 'high', holidays), RangeError, String(holidays));
   }
 });
