@@ -1,0 +1,51 @@
+# The two checks main's branch protection requires before a pull request can merge (ADR 0007):
+#
+#   build    the whole gate, ./build.sh, run on GitHub rather than on whoever's laptop.
+#   claimed  a delivery's specification has exactly one person on its issue, and that person is the one
+#            delivering it. It only looks; nothing here assigns.
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The criteria check compares with the team's main, so it needs main's history.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: ./build.sh
+
+  claimed:
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'deliver/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: The issue belongs to the person delivering
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          DELIVERY_BOT: ${{ vars.DELIVERY_BOT }}
+        run: |
+          number="${HEAD_REF#deliver/}"
+          number="${number:0:4}"
+          if [[ -n "$DELIVERY_BOT" && "$AUTHOR" == "$DELIVERY_BOT" ]]; then
+            # An unattended run opened this for whoever the issue was assigned to; one person is enough.
+            scripts/claim-delivery.sh --check "$number" --any-owner
+          else
+            scripts/claim-delivery.sh --check "$number" --owner "$AUTHOR"
+          fi

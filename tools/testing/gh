@@ -1,0 +1,43 @@
+#!/usr/bin/env node
+// A pretend `gh` for the delivery scripts' tests. It answers only the calls those scripts make, from a
+// JSON file named by FAKE_GH_STATE, and records every call it is given:
+//
+//   { "online": true, "me": "ana", "canAssign": true,
+//     "issues": { "42": { "assignees": ["ben"] } },
+//     "prs": [], "calls": [] }
+import { readFileSync, writeFileSync } from 'node:fs';
+
+const file = process.env.FAKE_GH_STATE;
+const state = JSON.parse(readFileSync(file, 'utf8'));
+const args = process.argv.slice(2);
+state.calls.push(args);
+const save = () => writeFileSync(file, JSON.stringify(state, null, 2));
+const fail = (message) => { save(); process.stderr.write(`${message}\n`); process.exit(1); };
+const flag = (name) => args[args.indexOf(name) + 1];
+
+if (!state.online) {
+  fail('error connecting to api.github.com');
+}
+
+const issue = (n) => state.issues[n] ?? fail(`GraphQL: Could not resolve to an issue with the number of ${n}.`);
+
+if (args[0] === 'api' && args[1] === 'user') {
+  process.stdout.write(`${state.me}\n`);
+} else if (args[0] === 'issue' && args[1] === 'view') {
+  process.stdout.write(issue(args[2]).assignees.map((a) => `${a}\n`).join(''));
+} else if (args[0] === 'issue' && args[1] === 'edit') {
+  const i = issue(args[2]);
+  if (!state.canAssign) {
+    fail(`GraphQL: ${state.me} does not have permission to update issue #${args[2]}.`);
+  }
+  if (args.includes('--add-assignee') && !i.assignees.includes(state.me)) {
+    i.assignees.push(state.me);
+  }
+} else if (args[0] === 'pr' && args[1] === 'create') {
+  state.prs.push({ title: flag('--title'), body: readFileSync(flag('--body-file'), 'utf8'), draft: args.includes('--draft') });
+  process.stdout.write(`https://github.com/team/ticketdesk/pull/${state.prs.length}\n`);
+} else {
+  fail(`fake gh: no answer for: gh ${args.join(' ')}`);
+}
+
+save();

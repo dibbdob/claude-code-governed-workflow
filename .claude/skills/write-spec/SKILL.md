@@ -18,7 +18,8 @@ question rather than choosing an answer.
 1. Read `CLAUDE.md`, the specifications in `docs/specs/` (for their shape and numbering), and the ADRs in
    `docs/adr/` that bear on the request. Read the code the request touches, enough to know what is true
    now.
-2. Take the next free number: one more than the highest `docs/specs/NNNN-*.md`.
+2. Take the next free number: one more than the highest `docs/specs/NNNN-*.md`. Someone else may take
+   the same number on the same day; the build catches it, and whichever is merged second is renumbered.
 3. Write `docs/specs/<NNNN>-<slug>.md` in this shape:
 
    ```markdown
@@ -41,7 +42,9 @@ question rather than choosing an answer.
 
    Each criterion is one observable outcome that a test could check. No criterion describes how the code
    is built. Do not number the criteria: numbering happens when delivery starts.
-4. Leave the status as `draft`. A person marks it `ready` once the open questions are answered;
-   `/deliver` and `scripts/agent.sh` refuse anything else.
+4. Leave the status as `draft`. A person marks it `ready` once the open questions are answered, opens one
+   GitHub issue for it, and adds the line `Issue: #<number>` under the status. The specification says what
+   to build; its issue says who is building it right now. `/deliver` and `scripts/agent.sh` refuse anything
+   that is not ready.
 
 Reply with the path you wrote and the open questions, and nothing more.

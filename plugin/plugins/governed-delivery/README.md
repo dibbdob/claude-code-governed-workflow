@@ -11,7 +11,11 @@ Generated from the source repository's `.claude/` by `tools/package_plugin.py`; 
 
 - `./build.sh` is the project's whole gate.
 - `tools/criteria.mjs` numbers acceptance criteria and checks their coverage.
-- Specifications live in `docs/specs/NNNN-<slug>.md` with a `Status:` line.
+- Specifications live in `docs/specs/NNNN-<slug>.md` with a `Status:` line, and an `Issue: #<n>` line once
+  ready.
+- The source repository's `scripts/start-delivery.sh`, `claim-delivery.sh` and `finish-delivery.sh` are
+  copied in: `/deliver` runs in the folder `start-delivery.sh` makes, and leaves the pull request to
+  `finish-delivery.sh`.
 
 ## Try it locally
 

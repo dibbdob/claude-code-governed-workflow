@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCriteria, numberCriteria, findProblems, changedCriteria } from './criteria.mjs';
+import { parseCriteria, numberCriteria, findProblems, changedCriteria, duplicateNumbers, baseRef } from './criteria.mjs';
 
 const spec = (status, criteria) =>
   `# 0009 Example\n\nStatus: ${status}\n\n## Acceptance criteria\n\n${criteria}\n\n## Notes\n\n- not a criterion\n`;
@@ -62,4 +62,16 @@ test('a criterion that was removed is reported', () => {
   const before = numberCriteria(spec('ready', '- Given a.\n- Given b.'), '0009');
   const after = before.replace('- **0009-AC-2** Given b.\n', '');
   assert.deepEqual(changedCriteria(before, after), ['0009-AC-2']);
+});
+
+test('two specifications with the same number are a problem', () => {
+  // Two people each took "one more than the highest" on the same day.
+  assert.deepEqual(duplicateNumbers(['0001-a.md', '0002-b.md', '0002-c.md', '0003-d.md']),
+    ['0002 is used by 0002-b.md and 0002-c.md; renumber the one merged second']);
+  assert.deepEqual(duplicateNumbers(['0001-a.md', '0002-b.md']), []);
+});
+
+test("criteria are compared with the team's main when there is one, and the local main when not", () => {
+  assert.equal(baseRef((ref) => ref === 'origin/main'), 'origin/main');
+  assert.equal(baseRef(() => false), 'main');
 });

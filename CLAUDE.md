@@ -40,7 +40,12 @@ to read-only commands by a hook in its frontmatter, whose tests run in `build.sh
 
 `.claude/settings.json` allows the build and read-only git, and denies `git push` and `git reset --hard`.
 
-`./scripts/agent.sh <number>` runs the same `/deliver` headless, then runs the build itself.
+Each delivery has a folder of its own, made by `scripts/start-delivery.sh <number>`; a specification's
+GitHub issue says who is delivering it, `scripts/claim-delivery.sh` is the only thing that assigns it, and
+`scripts/finish-delivery.sh` opens the pull request
+([ADR 0007](docs/adr/0007-a-team-delivers-the-way-git-works.md)). Their tests run in `build.sh`.
+
+`./scripts/agent.sh <number>` runs the same delivery headless, in its own folder, and finishes it.
 
 ## The plugin
 
