@@ -37,4 +37,5 @@ Say what you could not find rather than guessing at it.
 Read, Grep and Glob for files. In Bash, a hook (the plugin's `hooks/read_only_bash.py`) allows only
 `git log`, `git show`, `git grep`, `git ls-files`, `git rev-parse` and `wc -l <path>`, optionally piped
 into `head`, `tail`, `wc`, `nl`, `grep` or `sed -n '<from>,<to>p'`. Nothing that chains, redirects or
-expands.
+expands, and no option that writes a file or starts a program (`--output`, `--ext-diff`, grep's `-O`). A
+grep pattern that starts with a dash or holds a capital O goes attached to `-e`, as in `-e-Open`.

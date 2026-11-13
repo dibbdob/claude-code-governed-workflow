@@ -37,4 +37,8 @@ revealed that no test depended on the scan at all; the cases that only the scan 
   told not to use.
 - The hook reads words; it does not resolve them as git would. A word git takes as a path where the hook
   counted a revision is still a gap, and the prompt has to hold that line.
+- Options are the exception, because a check on how a word starts was not enough: git grep reads `-iOvim`
+  as `-i -O vim` and `--open` as `--open-files-in-pager`. The spec-reader profile models those two rules
+  (bundles of short options, and prefixes of long ones), with the grep letters that take a value listed
+  as checked against git 2.46. A git release that changes them needs that list checked again.
 - The hook is code with its own maintenance cost, and a new read-only agent needs a new profile.

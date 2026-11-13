@@ -43,6 +43,7 @@ class Reviewer(unittest.TestCase):
         'git show abc123:src/sla.js | grep x src/sla.js',  # a filter reading a file of its own
         'git diff --output=x main...abc123',
         'git grep -n -Ovim abc123 -- src',       # -O runs a program on the results
+        'git ls-tree abc123 --full-tree',        # the path slot is a path, not an option
         "git show 'abc123:src/sla.js",           # unterminated quote
         # Each of these passes the per-command rules; only the character scan stops the shell expanding it.
         'git grep -n x abc123 -- src/*',
@@ -79,8 +80,10 @@ class SpecReader(unittest.TestCase):
                 self.assertEqual(run('spec-reader', command).returncode, 2)
 
     def test_refuses_the_other_spellings_git_accepts(self):
-        # git reads -O inside a bundle of short options, and accepts any unambiguous prefix of a long one.
-        # A check on how an argument starts misses both: these ran a program before the fix.
+        # git reads -O inside a bundle of short options, and git grep accepts any unambiguous prefix of a
+        # long one. The grep spellings here ran a program before the fix; git log already rejects
+        # --out=, and --ext-d runs nothing without a configured diff program, so those two are refused
+        # defensively.
         for command in ['git grep -iOvim x', 'git grep -nIOvim x', 'git grep --open=vim x',
                         'git grep --open-files=vim x', 'git grep --open-files-in-p=vim x',
                         'git log --out=log.txt', 'git show --ext-d HEAD']:
@@ -88,6 +91,20 @@ class SpecReader(unittest.TestCase):
                 result = run('spec-reader', command)
                 self.assertEqual(result.returncode, 2, command)
                 self.assertIn('Refused', result.stderr)
+
+    def test_says_which_option_was_refused(self):
+        result = run('spec-reader', 'git grep -iOvim x')
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("'-iOvim'", result.stderr)
+        self.assertNotIn('is not one of', result.stderr)
+
+    def test_a_value_attached_to_an_option_is_not_read_as_options(self):
+        for command in ['git grep -eTODO', 'git grep -n -A3Open x', 'git grep -C2 -mOne x',
+                        'git log -SOpeningHours', 'git log -GOPEN_HOUR --oneline',
+                        'git log -p --output-indicator-new=+ -1']:
+            with self.subTest(command=command):
+                result = run('spec-reader', command)
+                self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_still_reads_with_ordinary_options(self):
         for command in ['git grep -n -i nextOpening', 'git grep -n -e TODO -- src', 'git grep --or x',

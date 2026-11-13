@@ -96,7 +96,7 @@ def reviewer_source(w):
             rest[2] == '--' and all(not p.startswith('-') for p in rest[3:])
     if w[:2] == ['git', 'ls-tree']:
         args = [a for a in w[2:] if a != '--name-only']
-        return 1 <= len(args) <= 2 and is_revision(args[0])
+        return 1 <= len(args) <= 2 and is_revision(args[0]) and not any(a.startswith('-') for a in args[1:])
     if w[:2] == ['git', 'rev-parse']:
         return len(w) == 3 and is_revision(w[2])
     return False
@@ -105,26 +105,43 @@ def reviewer_source(w):
 # Options that write or run something: --output sends git's output to a file, --ext-diff runs a configured
 # program, and grep's -O / --open-files-in-pager starts a program of the caller's choosing.
 RISKY_LONG = ('--output', '--ext-diff', '--open-files-in-pager')
-RISKY_SHORT = 'O'
+# git grep's short options that take the rest of their bundle as a value (-eTODO is -e TODO), checked
+# against git 2.46. Scanning stops at one of these; every other letter is read as an option of its own.
+GREP_VALUE_LETTERS = set('efABCm')
 
 
-def is_risky_option(arg):
-    """Whether git could read `arg` as one of the risky options, in any spelling it accepts.
+def risky_option(subcommand, arg):
+    """Why git could read `arg` as one of the risky options, in any spelling it accepts, or None.
 
-    git takes any unambiguous prefix of a long option (--open for --open-files-in-pager), so a long option
-    is refused when its name is a prefix of a risky one. It reads short options in bundles (-iOvim is -i
-    then -O vim), so a short option is refused when the letter appears anywhere in it. That also refuses
-    an attached value that happens to hold the letter, such as -eTODO; -e TODO, as two words, still runs.
+    A long option is refused when its name is a prefix of a risky one, because git grep takes any
+    unambiguous prefix (--open for --open-files-in-pager). For git grep, a bundle of short options is read
+    letter by letter as git does (-iOvim is -i then -O vim), up to the first letter that takes a value.
+    Elsewhere -O only names a file to read, and is refused when it leads, as before.
     """
     if arg.startswith('--'):
         name = arg.partition('=')[0]
-        return len(name) > 2 and any(r.startswith(name) or name.startswith(r) for r in RISKY_LONG)
-    return arg.startswith('-') and RISKY_SHORT in arg
+        hit = next((r for r in RISKY_LONG if len(name) > 2 and r.startswith(name)), None)
+        return f'git reads {arg!r} as {hit}, which writes a file or starts a program' if hit else None
+    if not arg.startswith('-'):
+        return None
+    if subcommand != 'grep':
+        return f'{arg!r} is -O, which this profile does not allow' if arg.startswith('-O') else None
+    for letter in arg[1:]:
+        if letter == 'O':
+            return (f'git grep reads {arg!r} as including -O, which starts a program. If it is a pattern, '
+                    f'attach it to -e, as in -e{arg}')
+        if letter in GREP_VALUE_LETTERS:
+            return None
+    return None
 
 
 def spec_reader_source(w):
     if w[:2] in (['git', 'log'], ['git', 'show'], ['git', 'grep'], ['git', 'ls-files'], ['git', 'rev-parse']):
-        return not any(is_risky_option(a) for a in w[2:])
+        for arg in w[2:]:
+            reason = risky_option(w[1], arg)
+            if reason:
+                raise Refused(reason)
+        return True
     if w[:2] == ['wc', '-l']:
         return len(w) == 3 and not w[2].startswith('-')
     return False
