@@ -22,6 +22,11 @@ pipe.
                   git diff <a>...<b> | <a> <b>, git grep -n <pattern> <rev> -- <path>...,
                   git ls-tree [--name-only] <rev> [<path>], git rev-parse <rev>
     spec-reader   git log, git show, git grep, git ls-files, git rev-parse, wc -l <path>
+    --by-agent-type   choose the profile from the hook input's agent_type instead: spec-reader and
+                      independent-reviewer (bare or plugin-namespaced) get theirs, and any other
+                      session, including the main one, is not restricted. This is the form a plugin
+                      uses, from its hooks/hooks.json.
+
     filters       head and tail (-n N or -N), wc (-l, -w, -c), nl, grep (short options only, one
                   pattern, no file), sed -n '<from>,<to>p'
 """
@@ -127,6 +132,12 @@ def is_filter(w):
 
 
 PROFILES = {'reviewer': reviewer_source, 'spec-reader': spec_reader_source}
+AGENT_PROFILES = {'independent-reviewer': 'reviewer', 'spec-reader': 'spec-reader'}
+
+
+def profile_for_agent(agent_type):
+    """The profile for a subagent, whether its type arrives bare or as <plugin>:<agent>."""
+    return AGENT_PROFILES.get((agent_type or '').rpartition(':')[2])
 
 
 def check(profile, command):
@@ -140,11 +151,16 @@ def check(profile, command):
 
 
 def main():
+    payload = json.load(sys.stdin)
     profile = sys.argv[1] if len(sys.argv) > 1 else ''
+    if profile == '--by-agent-type':
+        profile = profile_for_agent(payload.get('agent_type'))
+        if profile is None:
+            return 0
     if profile not in PROFILES:
         print(f'read_only_bash.py: unknown profile {profile!r}', file=sys.stderr)
         return 2
-    command = json.load(sys.stdin).get('tool_input', {}).get('command', '')
+    command = payload.get('tool_input', {}).get('command', '')
     try:
         check(profile, command)
     except Refused as reason:

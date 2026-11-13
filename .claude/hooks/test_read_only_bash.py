@@ -9,8 +9,11 @@ from pathlib import Path
 HOOK = Path(__file__).with_name('read_only_bash.py')
 
 
-def run(profile, command):
-    payload = json.dumps({'tool_name': 'Bash', 'tool_input': {'command': command}})
+def run(profile, command, agent_type=None):
+    body = {'tool_name': 'Bash', 'tool_input': {'command': command}}
+    if agent_type is not None:
+        body['agent_type'] = agent_type
+    payload = json.dumps(body)
     return subprocess.run([sys.executable, str(HOOK), profile], input=payload, capture_output=True, text=True)
 
 
@@ -74,6 +77,19 @@ class SpecReader(unittest.TestCase):
                         'git grep -Ovim x', 'git grep --open-files-in-pager=vim x']:
             with self.subTest(command=command):
                 self.assertEqual(run('spec-reader', command).returncode, 2)
+
+
+class ByAgentType(unittest.TestCase):
+    def test_a_read_only_agent_is_held_to_its_profile_bare_or_namespaced(self):
+        for agent_type in ['independent-reviewer', 'governed-delivery:independent-reviewer']:
+            with self.subTest(agent_type=agent_type):
+                self.assertEqual(run('--by-agent-type', 'git log', agent_type).returncode, 2)
+                self.assertEqual(run('--by-agent-type', 'git rev-parse HEAD', agent_type).returncode, 0)
+        self.assertEqual(run('--by-agent-type', 'touch x', 'governed-delivery:spec-reader').returncode, 2)
+
+    def test_the_main_session_and_other_agents_are_not_restricted(self):
+        self.assertEqual(run('--by-agent-type', 'touch x').returncode, 0)
+        self.assertEqual(run('--by-agent-type', 'touch x', 'general-purpose').returncode, 0)
 
 
 class Failures(unittest.TestCase):

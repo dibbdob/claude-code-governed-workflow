@@ -8,6 +8,9 @@ to renegotiate it. If you believe it is wrong, say so in a sentence or two and k
 
 ## 0. Gates before anything else
 
+- **Only a ready specification.** If `docs/specs/$1-*.md` does not have the line `Status: ready`, stop
+  and say what it says instead. A draft has open questions a person has not answered yet.
+
 - **One delivery at a time.** `git branch --list 'deliver/*' --no-merged main` lists any delivery not yet
   merged. If it lists one, stop and ask me which to finish; do not start alongside it. Two deliveries in
   one checkout share a working tree, and each one's build reports on the other's half-finished edits.

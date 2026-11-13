@@ -1,0 +1,14 @@
+{
+  "name": "governed-workflow",
+  "owner": {
+    "name": "Jan Wilson"
+  },
+  "description": "One plugin: a governed way to deliver a specification with Claude Code.",
+  "plugins": [
+    {
+      "name": "governed-delivery",
+      "source": "./plugins/governed-delivery",
+      "description": "Deliver a specification end to end: grounded by a read-only spec reader, reviewed by a reviewer who is not told why, with read-only subagents held by a hook."
+    }
+  ]
+}

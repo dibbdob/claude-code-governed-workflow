@@ -31,5 +31,5 @@ the merge message. A fix is reviewed again on its new commit.
 - The review measures the code against the specification, not against the author's intention.
 - Pinning to a commit makes the review's findings refer to something that still exists.
 - A citation list makes "no test for this criterion" a mechanical finding, not a judgement.
-- Not reading commit messages is an instruction in a prompt. Nothing yet stops the reviewer running
-  `git log`.
+- Not reading commit messages is enforced by the reviewer's read-only hook, which refuses `git log` and a
+  bare `git show <commit>` (ADR 0004).
