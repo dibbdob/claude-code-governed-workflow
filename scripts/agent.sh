@@ -16,23 +16,21 @@ grep -q '^Status: ready$' "$spec" || { echo "$spec is not marked 'Status: ready'
 [[ -z "$(git status --porcelain)" ]] || { echo "The working tree has changes; commit or stash them first" >&2; exit 1; }
 
 slug="$(basename "$spec" .md)"
-branch="agent/${slug}"
-git switch -c "$branch" main
+git switch -q main
 
-sed -i.bak 's/^Status: ready$/Status: in progress/' "$spec" && rm "$spec.bak"
-git commit -q -am "${number} Pick up the specification"
-
-prompt="Implement the specification in ${spec}. Write the tests first, one per acceptance criterion, then
-the code. Run ./build.sh until it passes, then commit your work with a message that starts '${number} '.
-Finally set the specification's status line to 'Status: done' and commit that."
+# The unattended run follows the same lifecycle as an attended one (.claude/commands/deliver.md), so there
+# is one definition of how a specification gets built, not two. /deliver branches, numbers the criteria
+# and marks the specification; this script only starts it and checks what it left.
+prompt="/deliver ${number}"
 
 mkdir -p runs
 claude -p "$prompt" \
   --output-format json \
   --permission-mode acceptEdits \
-  --allowedTools "Read,Edit,Write,Glob,Grep,Bash(./build.sh),Bash(git add:*),Bash(git commit:*),Bash(git status),Bash(git diff:*)" \
-  --max-turns 40 \
+  --allowedTools "Read,Edit,Write,Glob,Grep,Agent,Bash(./build.sh),Bash(node tools/criteria.mjs *),Bash(git switch *),Bash(git add *),Bash(git commit *),Bash(git status),Bash(git diff *),Bash(git log *)" \
+  --max-turns 60 \
   > "runs/${slug}.json"
+branch="$(git branch --show-current)"
 
 node -e '
   const run = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
