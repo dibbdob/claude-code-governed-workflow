@@ -75,6 +75,11 @@ is that it has not heard your account.
 For each finding, fix it (with a test that fails before the fix), or record why it stands. Either way it
 goes in the pull request description. If you fixed anything, review again on the new commit.
 
+Review at most twice. A thorough reviewer always finds something, and each fix invites another round: the
+first delivery took four, the later ones about inputs nobody sends. After the second review, fix only a
+finding that breaks a requirement or scenario of the change, and do not review again; list every other
+new finding under "Review findings" in the pull request description, marked as left for a person to judge.
+
 ## 4. Verify with OpenSpec
 
 Run OpenSpec's `openspec-verify-change` skill on `$1`. It checks the work against the change: every task

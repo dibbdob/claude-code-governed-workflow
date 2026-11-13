@@ -140,8 +140,20 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
   tasks undone made `validate --archived` fail; `openspec instructions` returns the project's risk rules and
   its build and archive guidance.
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
-- **Not yet verified in a live session:** `/deliver` end to end, Claude Code firing the reviewer's hook, and
-  the packaged plugin's hook. Running `./scripts/agent.sh 2` exercises the first two.
+- **Run for real, headless** (13 November 2026, `./scripts/agent.sh 2`, 13 minutes, on a Pro subscription,
+  which counted it as $3.50 of use): `/deliver` took issue #2 from its approved change to a draft pull
+  request (#6) whose `build` and `claimed` checks passed. It wrote each scenario's test before the code;
+  the spec-reader and the reviewer ran as subagents, and the reviewer's hook refused it `node`; OpenSpec's
+  apply and verify skills ran; the change was archived, and the one thing it added beyond the spec was put
+  first in the pull request for a person to confirm. What it taught, and what changed:
+  - the reviewer needed four rounds, the first finding a real regression and the last about inputs nobody
+    sends, so `/deliver` now reviews at most twice and leaves later findings to a person;
+  - the first attempt failed on an expired login and left an empty folder that blocked the second, so a
+    run that fails before committing now removes its folder and branch;
+  - `acceptEdits` let unlisted file commands run, `rm` among them, so the run now uses `dontAsk`, which
+    refuses them; an in-place `sed -i` still runs unlisted under both, which `agent.sh` says.
+- **Not yet verified in a live session:** the packaged plugin's hook, and a delivery under the two-review
+  limit and `dontAsk`.
 - **Run on GitHub** (13 November 2026, with a ruleset on `main` requiring a pull request and both checks):
   - `build` passed on every push and pull request, and merging was refused while it was still running;
   - `refined` labelled issue #2 `ready` when its change, renamed to `2-public-holidays`, was merged (#3).
@@ -151,8 +163,8 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
     `gh` through `claim-delivery.sh --check`.
 - **Not yet run on GitHub:** the overnight `deliver` workflow, which needs the bot account, its token and
   an API key; and required approvals, which need a second person.
-- **Not yet used in a session:** OpenSpec's own skills, including `verify`, and the archive guidance's
-  "please confirm the intent" question, which depends on the AI following it.
+- **Not yet used in a session:** OpenSpec's `propose` and `explore` skills, and the archive guidance's
+  "please confirm the intent" question, which only an attended delivery asks.
 
 ## Layout
 
