@@ -6,6 +6,18 @@ argument-hint: <spec-number>
 Implement specification $1. It is marked ready, so it is settled: your job is to build what it says, not
 to renegotiate it. If you believe it is wrong, say so in a sentence or two and keep building to it.
 
+## 0. Gates before anything else
+
+- **One delivery at a time.** `git branch --list 'deliver/*' --no-merged main` lists any delivery not yet
+  merged. If it lists one, stop and ask me which to finish; do not start alongside it. Two deliveries in
+  one checkout share a working tree, and each one's build reports on the other's half-finished edits.
+- **A defect is reproduced before it is fixed.** If the specification says `Type: defect`, the first
+  commit after numbering is a test that fails on `main` for the reason the specification describes, with
+  the failing `./build.sh` output in the commit message. No fix is written until that commit exists. A
+  fix for a defect nobody reproduced is a guess with a passing build.
+- **The criteria are not reworded.** `build.sh` fails if a numbered criterion differs from `main`. If one
+  is wrong, stop and say so; amending a specification is its own change.
+
 ## 1. Ground yourself before writing anything
 
 Spawn the `spec-reader` agent with the number $1 ([`.claude/agents/spec-reader.md`](../agents/spec-reader.md)).

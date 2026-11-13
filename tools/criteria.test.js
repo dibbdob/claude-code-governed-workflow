@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCriteria, numberCriteria, findProblems } from './criteria.mjs';
+import { parseCriteria, numberCriteria, findProblems, changedCriteria } from './criteria.mjs';
 
 const spec = (status, criteria) =>
   `# 0009 Example\n\nStatus: ${status}\n\n## Acceptance criteria\n\n${criteria}\n\n## Notes\n\n- not a criterion\n`;
@@ -49,4 +49,17 @@ test('a specification that is not done yet is not held to coverage', () => {
 test('a test naming a criterion that does not exist is a problem', () => {
   const problems = findProblems([], "test('[0042-AC-7] ghost', ...)");
   assert.deepEqual(problems, ['a test names 0042-AC-7, which no specification has']);
+});
+
+test('a criterion whose words changed is reported, and one that is newly numbered is not', () => {
+  const before = numberCriteria(spec('ready', '- Given a.\n- Given b.'), '0009');
+  const after = numberCriteria(before.replace('Given b.', 'Given b, mostly.') + '', '0009').replace(
+    '## Notes', '- Given c.\n\n## Notes');
+  assert.deepEqual(changedCriteria(before, numberCriteria(after, '0009')), ['0009-AC-2']);
+});
+
+test('a criterion that was removed is reported', () => {
+  const before = numberCriteria(spec('ready', '- Given a.\n- Given b.'), '0009');
+  const after = before.replace('- **0009-AC-2** Given b.\n', '');
+  assert.deepEqual(changedCriteria(before, after), ['0009-AC-2']);
 });

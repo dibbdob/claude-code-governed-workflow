@@ -3,6 +3,15 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# One build at a time in a checkout. Two at once share node's test output and the working tree, and
+# whichever finishes second reports on a tree the first one may have changed. mkdir is atomic.
+lock=.build.lock
+if ! mkdir "$lock" 2>/dev/null; then
+  echo "Another build is running in this checkout. If none is, remove $lock." >&2
+  exit 1
+fi
+trap 'rmdir "$lock"' EXIT
+
 echo "== syntax"
 find src test tools -name '*.js' -o -name '*.mjs' | xargs -n1 node --check
 

@@ -21,8 +21,10 @@ Before implementing one, number its criteria with `node tools/criteria.mjs numbe
 the criterion it covers in its title, `[0001-AC-2]`, and `build.sh` fails a finished specification with a
 criterion no test names.
 
-Never change a specification's acceptance criteria while implementing it. If one looks wrong, say so in
-the commit message and build to it as written. (Not yet enforced.)
+`build.sh` also fails when a numbered criterion's words differ from `main`. Amending a specification is a
+change of its own, built with `ALLOW_CRITERIA_CHANGE=1`.
+
+`build.sh` runs one at a time per checkout (`.build.lock`).
 
 ## Delivering a specification
 
