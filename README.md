@@ -107,8 +107,10 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
 
 ## Setting it up for a team
 
-1. Put the repository on GitHub. In the branch protection for `main`, require a pull request, one approval,
-   the `build` and `claimed` checks, and branches to be up to date before merging.
+1. Put the repository on GitHub. Add a ruleset for `main` that requires a pull request, one approval, the
+   `build` and `claimed` checks, and branches to be up to date before merging. On a private repository
+   that needs GitHub Pro or a team plan. With one person, set approvals to 0 until there is a second
+   person or a delivery bot whose pull requests need your review.
 2. Everyone sets OpenSpec's workflows to include `verify`, once per machine, so `openspec update` keeps it:
 
    ```bash
@@ -140,10 +142,15 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
 - **Not yet verified in a live session:** `/deliver` end to end, Claude Code firing the reviewer's hook, and
   the packaged plugin's hook. Running `./scripts/agent.sh 2` exercises the first two.
-- **Run on GitHub:** the `build` workflow, on the repository's first push (13 November 2026), which ran
-  `./build.sh` on GitHub's machines and passed.
-- **Not yet run on GitHub:** the `claimed` check (it runs on a delivery's pull request), the `deliver` and
-  `refined` workflows, branch protection, and the real `gh` behind the scripts.
+- **Run on GitHub** (13 November 2026, with a ruleset on `main` requiring a pull request and both checks):
+  - `build` passed on every push and pull request, and merging was refused while it was still running;
+  - `refined` labelled issue #2 `ready` when its change, renamed to `2-public-holidays`, was merged (#3).
+    The first attempt would have missed a renamed change; the fix, with its tests, came first (#1);
+  - `claimed`, on a trial delivery pull request (#4, closed unmerged): it failed while issue #2 was
+    unassigned, and the ruleset refused the merge; once the issue was assigned it passed, using the real
+    `gh` through `claim-delivery.sh --check`.
+- **Not yet run on GitHub:** the overnight `deliver` workflow, which needs the bot account, its token and
+  an API key; and required approvals, which need a second person.
 - **Not yet used in a session:** OpenSpec's own skills, including `verify`, and the archive guidance's
   "please confirm the intent" question, which depends on the AI following it.
 
