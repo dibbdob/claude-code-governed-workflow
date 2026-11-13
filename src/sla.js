@@ -32,11 +32,12 @@ export function priorityOf(ticket) {
  * The moment a ticket's first response is due, counting business hours only.
  * @param {Date} openedAt
  * @param {keyof typeof RESPONSE_HOURS} priority
- * @param {string[]} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a whole UTC
- *   day, and anything else in the list is refused with a RangeError
+ * @param {string[] | null} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a
+ *   whole UTC day. With no list, none are skipped. A list that is not one, or holds anything but a real
+ *   `YYYY-MM-DD` date, is refused with a RangeError.
  * @returns {Date}
  */
-export function responseDueAt(openedAt, priority, holidays = []) {
+export function responseDueAt(openedAt, priority, holidays) {
   const hours = RESPONSE_HOURS[priority];
   if (hours === undefined) {
     throw new RangeError(`Unknown priority: ${priority}`);
@@ -62,13 +63,18 @@ export function responseDueAt(openedAt, priority, holidays = []) {
   return now;
 }
 
-// A holiday that is not exactly `YYYY-MM-DD` would never match a day, so it is refused rather than ignored.
+// No list (undefined or null) means no holidays. A holiday that is not a real date written exactly as
+// `YYYY-MM-DD` would never match a day, so it is refused rather than ignored.
 function holidaySet(holidays) {
+  if (holidays === undefined || holidays === null) {
+    return new Set();
+  }
   if (!Array.isArray(holidays)) {
     throw new RangeError('Holidays must be a list of YYYY-MM-DD dates');
   }
   for (const holiday of holidays) {
-    if (typeof holiday !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(holiday)) {
+    const real = typeof holiday === 'string' && utcDate(new Date(`${holiday}T00:00:00Z`)) === holiday;
+    if (!real) {
       throw new RangeError(`Not a YYYY-MM-DD holiday: ${holiday}`);
     }
   }
