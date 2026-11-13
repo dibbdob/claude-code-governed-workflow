@@ -1,6 +1,7 @@
 # 0005 The plugin is generated from the project
 
-Status: accepted
+Status: accepted. Since ADR 0008 the plugin carries `/deliver`, the agents and the hook; `/write-spec` is
+gone, and OpenSpec's own commands come from OpenSpec.
 
 ## Context
 

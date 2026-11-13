@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Make sure a specification's issue is yours. This is the only step that ever assigns an issue (ADR 0007);
-# starting runs it when GitHub can be reached, and finishing and the pull-request check only look.
+# Make sure a change's issue is yours. This is the only step that ever assigns an issue (ADRs 0007, 0008);
+# starting runs it when GitHub can be reached, and finishing and the pull-request check only look. A change
+# is named after its issue, so 57-bank-holidays belongs to issue #57.
 #
-#   scripts/claim-delivery.sh 0002                      claim it: assign you, if nobody has it
-#   scripts/claim-delivery.sh --check 0002              only look: is it yours, and only yours?
-#   scripts/claim-delivery.sh --check 0002 --owner ben  only look: is it ben's, and only ben's?
-#   scripts/claim-delivery.sh --check 0002 --any-owner  only look: is exactly one person on it? (for a
-#                                                       pull request a delivery bot opened for them)
+#   scripts/claim-delivery.sh 57-bank-holidays                      claim it: assign you, if nobody has it
+#   scripts/claim-delivery.sh --check 57-bank-holidays              only look: is it yours, and only yours?
+#   scripts/claim-delivery.sh --check 57-bank-holidays --owner ben  only look: is it ben's alone?
+#   scripts/claim-delivery.sh --check 57-bank-holidays --any-owner  only look: is exactly one person on it?
+#                                                     (for a pull request a delivery bot opened for them)
 #
 # Exit status: 0 it is yours (or the owner's); 1 it is someone else's, nobody's yet, or shared; 2 GitHub
-# could not be reached; 3 you may not assign issues; 4 the specification names no issue.
+# could not be reached; 3 you may not assign issues; 4 the change is not named after an issue.
 set -uo pipefail
 
 check=0
@@ -25,12 +26,11 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
-number="${args[0]:?usage: scripts/claim-delivery.sh [--check] <spec-number> [--owner <login>]}"
+number="${args[0]:?usage: scripts/claim-delivery.sh [--check] <change-name> [--owner <login> | --any-owner]}"
 
-spec="$(ls docs/specs/"${number}"-*.md 2>/dev/null | head -n1)"
-[[ -n "$spec" ]] || { echo "There is no specification docs/specs/${number}-*.md here." >&2; exit 4; }
-issue="$(sed -n 's/^Issue: #\([0-9][0-9]*\)$/\1/p' "$spec" | head -n1)"
-[[ -n "$issue" ]] || { echo "${spec} has no issue. A person adds the line 'Issue: #<number>' when marking it ready." >&2; exit 4; }
+[[ "$number" =~ ^([0-9]+)(-|$) ]] ||
+  { echo "The change '${number}' is not named after an issue. Name changes <issue-number>-<what-it-does>, such as 57-bank-holidays." >&2; exit 4; }
+issue="${BASH_REMATCH[1]}"
 
 unreachable() {
   echo "Couldn't reach GitHub to check issue #${issue}. When you are connected, run: scripts/claim-delivery.sh ${number}" >&2

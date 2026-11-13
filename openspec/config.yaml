@@ -1,0 +1,83 @@
+schema: spec-driven
+
+# This project's rules (ADR 0008). OpenSpec's own skills and `openspec instructions` hand these to whoever
+# writes or delivers a change, so they apply without any tooling of our own.
+
+rules:
+  proposal:
+    - >-
+      End the proposal with a "## Risk" section: a level (low, medium or high) and one or two sentences on
+      what could go wrong for customers or for the desk if this change is wrong. Rate it medium or high when
+      it changes a deadline, a priority, stored data, or what another capability relies on.
+  design:
+    - >-
+      Write a design for every change whose proposal rates its risk medium or high. Fill in "Risks /
+      Trade-offs" as [Risk] → Mitigation, with at least one mitigation that a test or the reviewer can check.
+  tasks:
+    - >-
+      For each mitigation in the design, include a task that puts it in place and says how it is checked.
+
+operations:
+  apply:
+    guidance:
+      - >-
+        Work test first. Before the code for a scenario, write at least one test for it, named after it as
+        [<capability>] <scenario name>, for example test('[response-deadline] A ticket opened on a public
+        holiday', ...). The build fails when a scenario in openspec/specs has no test naming it.
+      - >-
+        Run ./build.sh, the whole of it, before every commit, and commit in steps a reviewer can read, each
+        message starting with the change's name and a colon. Tick a task only when its own check has passed.
+      - >-
+        If the proposal says the change fixes a defect, the first commit is a test that fails on the team's
+        main for the reason the proposal describes, with the failing ./build.sh output in the commit message.
+      - >-
+        If building the change shows that a requirement or scenario should be worded differently, revise the
+        change with OpenSpec's openspec-update-change skill, and only while its intent is the same. If the
+        intent would change, stop and say that it needs a new proposal.
+  archive:
+    guidance:
+      - >-
+        Before archiving, compare this change's spec files with the version approved on the team's main
+        (origin/main, or main when there is no remote). If nothing changed, say so in one line.
+      - >-
+        If any requirement or scenario changed, list each one in plain words: what it said when approved,
+        what it says now, why it changed, whether the intent is still the same, and what could go wrong
+        because of the change.
+      - >-
+        If a person is there, ask them to confirm the intent is unchanged before archiving. In an
+        unattended run, do not stop: put the list first in the pull request description, under the heading
+        "Changed since approval: please confirm the intent is the same".
+      - >-
+        If the intent has changed, do not archive. Say the change needs a new proposal instead.
+
+
+# Project context (optional)
+# Add only constraints that should guide OpenSpec artifacts and workflows.
+# Include constraints an agent cannot infer by reading the code.
+# Keep general project documentation and discoverable codebase facts out.
+# Example:
+#   context: |
+#     Designs and tasks must cover Windows, macOS, and Linux
+#     Write all artifacts in Spanish
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

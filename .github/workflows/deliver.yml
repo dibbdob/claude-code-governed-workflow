@@ -1,6 +1,6 @@
-# Deliver a specification on GitHub's machines (ADR 0007). Put the label 'deliver' on a specification's
-# issue, and this runs scripts/agent.sh for the one person the issue is assigned to, ending in a draft pull
-# request. It spends API credit, so who may add labels is who may spend it.
+# Deliver an OpenSpec change on GitHub's machines (ADRs 0007, 0008). Put the label 'deliver' on the issue a
+# change is named after, and this runs scripts/agent.sh for the one person the issue is assigned to, ending
+# in a draft pull request. It spends API credit, so who may add labels is who may spend it.
 #
 # Needs, in the repository's settings:
 #   secret ANTHROPIC_API_KEY  for Claude Code, from an account with a spend limit.
@@ -17,6 +17,9 @@ on:
 permissions:
   contents: read
   issues: read
+
+env:
+  OPENSPEC_TELEMETRY: '0'
 
 concurrency:
   group: deliver-${{ github.event.issue.number }}
@@ -35,20 +38,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci --ignore-scripts
       - run: npm install --global @anthropic-ai/claude-code
 
-      - name: Find the specification, and the one person it is for
+      - name: Find the approved change, and the one person it is for
         id: find
         env:
           GH_TOKEN: ${{ secrets.DELIVERY_TOKEN }}
           ISSUE: ${{ github.event.issue.number }}
         run: |
-          spec="$(grep -lx "Issue: #${ISSUE}" docs/specs/*.md | head -n1 || true)"
-          [[ -n "$spec" ]] || { echo "No specification on main names issue #${ISSUE}." >&2; exit 1; }
+          change="$(ls -d openspec/changes/"${ISSUE}"-*/ 2>/dev/null | head -n1 | xargs -r basename)"
+          [[ -n "$change" ]] ||
+            { echo "No approved change on main is named after issue #${ISSUE} (openspec/changes/${ISSUE}-...)." >&2; exit 1; }
           who="$(gh issue view "$ISSUE" --json assignees --jq '.assignees[].login')"
           [[ "$(grep -c . <<<"$who")" == 1 ]] ||
             { echo "Issue #${ISSUE} needs exactly one person assigned before it can be delivered." >&2; exit 1; }
-          echo "number=$(basename "$spec" | cut -c1-4)" >> "$GITHUB_OUTPUT"
+          echo "change=$change" >> "$GITHUB_OUTPUT"
           echo "for=$who" >> "$GITHUB_OUTPUT"
 
       - name: Deliver
@@ -56,8 +61,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GH_TOKEN: ${{ secrets.DELIVERY_TOKEN }}
           DELIVERY_FOR: ${{ steps.find.outputs.for }}
-          NUMBER: ${{ steps.find.outputs.number }}
+          CHANGE: ${{ steps.find.outputs.change }}
         run: |
           git config --global user.name "Ticketdesk delivery"
           git config --global user.email "delivery@users.noreply.github.com"
-          ./scripts/agent.sh "$NUMBER"
+          ./scripts/agent.sh "$CHANGE"

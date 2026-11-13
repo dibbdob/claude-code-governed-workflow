@@ -22,8 +22,26 @@ if grep -rnE '\.(get|set)(Hours|Minutes|Seconds|Day|Date|Month|FullYear)\(' src;
   exit 1
 fi
 
-echo "== every finished criterion has a test"
-node tools/criteria.mjs check
+# OpenSpec is pinned in package.json. Its usage reporting is off for every build (ADR 0008).
+export OPENSPEC_TELEMETRY=0
+[[ -x node_modules/.bin/openspec ]] || npm ci --silent --ignore-scripts
+
+echo "== the specs and changes are well formed (openspec validate)"
+node_modules/.bin/openspec validate --all --strict --no-interactive >/dev/null ||
+  node_modules/.bin/openspec validate --all --strict --no-interactive
+
+echo "== no change is archived with tasks left undone (openspec validate --archived)"
+node_modules/.bin/openspec validate --archived --no-interactive >/dev/null ||
+  node_modules/.bin/openspec validate --archived --no-interactive
+
+echo "== OpenSpec's verify skill is installed (/deliver runs it before archiving)"
+# `openspec update` matches a project's skills to the machine's profile, so a teammate on the default
+# profile would remove it without knowing (README, "Setting it up for a team").
+[[ -f .agents/skills/openspec-verify-change/SKILL.md ]] ||
+  { echo "OpenSpec's verify skill is missing. Add 'verify' to your OpenSpec workflows, then run openspec update." >&2; exit 1; }
+
+echo "== every scenario has a test"
+node tools/specs.mjs check
 
 echo "== tests"
 node --test

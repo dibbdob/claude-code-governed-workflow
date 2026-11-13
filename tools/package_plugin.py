@@ -6,6 +6,10 @@
 
 The project's .claude/ is the one source. The plugin is a copy with the changes a plugin needs:
 
+- Only this project's own command and agents travel. OpenSpec's skills are not copied: a project gets them
+  from OpenSpec itself, with `openspec init` (ADR 0008). (`opsx` is skipped too: OpenSpec 1 kept commands
+  there, and a project that has not run `openspec update` may still have them.)
+
 - Plugin subagents ignore the `hooks` frontmatter field, so an agent copied as it is would keep its
   "read-only" description and lose the hook that makes it true. The generator strips the field and the
   plugin registers the hook once, in hooks/hooks.json, choosing each agent's profile by agent_type.
@@ -22,7 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET = ROOT / 'plugin' / 'plugins' / 'governed-delivery'
-GENERATED = ['agents', 'commands', 'skills', 'hooks']
+GENERATED = ['agents', 'commands', 'hooks']
 
 HOOKS_JSON = {
     'description': 'Hold the plugin\'s read-only subagents to read-only Bash commands.',
@@ -50,8 +54,7 @@ def build(out):
         text = text.replace('`.claude/hooks/read_only_bash.py`', "the plugin's `hooks/read_only_bash.py`")
         (out / 'agents' / agent.name).write_text(text)
 
-    shutil.copytree(ROOT / '.claude' / 'commands', out / 'commands')
-    shutil.copytree(ROOT / '.claude' / 'skills', out / 'skills')
+    shutil.copytree(ROOT / '.claude' / 'commands', out / 'commands', ignore=shutil.ignore_patterns('opsx'))
 
     (out / 'hooks').mkdir()
     shutil.copy2(ROOT / '.claude' / 'hooks' / 'read_only_bash.py', out / 'hooks' / 'read_only_bash.py')

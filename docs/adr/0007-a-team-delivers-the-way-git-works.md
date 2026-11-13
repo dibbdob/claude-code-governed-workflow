@@ -1,6 +1,7 @@
 # 0007 A team delivers the way Git works
 
-Status: accepted
+Status: accepted. ADR 0008 replaces its specification numbers and `Issue:` line: changes are named after
+their issue, and a change is ready once its reviewed pull request is merged.
 
 ## Context
 

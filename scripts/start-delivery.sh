@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# Start delivering a specification: a folder and a branch of its own, made from the team's main, and a claim
-# on its issue when GitHub can be reached (ADR 0007). It works offline; the claim can come later.
+# Start delivering an OpenSpec change: a folder and a branch of its own, made from the team's main, and a claim
+# on its issue when GitHub can be reached (ADRs 0007 and 0008). It works offline; the claim can come later.
 #
-#   scripts/start-delivery.sh 0002      prints the new folder on its last line
+#   scripts/start-delivery.sh 57                 the change for issue #57 (openspec/changes/57-...)
+#   scripts/start-delivery.sh 57-bank-holidays   or the change by name
 #
-# Each delivery gets its own folder, so two deliveries never share half-finished files, whoever runs them.
+# A change is ready once it is on the team's main: it only gets there through a reviewed pull request, which
+# is its refinement. Prints the new folder on its last line.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
-number="${1:?usage: scripts/start-delivery.sh <spec-number>}"
+wanted="${1:?usage: scripts/start-delivery.sh <issue-number | change-name>}"
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 
@@ -20,17 +22,26 @@ fi
 base=main
 git rev-parse --verify --quiet origin/main >/dev/null && base=origin/main
 
-spec="$(git ls-tree --name-only "$base" docs/specs/ | grep -E "^docs/specs/${number}-.*\.md$" | head -n1 || true)"
-[[ -n "$spec" ]] || { echo "There is no specification ${number} on ${base}." >&2; exit 1; }
-git show "${base}:${spec}" | grep -q '^Status: ready$' ||
-  { echo "${spec} is not marked 'Status: ready' on ${base}." >&2; exit 1; }
+# Open changes on the team's main: openspec/changes/<name>/proposal.md, not archived.
+open="$(git ls-tree -r --name-only "$base" openspec/changes/ 2>/dev/null |
+  sed -n 's#^openspec/changes/\([^/]*\)/proposal\.md$#\1#p' | grep -v '^archive$' || true)"
+if [[ "$wanted" =~ ^[0-9]+$ ]]; then
+  change="$(grep -E "^${wanted}-" <<<"$open" | head -n1 || true)"
+else
+  change="$(grep -xF "$wanted" <<<"$open" || true)"
+fi
+[[ -n "$change" ]] || {
+  echo "'${wanted}' is not an approved change on ${base}. A change is ready to deliver once its proposal has been reviewed and merged into the team's main." >&2
+  exit 1
+}
 
-slug="$(basename "$spec" .md)"
-branch="deliver/${slug}"
-folder="${DELIVERY_DIR:-$(dirname "$root")/$(basename "$root")-deliveries}/${slug}"
+branch="deliver/${change}"
+folder="${DELIVERY_DIR:-$(dirname "$root")/$(basename "$root")-deliveries}/${change}"
 git worktree add --quiet -b "$branch" "$folder" "$base" >&2
-echo "Started ${number} in ${folder}, on branch ${branch}." >&2
+# Share the project's installed tools (OpenSpec) with the new folder, so its build works offline too.
+[[ -d "$root/node_modules" && ! -e "$folder/node_modules" ]] && ln -s "$root/node_modules" "$folder/node_modules"
+echo "Started ${change} in ${folder}, on branch ${branch}." >&2
 
 # Claiming is the one step that assigns. Starting tries it; whatever it finds, the work can go on.
-(cd "$folder" && "$here/claim-delivery.sh" "$number") >&2 || true
+(cd "$folder" && "$here/claim-delivery.sh" "$change") >&2 || true
 echo "$folder"

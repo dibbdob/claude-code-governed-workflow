@@ -2,5 +2,10 @@
   "name": "ticketdesk",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test" }
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "2.0.0"
+  }
 }
