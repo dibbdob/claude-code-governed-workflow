@@ -78,6 +78,24 @@ class SpecReader(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertEqual(run('spec-reader', command).returncode, 2)
 
+    def test_refuses_the_other_spellings_git_accepts(self):
+        # git reads -O inside a bundle of short options, and accepts any unambiguous prefix of a long one.
+        # A check on how an argument starts misses both: these ran a program before the fix.
+        for command in ['git grep -iOvim x', 'git grep -nIOvim x', 'git grep --open=vim x',
+                        'git grep --open-files=vim x', 'git grep --open-files-in-p=vim x',
+                        'git log --out=log.txt', 'git show --ext-d HEAD']:
+            with self.subTest(command=command):
+                result = run('spec-reader', command)
+                self.assertEqual(result.returncode, 2, command)
+                self.assertIn('Refused', result.stderr)
+
+    def test_still_reads_with_ordinary_options(self):
+        for command in ['git grep -n -i nextOpening', 'git grep -n -e TODO -- src', 'git grep --or x',
+                        'git log --oneline -- src/sla.js', 'git show --stat HEAD', 'git ls-files -- docs']:
+            with self.subTest(command=command):
+                result = run('spec-reader', command)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
 
 class ByAgentType(unittest.TestCase):
     def test_a_read_only_agent_is_held_to_its_profile_bare_or_namespaced(self):

@@ -102,12 +102,29 @@ def reviewer_source(w):
     return False
 
 
+# Options that write or run something: --output sends git's output to a file, --ext-diff runs a configured
+# program, and grep's -O / --open-files-in-pager starts a program of the caller's choosing.
+RISKY_LONG = ('--output', '--ext-diff', '--open-files-in-pager')
+RISKY_SHORT = 'O'
+
+
+def is_risky_option(arg):
+    """Whether git could read `arg` as one of the risky options, in any spelling it accepts.
+
+    git takes any unambiguous prefix of a long option (--open for --open-files-in-pager), so a long option
+    is refused when its name is a prefix of a risky one. It reads short options in bundles (-iOvim is -i
+    then -O vim), so a short option is refused when the letter appears anywhere in it. That also refuses
+    an attached value that happens to hold the letter, such as -eTODO; -e TODO, as two words, still runs.
+    """
+    if arg.startswith('--'):
+        name = arg.partition('=')[0]
+        return len(name) > 2 and any(r.startswith(name) or name.startswith(r) for r in RISKY_LONG)
+    return arg.startswith('-') and RISKY_SHORT in arg
+
+
 def spec_reader_source(w):
     if w[:2] in (['git', 'log'], ['git', 'show'], ['git', 'grep'], ['git', 'ls-files'], ['git', 'rev-parse']):
-        # No option that writes or runs something: --output sends git's output to a file, and grep's
-        # -O / --open-files-in-pager starts a program of the caller's choosing.
-        risky = ('--output', '--ext-diff', '--open-files-in-pager', '-O')
-        return not any(a.startswith(risky) for a in w[2:])
+        return not any(is_risky_option(a) for a in w[2:])
     if w[:2] == ['wc', '-l']:
         return len(w) == 3 and not w[2].startswith('-')
     return False
