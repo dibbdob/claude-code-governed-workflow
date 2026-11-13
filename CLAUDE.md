@@ -24,7 +24,10 @@ criterion no test names.
 Never change a specification's acceptance criteria while implementing it. If one looks wrong, say so in
 the commit message and build to it as written. (Not yet enforced.)
 
-## Unattended work
+## Delivering a specification
 
-`./scripts/agent.sh <number>` hands a specification marked `Status: ready` to a headless Claude Code run on
-its own branch, then runs the build itself.
+`/deliver <number>` takes a ready specification from its branch to a merge message
+([command](.claude/commands/deliver.md)). It reads through the `spec-reader` subagent first
+([ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md)).
+
+`./scripts/agent.sh <number>` runs the same `/deliver` headless, then runs the build itself.
