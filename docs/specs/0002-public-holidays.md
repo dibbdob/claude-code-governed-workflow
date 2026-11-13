@@ -9,8 +9,10 @@ opened before a holiday is shown as overdue when nobody could have answered it.
 
 ## Acceptance criteria
 
-- Given a list of public holidays, when a deadline runs into one of them, then that whole day is skipped
+<!-- criteria high-water: 3 -->
+
+- **0002-AC-1** Given a list of public holidays, when a deadline runs into one of them, then that whole day is skipped
   as though it were a weekend.
-- Given a ticket opened on a public holiday, when its deadline is computed, then counting starts at 09:00
+- **0002-AC-2** Given a ticket opened on a public holiday, when its deadline is computed, then counting starts at 09:00
   on the next business day.
-- Given no list of holidays, when a deadline is computed, then it is the same as before this change.
+- **0002-AC-3** Given no list of holidays, when a deadline is computed, then it is the same as before this change.
