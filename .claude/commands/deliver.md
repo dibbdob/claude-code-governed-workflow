@@ -43,10 +43,28 @@ Tests first, one per criterion at least, each naming its criterion in its title 
 the code. Commit in steps a reviewer can read, each message starting `<NNNN> `. Run `./build.sh` (the
 whole of it) before each commit.
 
-## 4. Finish
+## 4. Independent review
 
-Set `Status: done`, run `./build.sh`, and commit. Then write the merge message, in this shape, and show it
-to me:
+Set `Status: done`, run `./build.sh`, and commit. Then pin the review to that commit and collect the
+citations:
+
+```bash
+git rev-parse HEAD
+git grep -n '\[<NNNN>-AC-' HEAD -- test
+```
+
+Spawn the `independent-reviewer` agent ([`.claude/agents/independent-reviewer.md`](../agents/independent-reviewer.md))
+with the number, the commit and the citation lines, and nothing else: not your plan, not your reasons, not
+a summary of what you built ([ADR 0003](../../docs/adr/0003-the-reviewer-is-not-told-why.md)). Its value
+is that it has not heard your account.
+
+For each finding, fix it (with a test that fails before the fix), or record why it stands. Either way it
+goes in the merge message. If you fixed anything, review again on the new commit; a fix is new code
+nobody has reviewed.
+
+## 5. Finish
+
+Write the merge message, in this shape, and show it to me:
 
 ```
 Merge deliver/<NNNN>-<slug>: <what is now true, in plain words>
