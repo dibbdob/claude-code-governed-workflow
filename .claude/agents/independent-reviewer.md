@@ -3,6 +3,12 @@ name: independent-reviewer
 description: The independent review in step 4 of /deliver. Reviews a delivery branch, pinned to one commit, against its specification, without the author's rationale. The caller passes the specification number, the commit, and the lines where the tests cite each criterion. Reads only; builds, runs and changes nothing.
 tools: Bash
 disallowedTools: Write, Edit, NotebookEdit
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/read_only_bash.py" reviewer || exit 2
 model: inherit
 ---
 
@@ -33,3 +39,16 @@ Report, most serious first, in under 700 words:
 - (d) any check or test that cannot fail on the case it claims to cover.
 
 For each, say what you did to establish it. A finding you inferred but did not verify is labelled as such.
+
+## What you can run
+
+A hook (`.claude/hooks/read_only_bash.py`) refuses every other command, one command per call:
+
+- `git show <sha>:<path>`, always with a path; a bare commit would show its message
+- `git diff main...<sha>`, or between two revisions
+- `git grep -n <pattern> <sha> -- <path>`
+- `git ls-tree [--name-only] <sha> [<path>]`, `git rev-parse <rev>`
+- piped into `head`, `tail`, `wc`, `nl`, `grep` (short options, no file) or `sed -n '<from>,<to>p'`
+
+No `cd`, `&&`, `;`, redirection or unquoted `$`; a pattern with `[` or `$` goes in single quotes. Read a
+long file in ranges: `git show <sha>:<path> | sed -n '1,200p'`, then the next range.

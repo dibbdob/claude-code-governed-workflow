@@ -3,6 +3,12 @@ name: spec-reader
 description: The grounding read for /deliver. Given a specification number, reads the specification, the ADRs it depends on, and what has changed on main since it was written, and returns every acceptance criterion verbatim with anything that is now stale. Reads only; changes nothing.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit, NotebookEdit
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/read_only_bash.py" spec-reader || exit 2
 model: sonnet
 ---
 
@@ -31,3 +37,10 @@ words are the contract. The caller gives you the number `<NNNN>`.
 - **Read**: every path you read, with its line count.
 
 Say what you could not find rather than guessing at it.
+
+## What you can run
+
+Read, Grep and Glob for files. In Bash, a hook (`.claude/hooks/read_only_bash.py`) allows only
+`git log`, `git show`, `git grep`, `git ls-files`, `git rev-parse` and `wc -l <path>`, optionally piped
+into `head`, `tail`, `wc`, `nl`, `grep` or `sed -n '<from>,<to>p'`. Nothing that chains, redirects or
+expands.
