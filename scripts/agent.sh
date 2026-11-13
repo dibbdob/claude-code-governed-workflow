@@ -18,6 +18,9 @@ grep -q '^Status: ready$' "$spec" || { echo "$spec is not marked 'Status: ready'
 slug="$(basename "$spec" .md)"
 git switch -q main
 
+# Every command /deliver and its subagents run must be on this list: a headless run has nobody to approve
+# anything else, so an unlisted command is refused. The subagents' own hook narrows their share further.
+#
 # The unattended run follows the same lifecycle as an attended one (.claude/commands/deliver.md), so there
 # is one definition of how a specification gets built, not two. /deliver branches, numbers the criteria
 # and marks the specification; this script only starts it and checks what it left.
@@ -27,7 +30,7 @@ mkdir -p runs
 claude -p "$prompt" \
   --output-format json \
   --permission-mode acceptEdits \
-  --allowedTools "Read,Edit,Write,Glob,Grep,Agent,Bash(./build.sh),Bash(node tools/criteria.mjs *),Bash(git switch *),Bash(git add *),Bash(git commit *),Bash(git status),Bash(git diff *),Bash(git log *)" \
+  --allowedTools "Read,Edit,Write,Glob,Grep,Agent,Bash(./build.sh),Bash(node tools/criteria.mjs *),Bash(git switch *),Bash(git add *),Bash(git commit *),Bash(git status),Bash(git diff *),Bash(git log *),Bash(git branch *),Bash(git rev-parse *),Bash(git grep *),Bash(git show *),Bash(git ls-tree *),Bash(wc -l *)" \
   --max-turns 60 \
   > "runs/${slug}.json"
 branch="$(git branch --show-current)"
