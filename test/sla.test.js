@@ -106,3 +106,27 @@ test('consecutive holidays and a weekend are all skipped', () => {
   const due = responseDueAt(new Date('2026-12-24T16:00:00Z'), 'urgent', ['2026-12-25', '2026-12-28']);
   assert.equal(due.toISOString(), '2026-12-29T12:00:00.000Z');
 });
+
+// The worked examples agreed for each scenario (openspec/specs/response-deadline/spec.md), row by row: each
+// is a case a person on the desk checks on the issue, so each is checked here too.
+const agreed = {
+  'A deadline that runs into a public holiday': [
+    ['Thu 24 Dec 2026, 15:00 UTC', '2026-12-24T15:00:00Z', 'urgent', ['2026-12-25'], '2026-12-28T11:00:00.000Z'],
+    ['Wed 23 Dec 2026, 09:00 UTC', '2026-12-23T09:00:00Z', 'normal', ['2026-12-25'], '2026-12-28T17:00:00.000Z'],
+    ['Thu 24 Dec 2026, 16:00 UTC', '2026-12-24T16:00:00Z', 'high', ['2026-12-25', '2026-12-28'], '2026-12-29T16:00:00.000Z'],
+  ],
+  'A ticket opened on a public holiday': [
+    ['Fri 25 Dec 2026, 10:00 UTC', '2026-12-25T10:00:00Z', 'urgent', ['2026-12-25'], '2026-12-28T13:00:00.000Z'],
+    ['Fri 25 Dec 2026, 07:30 UTC', '2026-12-25T07:30:00Z', 'high', ['2026-12-25'], '2026-12-28T17:00:00.000Z'],
+  ],
+  'No list of holidays': [
+    ['Thu 24 Dec 2026, 15:00 UTC', '2026-12-24T15:00:00Z', 'urgent', undefined, '2026-12-25T11:00:00.000Z'],
+  ],
+};
+for (const [scenario, rows] of Object.entries(agreed)) {
+  test(`every agreed example of "${scenario}" gives the answer agreed`, () => {
+    for (const [opened, at, priority, holidays, due] of rows) {
+      assert.equal(responseDueAt(new Date(at), priority, holidays).toISOString(), due, `${opened}, ${priority}`);
+    }
+  });
+}

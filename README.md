@@ -39,6 +39,7 @@ git log --graph --format='%h %s%n%b' main                # everything, with the 
 | 12 | `spec-reader-without-a-shell` | The read-only hook kept needing fixes to model git, for a shell the spec-reader did not need |
 | 13 | `team-delivery` | Everything assumed one person on one machine: one delivery at a time, a local main, no pull requests |
 | 14 | `openspec` | A home-made spec format and numbering, with no refinement step, where an established framework does the job |
+| 15 | `first-delivery` | Everything had been tested against stand-ins; nothing had yet delivered a change for real, on GitHub, with nobody watching |
 
 Some findings in the history came from checking the checks. The first UTC gate could not fail (`grep`
 given a directory without `-r`). With the hook's character scan disabled every hook test still passed, so
@@ -64,6 +65,7 @@ fixes went with it (stage 12).
 | **Plugin and marketplace**, generated from the project, validated, with a drift check | [`plugin/`](plugin), [`package_plugin.py`](tools/package_plugin.py), [ADR 0005](docs/adr/0005-the-plugin-is-generated-from-the-project.md) |
 | **Specs with an established framework**: OpenSpec changes and specs, its own checks (`validate`, `validate --archived`, the `verify` workflow), and one check of ours: every scenario has a test | [`openspec/`](openspec), [`specs.mjs`](tools/specs.mjs), [tests](tools/specs.test.js), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
 | **Refinement as a pull request**: a change reaches main only through review, and its issue is then labelled ready | [`refined.yml`](.github/workflows/refined.yml), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
+| **Worked examples in Gherkin**: every scenario of a change is an outline with examples a person on the desk can check, and the build checks the outline | [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-scenario-is-an-outline-with-worked-examples.md) |
 | **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml), [an example change](openspec/changes/2-public-holidays) |
 | **A team, the way Git works**: a folder per delivery, starting offline, one issue per change saying who has it, one step that assigns and checks that only look | [`start-delivery.sh`](scripts/start-delivery.sh), [`claim-delivery.sh`](scripts/claim-delivery.sh), [`finish-delivery.sh`](scripts/finish-delivery.sh), [tests](tools/delivery.test.js), [ADR 0007](docs/adr/0007-a-team-delivers-the-way-git-works.md) |
 | **CI on GitHub**: the build and the ownership check on every pull request, and unattended deliveries started by a label | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml) |
@@ -152,6 +154,9 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
     run that fails before committing now removes its folder and branch;
   - `acceptEdits` let unlisted file commands run, `rm` among them, so the run now uses `dontAsk`, which
     refuses them; an in-place `sed -i` still runs unlisted under both, which `agent.sh` says.
+  - its scenarios were rules nobody on the desk could check at a glance, so every scenario of a change is
+    now a Gherkin outline with worked examples (ADR 0009); change 2's were rewritten so, each row was
+    tested against the delivered code, and the delivery was merged.
 - **Not yet verified in a live session:** the packaged plugin's hook, and a delivery under the two-review
   limit and `dontAsk`.
 - **Run on GitHub** (13 November 2026, with a ruleset on `main` requiring a pull request and both checks):
