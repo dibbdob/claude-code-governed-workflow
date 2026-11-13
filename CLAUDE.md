@@ -30,6 +30,8 @@ change of its own, built with `ALLOW_CRITERIA_CHANGE=1`.
 
 `/deliver <number>` takes a ready specification from its branch to a merge message
 ([command](.claude/commands/deliver.md)). It reads through the `spec-reader` subagent first
-([ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md)).
+([ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md)), and is reviewed by the
+`independent-reviewer` subagent, pinned to one commit and given no rationale
+([ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md)).
 
 `./scripts/agent.sh <number>` runs the same `/deliver` headless, then runs the build itself.
