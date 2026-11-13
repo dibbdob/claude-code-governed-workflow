@@ -43,6 +43,7 @@ class Reviewer(unittest.TestCase):
         'git show abc123:src/sla.js | grep x src/sla.js',  # a filter reading a file of its own
         'git diff --output=x main...abc123',
         'git grep -n -Ovim abc123 -- src',       # -O runs a program on the results
+        'git ls-tree abc123 --full-tree',        # the path slot is a path, not an option
         "git show 'abc123:src/sla.js",           # unterminated quote
         # Each of these passes the per-command rules; only the character scan stops the shell expanding it.
         'git grep -n x abc123 -- src/*',
@@ -65,36 +66,44 @@ class Reviewer(unittest.TestCase):
                 self.assertIn('Refused', result.stderr)
 
 
-class SpecReader(unittest.TestCase):
-    def test_reads_history_and_counts_lines(self):
-        for command in ['git log --oneline -15 main', 'wc -l docs/specs/0002-public-holidays.md',
-                        'git log --oneline -- docs/specs/0002-public-holidays.md | head -n 5']:
-            with self.subTest(command=command):
-                self.assertEqual(run('spec-reader', command).returncode, 0)
-
-    def test_refuses_writes(self):
-        for command in ['git commit -m x', 'git checkout main', 'git log --output=log.txt', 'touch x',
-                        'git grep -Ovim x', 'git grep --open-files-in-pager=vim x']:
-            with self.subTest(command=command):
-                self.assertEqual(run('spec-reader', command).returncode, 2)
-
-
 class ByAgentType(unittest.TestCase):
     def test_a_read_only_agent_is_held_to_its_profile_bare_or_namespaced(self):
         for agent_type in ['independent-reviewer', 'governed-delivery:independent-reviewer']:
             with self.subTest(agent_type=agent_type):
                 self.assertEqual(run('--by-agent-type', 'git log', agent_type).returncode, 2)
                 self.assertEqual(run('--by-agent-type', 'git rev-parse HEAD', agent_type).returncode, 0)
-        self.assertEqual(run('--by-agent-type', 'touch x', 'governed-delivery:spec-reader').returncode, 2)
 
     def test_the_main_session_and_other_agents_are_not_restricted(self):
         self.assertEqual(run('--by-agent-type', 'touch x').returncode, 0)
         self.assertEqual(run('--by-agent-type', 'touch x', 'general-purpose').returncode, 0)
 
 
+class AgentTools(unittest.TestCase):
+    """What each read-only agent may call is decided by its frontmatter, which Claude Code enforces."""
+
+    def frontmatter(self, name):
+        text = (Path(__file__).parent.parent / 'agents' / f'{name}.md').read_text()
+        head = text.split('---')[1]
+        return {k.strip(): v.strip() for k, _, v in (l.partition(':') for l in head.splitlines() if ':' in l and not l.startswith(' '))}
+
+    def test_the_spec_reader_has_no_shell(self):
+        fields = self.frontmatter('spec-reader')
+        self.assertNotIn('Bash', fields['tools'])
+        self.assertNotIn('hooks', fields)
+
+    def test_the_reviewer_has_only_the_shell_its_hook_holds(self):
+        # With Read it could open .git/COMMIT_EDITMSG, the author's reasons (ADR 0003).
+        fields = self.frontmatter('independent-reviewer')
+        self.assertEqual(fields['tools'], 'Bash')
+        self.assertIn('hooks', fields)
+
+
 class Failures(unittest.TestCase):
     def test_an_unknown_profile_blocks(self):
         self.assertEqual(run('anyone', 'git rev-parse HEAD').returncode, 2)
+
+    def test_the_spec_reader_profile_is_gone_and_blocks_like_any_unknown_one(self):
+        self.assertEqual(run('spec-reader', 'git log').returncode, 2)
 
     def test_malformed_input_blocks_rather_than_crashing_open(self):
         result = subprocess.run([sys.executable, str(HOOK), 'reviewer'], input='not json',

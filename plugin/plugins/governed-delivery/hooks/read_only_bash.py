@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Hold a subagent's Bash to a short list of read-only commands (ADR 0004).
+"""Hold the independent reviewer's Bash to a short list of read-only commands (ADRs 0004 and 0006).
 
 A subagent's `tools` field can grant or withhold Bash, but cannot narrow it to particular commands. The
-agents in .claude/agents/ that must change nothing therefore run this as a PreToolUse hook on Bash,
-naming their profile:
+reviewer needs a shell, because it reads a pinned commit through git and must not have the Read tool
+(which would open .git/COMMIT_EDITMSG). So it runs this as a PreToolUse hook on Bash, naming its profile.
+The spec-reader has no shell at all, which needs no hook.
 
     python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/read_only_bash.py" reviewer || exit 2
 
@@ -21,10 +22,9 @@ pipe.
                                           not read)
                   git diff <a>...<b> | <a> <b>, git grep -n <pattern> <rev> -- <path>...,
                   git ls-tree [--name-only] <rev> [<path>], git rev-parse <rev>
-    spec-reader   git log, git show, git grep, git ls-files, git rev-parse, wc -l <path>
-    --by-agent-type   choose the profile from the hook input's agent_type instead: spec-reader and
-                      independent-reviewer (bare or plugin-namespaced) get theirs, and any other
-                      session, including the main one, is not restricted. This is the form a plugin
+    --by-agent-type   choose the profile from the hook input's agent_type instead: independent-reviewer
+                      (bare or plugin-namespaced) gets its own, and any other session, including the
+                      main one, is not restricted. This is the form a plugin
                       uses, from its hooks/hooks.json.
 
     filters       head and tail (-n N or -N), wc (-l, -w, -c), nl, grep (short options only, one
@@ -96,20 +96,9 @@ def reviewer_source(w):
             rest[2] == '--' and all(not p.startswith('-') for p in rest[3:])
     if w[:2] == ['git', 'ls-tree']:
         args = [a for a in w[2:] if a != '--name-only']
-        return 1 <= len(args) <= 2 and is_revision(args[0])
+        return 1 <= len(args) <= 2 and is_revision(args[0]) and not any(a.startswith('-') for a in args[1:])
     if w[:2] == ['git', 'rev-parse']:
         return len(w) == 3 and is_revision(w[2])
-    return False
-
-
-def spec_reader_source(w):
-    if w[:2] in (['git', 'log'], ['git', 'show'], ['git', 'grep'], ['git', 'ls-files'], ['git', 'rev-parse']):
-        # No option that writes or runs something: --output sends git's output to a file, and grep's
-        # -O / --open-files-in-pager starts a program of the caller's choosing.
-        risky = ('--output', '--ext-diff', '--open-files-in-pager', '-O')
-        return not any(a.startswith(risky) for a in w[2:])
-    if w[:2] == ['wc', '-l']:
-        return len(w) == 3 and not w[2].startswith('-')
     return False
 
 
@@ -131,8 +120,8 @@ def is_filter(w):
     return False
 
 
-PROFILES = {'reviewer': reviewer_source, 'spec-reader': spec_reader_source}
-AGENT_PROFILES = {'independent-reviewer': 'reviewer', 'spec-reader': 'spec-reader'}
+PROFILES = {'reviewer': reviewer_source}
+AGENT_PROFILES = {'independent-reviewer': 'reviewer'}
 
 
 def profile_for_agent(agent_type):
