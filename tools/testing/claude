@@ -5,6 +5,11 @@ set -euo pipefail
 echo "delivered" > delivered.txt
 git -c user.name=Claude -c user.email=claude@example.invalid add delivered.txt
 git -c user.name=Claude -c user.email=claude@example.invalid commit --quiet -m "Deliver it"
+# The last step of /deliver: archive the change.
+change="$(git branch --show-current)"; change="${change#deliver/}"
+mkdir -p openspec/changes/archive
+git mv "openspec/changes/${change}" "openspec/changes/archive/2026-11-13-${change}"
+git -c user.name=Claude -c user.email=claude@example.invalid commit --quiet -m "Archive ${change}"
 mkdir -p .delivery
 printf 'Merge %s: it is delivered\n\n## In plain terms\n' "$(git branch --show-current)" > .delivery/pull-request.md
 echo '{"num_turns": 1, "total_cost_usd": 0, "is_error": false, "result": "Delivered."}'

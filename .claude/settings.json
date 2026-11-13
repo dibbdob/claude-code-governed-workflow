@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(./build.sh)",
-      "Bash(node tools/criteria.mjs *)",
+      "Bash(openspec *)",
+      "Bash(node tools/specs.mjs *)",
       "Bash(git status)",
       "Bash(git diff *)",
       "Bash(git log *)"

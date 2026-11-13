@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 runs/
 .DS_Store
 .build.lock/

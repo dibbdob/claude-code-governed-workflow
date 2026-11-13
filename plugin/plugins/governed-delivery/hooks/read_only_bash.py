@@ -21,7 +21,7 @@ pipe.
     reviewer      git show <rev>:<path>  (a bare commit would print its message, which the review must
                                           not read)
                   git diff <a>...<b> | <a> <b>, git grep -n <pattern> <rev> -- <path>...,
-                  git ls-tree [--name-only] <rev> [<path>], git rev-parse <rev>
+                  git ls-tree [-r] [--name-only] <rev> [<path>], git rev-parse <rev>
     --by-agent-type   choose the profile from the hook input's agent_type instead: independent-reviewer
                       (bare or plugin-namespaced) gets its own, and any other session, including the
                       main one, is not restricted. This is the form a plugin
@@ -95,7 +95,7 @@ def reviewer_source(w):
         return len(rest) >= 4 and not rest[0].startswith('-') and is_revision(rest[1]) and \
             rest[2] == '--' and all(not p.startswith('-') for p in rest[3:])
     if w[:2] == ['git', 'ls-tree']:
-        args = [a for a in w[2:] if a != '--name-only']
+        args = [a for a in w[2:] if a not in ('--name-only', '-r')]
         return 1 <= len(args) <= 2 and is_revision(args[0]) and not any(a.startswith('-') for a in args[1:])
     if w[:2] == ['git', 'rev-parse']:
         return len(w) == 3 and is_revision(w[2])

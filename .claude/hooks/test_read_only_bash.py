@@ -23,8 +23,9 @@ class Reviewer(unittest.TestCase):
         "git show abc123:src/sla.js | sed -n '1,120p'",
         'git diff main...abc123',
         'git diff main abc123 | head -n 40',
-        "git grep -n '\\[0002-AC-' abc123 -- test",
-        'git ls-tree --name-only abc123 docs/specs/',
+        "git grep -n '\\[response-deadline\\] ' abc123 -- test",
+        'git ls-tree --name-only abc123 openspec/changes/public-holidays/',
+        'git ls-tree -r --name-only abc123 openspec/changes/public-holidays',
         'git rev-parse HEAD',
         'git show abc123:src/sla.js | grep -n -C3 nextOpening',
     ]

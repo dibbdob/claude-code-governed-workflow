@@ -1,0 +1,33 @@
+# Show on each issue when its change has been refined (ADR 0008). A change reaches main only through a
+# reviewed pull request, so when a change's proposal lands on main, its issue is labelled 'ready': the status
+# people see on GitHub follows the review, rather than being set by hand.
+name: refined
+
+on:
+  push:
+    branches: [main]
+    paths: ['openspec/changes/*/proposal.md']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Label the issues of newly approved changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          gh label create ready --description "Refined: its change is approved on main" --color 0E8A16 2>/dev/null || true
+          git diff --name-only --diff-filter=A "$BEFORE" "$AFTER" -- 'openspec/changes/*/proposal.md' |
+            sed -n 's#^openspec/changes/\([0-9][0-9]*\)-[^/]*/proposal\.md$#\1#p' |
+            while read -r issue; do
+              gh issue edit "$issue" --add-label ready
+            done
