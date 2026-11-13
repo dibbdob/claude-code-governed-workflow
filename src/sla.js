@@ -73,9 +73,13 @@ function holidaySet(holidays) {
     throw new RangeError('Holidays must be a list of YYYY-MM-DD dates');
   }
   for (const holiday of holidays) {
-    const real = typeof holiday === 'string' && utcDate(new Date(`${holiday}T00:00:00Z`)) === holiday;
+    const real =
+      typeof holiday === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(holiday) &&
+      utcDate(new Date(`${holiday}T00:00:00Z`)) === holiday;
     if (!real) {
-      throw new RangeError(`Not a YYYY-MM-DD holiday: ${holiday}`);
+      const shown = typeof holiday === 'string' ? holiday : `a ${typeof holiday}`;
+      throw new RangeError(`Not a YYYY-MM-DD holiday: ${shown}`);
     }
   }
   return new Set(holidays);
@@ -84,8 +88,8 @@ function holidaySet(holidays) {
 // The UTC calendar date of a moment, as `YYYY-MM-DD`. Unlike toISOString, it does not throw on an
 // invalid date.
 function utcDate(date) {
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+  const pad = (n, width = 2) => String(n).padStart(width, '0');
+  return `${pad(date.getUTCFullYear(), 4)}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
 function isWeekday(date) {
