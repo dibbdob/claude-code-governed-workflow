@@ -26,6 +26,12 @@ verbatim. It reads on a cheaper model and outside your context, so a long specif
 not fill the session that has to build. Its report is a reading aid; the specification stays the contract,
 so open it yourself where you build against it.
 
+**In the same message, spawn an `Explore` agent to survey the code the specification touches**: the
+functions and modules it names or implies, the tests that exercise them, and anything the specification
+assumes that the code contradicts. It also only reads, and it needs nothing from the spec-reader, so the
+two run side by side rather than one after the other. Their two reports together are what you plan from:
+one says what must be true, the other says what is true now.
+
 State back, in five lines or fewer: what you are building, the criteria you will satisfy, and anything
 stale. Then branch off current `main` as `deliver/<NNNN>-<slug>`.
 

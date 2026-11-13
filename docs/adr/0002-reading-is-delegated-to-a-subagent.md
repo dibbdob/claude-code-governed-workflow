@@ -22,6 +22,14 @@ reading so it knows when it has reached the end.
 The report quotes criteria rather than summarising them, because the builder writes a test against each
 one and a paraphrase drops clauses.
 
+## Amendment: the survey runs beside it
+
+Grounding from the specification alone left the builder to discover the code's current shape while
+building, which is when a contradiction between the two is most expensive to find. `/deliver` now spawns
+the built-in `Explore` agent in the same message as the spec-reader, to survey the code the specification
+touches. Neither needs the other's result, so they run in parallel, and the builder plans from both: what
+must be true, and what is true now.
+
 ## Consequences
 
 - The builder's context starts with a short, complete report instead of raw documents.
