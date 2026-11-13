@@ -44,22 +44,39 @@ test('[response-deadline] A deadline that runs into a public holiday', () => {
 test('[response-deadline] A ticket opened on a public holiday', () => {
   // Opened on a holiday Tuesday, at any hour: counting starts at 09:00 on Wednesday
   const holidays = ['2026-11-10'];
-  for (const openedAt of ['2026-11-10T00:00:00Z', '2026-11-10T11:00:00Z', '2026-11-10T23:59:00Z']) {
+  for (const openedAt of ['2026-11-10T00:00:00Z', '2026-11-10T08:00:00Z', '2026-11-10T11:00:00Z']) {
     const due = responseDueAt(new Date(openedAt), 'urgent', holidays);
     assert.equal(due.toISOString(), '2026-11-11T13:00:00.000Z', openedAt);
   }
 });
 
 test('[response-deadline] No list of holidays', () => {
-  // The cases the earlier tests cover, with no list and with an empty one, give the same deadlines as before
+  // The cases the earlier tests cover, and deadlines that run over several days, give the same deadlines as
+  // before, with no list and with an empty one
   const cases = [
     ['2026-11-11T10:00:00Z', 'urgent', '2026-11-11T14:00:00.000Z'],
     ['2026-11-13T16:00:00Z', 'urgent', '2026-11-16T12:00:00.000Z'],
     ['2026-11-14T11:00:00Z', 'high', '2026-11-16T17:00:00.000Z'],
+    ['2026-11-09T18:00:00Z', 'high', '2026-11-10T17:00:00.000Z'],
+    ['2026-11-09T15:00:00Z', 'normal', '2026-11-12T15:00:00.000Z'],
+    ['2026-11-11T10:00:00Z', 'low', '2026-11-18T10:00:00.000Z'],
   ];
   for (const [openedAt, priority, expected] of cases) {
     assert.equal(responseDueAt(new Date(openedAt), priority).toISOString(), expected, openedAt);
     assert.equal(responseDueAt(new Date(openedAt), priority, []).toISOString(), expected, openedAt);
+  }
+
+  // An opening time that is not a date gave an invalid date before, and still does
+  for (const holidays of [undefined, []]) {
+    const due = responseDueAt(new Date('not a date'), 'urgent', holidays);
+    assert.ok(Number.isNaN(due.getTime()));
+  }
+});
+
+test('a holiday not written as YYYY-MM-DD is refused, not ignored', () => {
+  const openedAt = new Date('2026-11-09T10:00:00Z');
+  for (const holidays of [[new Date('2026-11-10')], ['2026-11-10T00:00:00Z'], ['10/11/2026'], ['2026-11-10 '], '2026-11-10']) {
+    assert.throws(() => responseDueAt(openedAt, 'high', holidays), RangeError, String(holidays));
   }
 });
 
