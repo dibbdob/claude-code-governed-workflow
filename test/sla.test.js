@@ -48,6 +48,9 @@ test('[response-deadline] A ticket opened on a public holiday', () => {
     const due = responseDueAt(new Date(openedAt), 'urgent', holidays);
     assert.equal(due.toISOString(), '2026-11-11T13:00:00.000Z', openedAt);
   }
+  // Opened after closing on a holiday Friday: the weekend follows, so counting starts at 09:00 on Monday
+  const due = responseDueAt(new Date('2026-12-25T18:00:00Z'), 'urgent', ['2026-12-25']);
+  assert.equal(due.toISOString(), '2026-12-28T13:00:00.000Z');
 });
 
 test('[response-deadline] No list of holidays', () => {
@@ -76,9 +79,20 @@ test('[response-deadline] No list of holidays', () => {
 
 test('a holiday not written as YYYY-MM-DD is refused, not ignored', () => {
   const openedAt = new Date('2026-11-09T10:00:00Z');
-  for (const holidays of [[new Date('2026-11-10')], ['2026-11-10T00:00:00Z'], ['10/11/2026'], ['2026-11-10 '], '2026-11-10', ['2026-11-31'], ['2026-02-30'], {}]) {
+  for (const holidays of [[new Date('2026-11-10')], ['2026-11-10T00:00:00Z'], ['10/11/2026'], ['2026-11-10 '], '2026-11-10', ['2026-11-31'], ['2026-02-30'], {}, ['NaN-NaN-NaN'], [Symbol('x')]]) {
     assert.throws(() => responseDueAt(openedAt, 'high', holidays), RangeError, String(holidays));
   }
+});
+
+test('a real holiday before the year 1000 is accepted', () => {
+  // Christmas 0999 was a Thursday; opened 16:00 on the 24th, urgent, it is due 12:00 on Monday the 28th
+  const due = responseDueAt(new Date('0999-12-24T16:00:00Z'), 'urgent', ['0999-12-25']);
+  assert.equal(due.toISOString(), '0999-12-28T12:00:00.000Z');
+});
+
+test('an opening time that is not a date, with holidays, still gives an invalid deadline', () => {
+  const due = responseDueAt(new Date('not a date'), 'urgent', ['2026-11-10']);
+  assert.ok(Number.isNaN(due.getTime()));
 });
 
 test('a ticket opened at 16:00 UTC the day before a holiday is due after the holiday', () => {
