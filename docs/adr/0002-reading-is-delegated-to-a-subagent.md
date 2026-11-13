@@ -36,5 +36,4 @@ must be true, and what is true now.
 - The read costs less and runs on a model chosen for it.
 - The report is a reading aid, not the contract. The builder still opens the specification where it
   builds against it, so an error in the report is caught rather than built.
-- The subagent's tools are restricted by its frontmatter, but its Bash is not yet narrowed to read-only
-  commands.
+- The subagent's tools are restricted by its frontmatter, and its Bash by a read-only hook (ADR 0004).
