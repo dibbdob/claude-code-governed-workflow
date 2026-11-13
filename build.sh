@@ -28,6 +28,9 @@ node tools/criteria.mjs check
 echo "== tests"
 node --test
 
+echo "== the plugin is generated from .claude/"
+python3 tools/package_plugin.py --check
+
 echo "== the read-only hook"
 python3 .claude/hooks/test_read_only_bash.py 2>&1 | tail -n 1
 

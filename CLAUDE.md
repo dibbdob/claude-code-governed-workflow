@@ -40,3 +40,9 @@ commands by a hook in their frontmatter, whose tests run in `build.sh`
 `.claude/settings.json` allows the build and read-only git, and denies `git push` and `git reset --hard`.
 
 `./scripts/agent.sh <number>` runs the same `/deliver` headless, then runs the build itself.
+
+## The plugin
+
+`plugin/` is a marketplace holding one plugin, `governed-delivery`, generated from `.claude/` by
+`python3 tools/package_plugin.py`. Edit `.claude/`, regenerate, and commit both; `build.sh` fails when they
+differ ([ADR 0005](docs/adr/0005-the-plugin-is-generated-from-the-project.md)).

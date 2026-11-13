@@ -1,0 +1,8 @@
+{
+  "name": "governed-delivery",
+  "version": "0.1.0",
+  "description": "Deliver a specification end to end: grounded by a read-only spec reader, reviewed by a reviewer who is not told why, with read-only subagents held by a hook.",
+  "author": { "name": "Jan Wilson" },
+  "license": "MIT",
+  "keywords": ["workflow", "subagents", "hooks", "review", "specifications"]
+}
