@@ -13,6 +13,7 @@
 
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const HEADING = '## Acceptance criteria';
 const MARKER = /^<!-- criteria high-water: (\d+) -->$/;
@@ -94,6 +95,25 @@ export function findProblems(specs, testSource) {
   return problems;
 }
 
+/**
+ * The identifiers of criteria that existed before and whose words have since changed or gone. A criterion
+ * that had no identifier before is new to numbering, not changed.
+ */
+export function changedCriteria(before, after) {
+  const now = new Map(parseCriteria(after).criteria.filter((c) => c.id).map((c) => [c.id, c.text]));
+  return parseCriteria(before)
+    .criteria.filter((c) => c.id && now.get(c.id) !== c.text)
+    .map((c) => c.id);
+}
+
+function onMain(path) {
+  try {
+    return execFileSync('git', ['show', `main:${path}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
+}
+
 function main([command, file]) {
   if (command === 'number' && file) {
     const specNumber = basename(file).slice(0, 4);
@@ -109,6 +129,18 @@ function main([command, file]) {
       .map((f) => readFileSync(join('test', f), 'utf8'))
       .join('\n');
     const problems = findProblems(specs, tests);
+
+    // A criterion is the contract the tests were written against, so implementing a specification never
+    // rewords one. Amending a specification is its own change, made deliberately with the override.
+    if (process.env.ALLOW_CRITERIA_CHANGE !== '1') {
+      for (const { name, text } of specs) {
+        const before = onMain(`docs/specs/${name}`);
+        for (const id of before ? changedCriteria(before, text) : []) {
+          problems.push(`${name}: ${id} differs from main. Criteria are not edited while implementing; ` +
+            'amend the specification on its own branch with ALLOW_CRITERIA_CHANGE=1.');
+        }
+      }
+    }
     problems.forEach((p) => console.error(p));
     return problems.length === 0 ? 0 : 1;
   }
