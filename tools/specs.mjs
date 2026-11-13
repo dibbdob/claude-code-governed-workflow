@@ -1,6 +1,7 @@
-// The check OpenSpec does not make, which build.sh runs beside `openspec validate` (ADR 0008): every
-// scenario in openspec/specs has a test that names it, as `[<capability>] <scenario>`, and no test names a
-// scenario that neither the specs nor an open change has.
+// The checks OpenSpec does not make, which build.sh runs beside `openspec validate`: every scenario in
+// openspec/specs has a test that names it, as `[<capability>] <scenario>`, and no test names a scenario that
+// neither the specs nor an open change has (ADR 0008); and every scenario in an open change has worked
+// examples, a table under it a person can check without reading code (ADR 0009).
 //
 // Rewording a change during delivery is allowed, as OpenSpec intends, while its intent holds: archiving
 // lists what changed since approval for a person to confirm (openspec/config.yaml).
@@ -12,6 +13,47 @@ import { join, relative, sep } from 'node:path';
 /** The scenario names in a spec, in order. */
 export function scenarios(text) {
   return [...text.matchAll(/^#### Scenario:\s*(.+?)\s*$/gm)].map((m) => m[1]);
+}
+
+/** Each scenario in a spec with the text under it, up to the next heading. */
+export function scenarioBlocks(text) {
+  return [...text.matchAll(/^#### Scenario:\s*(.+?)\s*$([\s\S]*?)(?=^#{1,4} |(?![\s\S]))/gm)]
+    .map((m) => ({ name: m[1], body: m[2] }));
+}
+
+/** The rows of the first table in a scenario's text, without its header and divider. */
+export function exampleRows(body) {
+  const table = body.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('|'));
+  return table.slice(2).map((l) => l.replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+}
+
+/** The column names of the first table in a scenario's text. */
+export function exampleColumns(body) {
+  const header = body.split('\n').map((l) => l.trim()).find((l) => l.startsWith('|'));
+  return header ? header.replace(/^\||\|$/g, '').split('|').map((c) => c.trim()) : [];
+}
+
+/** The `<placeholders>` a scenario's steps use, in order, each once. */
+export function placeholders(body) {
+  const steps = body.split('\n').filter((l) => /^- \*\*(GIVEN|WHEN|AND|THEN|BUT)\*\*/.test(l)).join('\n');
+  return [...new Set([...steps.matchAll(/<([^<>]+)>/g)].map((m) => m[1].trim()))];
+}
+
+/**
+ * Problems with the worked examples of open changes' scenarios (ADR 0009): a scenario with none, a step's
+ * <placeholder> that is not a column, a column no step uses. Living specs written before the rule are exempt.
+ */
+export function examplesProblems(changes) {
+  return changes.flatMap((c) => scenarioBlocks(c.text).flatMap((b) => {
+    const at = `${c.change}: the scenario "${b.name}" (${c.capability})`;
+    if (exampleRows(b.body).length === 0) return [`${at} has no worked examples`];
+    const used = placeholders(b.body);
+    const columns = exampleColumns(b.body);
+    return [
+      ...used.filter((p) => !columns.includes(p)).map((p) => `${at} uses <${p}>, which is not a column of its examples`),
+      ...columns.filter((col) => !used.includes(col)).map((col) => `${at} has the column "${col}", which no step uses`),
+    ];
+  }));
 }
 
 /** Every `[capability] Scenario name` a test title cites. */
@@ -48,10 +90,10 @@ function check() {
   const specs = specFiles.map((p) => ({ capability: posix(relative('openspec/specs', p)).replace(/\/spec\.md$/, ''), text: readFileSync(p, 'utf8') }));
   const changeFiles = files('openspec/changes').map(posix).filter((p) => /\/specs\/.+\.md$/.test(p));
   const openChanges = changeFiles.filter((p) => !p.startsWith('openspec/changes/archive/'))
-    .map((p) => ({ capability: p.replace(/^openspec\/changes\/[^/]+\/specs\//, '').replace(/\/spec\.md$/, ''), text: readFileSync(p, 'utf8') }));
+    .map((p) => ({ change: p.split('/')[2], capability: p.replace(/^openspec\/changes\/[^/]+\/specs\//, '').replace(/\/spec\.md$/, ''), text: readFileSync(p, 'utf8') }));
   const tests = files('test').filter((p) => p.endsWith('.test.js')).map((p) => readFileSync(p, 'utf8')).join('\n');
 
-  const problems = coverageProblems(specs, openChanges, tests);
+  const problems = [...coverageProblems(specs, openChanges, tests), ...examplesProblems(openChanges)];
   problems.forEach((p) => console.error(p));
   return problems.length === 0 ? 0 : 1;
 }

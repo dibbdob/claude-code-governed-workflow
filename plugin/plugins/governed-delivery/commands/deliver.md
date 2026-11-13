@@ -11,7 +11,7 @@ Use this command to deliver a change in this repository. The building itself is 
 (step 2); around it, this command adds what the project insists on: the gates below, a spec-reader with no
 shell, an independent review, OpenSpec's verify, archiving with revisions flagged, and the build as the
 judge
-([ADR 0008](../../docs/adr/0008-specs-are-openspec-changes.md)).
+([ADR 0008](https://github.com/dibbdob/claude-code-governed-workflow/blob/main/docs/adr/0008-specs-are-openspec-changes.md)).
 
 The team's main is `origin/main` when there is a remote, and `main` when there is not.
 
@@ -22,7 +22,7 @@ The team's main is `origin/main` when there is a remote, and `main` when there i
 - **In its own folder.** `git branch --show-current` must be `deliver/$1`. If it is anything else, stop and
   say to run `scripts/start-delivery.sh $1` and open the folder it prints. Every delivery has a folder of its
   own, so several can run at once, by different people, without sharing half-finished files
-  ([ADR 0007](../../docs/adr/0007-a-team-delivers-the-way-git-works.md)).
+  ([ADR 0007](https://github.com/dibbdob/claude-code-governed-workflow/blob/main/docs/adr/0007-a-team-delivers-the-way-git-works.md)).
 - **A defect is reproduced before it is fixed.** If the proposal says the change fixes a defect, the first
   commit is a test that fails on the team's main for the reason the proposal describes, with the failing
   `./build.sh` output in the commit message. No fix is written until that commit exists.
@@ -69,11 +69,16 @@ git grep -n '\[[a-z0-9/-]*\] ' HEAD -- test
 
 Spawn the `independent-reviewer` agent ([`.claude/agents/independent-reviewer.md`](../agents/independent-reviewer.md))
 with the change name, the commit and the citation lines, and nothing else: not your plan, not your reasons,
-not a summary of what you built ([ADR 0003](../../docs/adr/0003-the-reviewer-is-not-told-why.md)). Its value
+not a summary of what you built ([ADR 0003](https://github.com/dibbdob/claude-code-governed-workflow/blob/main/docs/adr/0003-the-reviewer-is-not-told-why.md)). Its value
 is that it has not heard your account.
 
 For each finding, fix it (with a test that fails before the fix), or record why it stands. Either way it
 goes in the pull request description. If you fixed anything, review again on the new commit.
+
+Review at most twice. A thorough reviewer always finds something, and each fix invites another round: the
+first delivery took four, the later ones about inputs nobody sends. After the second review, fix only a
+finding that breaks a requirement or scenario of the change, and do not review again; list every other
+new finding under "Review findings" in the pull request description, marked as left for a person to judge.
 
 ## 4. Verify with OpenSpec
 

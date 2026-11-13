@@ -26,8 +26,6 @@ jobs:
           AFTER: ${{ github.sha }}
         run: |
           gh label create ready --description "Refined: its change is approved on main" --color 0E8A16 2>/dev/null || true
-          git diff --name-only --diff-filter=A "$BEFORE" "$AFTER" -- 'openspec/changes/*/proposal.md' |
-            sed -n 's#^openspec/changes/\([0-9][0-9]*\)-[^/]*/proposal\.md$#\1#p' |
-            while read -r issue; do
-              gh issue edit "$issue" --add-label ready
-            done
+          scripts/approved-issues.sh "$BEFORE" "$AFTER" | while read -r issue; do
+            gh issue edit "$issue" --add-label ready
+          done

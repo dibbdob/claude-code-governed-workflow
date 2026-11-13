@@ -49,6 +49,9 @@ node --test
 echo "== the plugin is generated from .claude/"
 python3 tools/package_plugin.py --check
 
+echo "== every relative link in the Markdown leads somewhere"
+node tools/links.mjs
+
 echo "== the read-only hook"
 python3 .claude/hooks/test_read_only_bash.py 2>&1 | tail -n 1
 

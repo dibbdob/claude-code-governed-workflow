@@ -2,9 +2,18 @@
 # A pretend headless `claude -p "/deliver <n>"` for scripts/agent.sh's tests: it does what a finished
 # delivery leaves behind (a commit, and the pull request description) and prints a run's JSON. No model.
 set -euo pipefail
+# FAKE_CLAUDE_FAIL=1 plays a run that fails before doing anything, as an expired login does.
+if [[ -n "${FAKE_CLAUDE_FAIL:-}" ]]; then
+  echo '{"num_turns": 1, "total_cost_usd": 0, "is_error": true, "result": "Failed to authenticate"}'
+  exit 1
+fi
 echo "delivered" > delivered.txt
 git -c user.name=Claude -c user.email=claude@example.invalid add delivered.txt
 git -c user.name=Claude -c user.email=claude@example.invalid commit --quiet -m "Deliver it"
+if [[ -n "${FAKE_CLAUDE_FAIL_AFTER_COMMIT:-}" ]]; then
+  echo '{"num_turns": 60, "total_cost_usd": 0, "is_error": true, "result": "Reached the turn limit"}'
+  exit 1
+fi
 # The last step of /deliver: archive the change.
 change="$(git branch --show-current)"; change="${change#deliver/}"
 mkdir -p openspec/changes/archive

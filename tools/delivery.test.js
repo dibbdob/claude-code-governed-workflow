@@ -255,6 +255,29 @@ test('an unattended run starts its own folder, delivers, and opens a draft pull 
   assert.equal(git(ana.dir, 'branch', '--show-current').trim(), 'main', "the person's own checkout is left alone");
 });
 
+test('a run that fails before delivering anything leaves nothing behind, so it can simply be run again', () => {
+  // The first real run failed on an expired login, and its empty folder and branch stopped the second.
+  const t = team();
+  const ana = t.person('ana');
+  const failed = agent(ana, t, { FAKE_CLAUDE_FAIL: '1' });
+  assert.equal(failed.status, 1);
+  assert.equal(existsSync(`${ana.dir}-deliveries/42-holidays`), false, `the empty folder is removed: ${failed.stderr}`);
+  assert.equal(git(ana.dir, 'branch', '--list', 'deliver/42-holidays').trim(), '', 'the empty branch is removed');
+
+  const again = agent(ana, t);
+  assert.equal(again.status, 0, again.stderr);
+  assert.equal(t.github().prs.length, 1);
+});
+
+test('a run that fails after committing keeps its folder and branch', () => {
+  const t = team();
+  const ana = t.person('ana');
+  const r = agent(ana, t, { FAKE_CLAUDE_FAIL_AFTER_COMMIT: '1' });
+  assert.equal(r.status, 1);
+  assert.equal(existsSync(`${ana.dir}-deliveries/42-holidays`), true);
+  assert.match(git(ana.dir, 'log', '--oneline', 'deliver/42-holidays'), /Deliver it/);
+});
+
 test('a run in CI opens the pull request for the person assigned, and only for them', () => {
   const t = team({ issues: { 42: { assignees: ['ana'] }, 43: { assignees: [] } } });
   const bot = t.person('bot');

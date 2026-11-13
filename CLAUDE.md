@@ -24,9 +24,13 @@ A change is ready once its pull request is merged. OpenSpec's skills, in `.agent
 them.
 
 A test names the scenario it covers in its title, `[response-deadline] A ticket opened late on a Friday`, and
-`build.sh` fails when a scenario in `openspec/specs/` has no test naming it, and when an archived change has
-tasks left undone. A change may be revised while it is delivered, as OpenSpec intends, while its intent holds;
-archiving lists every revision for a person to confirm. `openspec/config.yaml` holds the rules for that and
+`build.sh` fails when a scenario in `openspec/specs/` has no test naming it, when a scenario in an open change
+is not a Gherkin outline whose placeholders match its table of worked examples
+([ADR 0009](docs/adr/0009-a-scenario-is-an-outline-with-worked-examples.md)), and when an archived change has
+tasks left undone.
+
+A change may be revised while it is delivered, as OpenSpec intends, while its intent holds; archiving lists
+every revision for a person to confirm. `openspec/config.yaml` holds the rules for that and
 for risk: every proposal states a risk level, and a medium or high one gets a design with mitigations.
 
 `build.sh` runs one at a time per checkout (`.build.lock`).

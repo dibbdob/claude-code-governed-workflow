@@ -40,5 +40,5 @@ Say what you could not find rather than guessing at it.
 ## What you can use
 
 Read, Grep and Glob, and nothing else: no shell, so nothing you do can change the repository
-([ADR 0006](../../docs/adr/0006-an-agent-that-can-do-without-a-shell-gets-none.md)). Git history comes from
+([ADR 0006](https://github.com/dibbdob/claude-code-governed-workflow/blob/main/docs/adr/0006-an-agent-that-can-do-without-a-shell-gets-none.md)). Git history comes from
 the caller, not from you.

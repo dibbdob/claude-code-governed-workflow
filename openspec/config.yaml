@@ -9,6 +9,15 @@ rules:
       End the proposal with a "## Risk" section: a level (low, medium or high) and one or two sentences on
       what could go wrong for customers or for the desk if this change is wrong. Rate it medium or high when
       it changes a deadline, a priority, stored data, or what another capability relies on.
+  specs:
+    - >-
+      Write every scenario as a Gherkin scenario outline, since it is the acceptance criterion a person on
+      the desk checks: steps as GIVEN, WHEN, THEN and AND, in the desk's words, with each value that varies
+      written as a placeholder in backticks, `<opened>`. Under the steps, a table of worked examples whose
+      columns are exactly those placeholders, one row per case: real dates and times, with the day of the
+      week and the time zone, and the answer expected. Include the boundary that would be easiest to get
+      wrong. The build fails when a scenario in an open change has no examples, or a placeholder and the
+      columns do not match.
   design:
     - >-
       Write a design for every change whose proposal rates its risk medium or high. Fill in "Risks /
