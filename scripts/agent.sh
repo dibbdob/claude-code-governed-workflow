@@ -40,3 +40,7 @@ node -e '
   console.log(run.result);
   process.exit(run.is_error ? 1 : 0);
 ' "runs/${slug}.json"
+
+# The run's own account of itself is a claim. The build on what it committed is the evidence.
+[[ -z "$(git status --porcelain)" ]] || { echo "The run left uncommitted changes on $branch" >&2; exit 1; }
+./build.sh
