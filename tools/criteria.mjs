@@ -106,9 +106,35 @@ export function changedCriteria(before, after) {
     .map((c) => c.id);
 }
 
-function onMain(path) {
+/** Specification numbers used by more than one file. Each person takes "one more than the highest", so two
+ * people on the same day can take the same number; whichever merges second renumbers. */
+export function duplicateNumbers(names) {
+  const byNumber = new Map();
+  for (const name of [...names].sort()) {
+    byNumber.set(name.slice(0, 4), [...(byNumber.get(name.slice(0, 4)) ?? []), name]);
+  }
+  return [...byNumber].filter(([, files]) => files.length > 1)
+    .map(([n, files]) => `${n} is used by ${files.join(' and ')}; renumber the one merged second`);
+}
+
+const gitOk = (args) => {
   try {
-    return execFileSync('git', ['show', `main:${path}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    execFileSync('git', args, { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** What a criterion is compared with: the team's main when this checkout has one, so a stale local main
+ * cannot hide a reworded criterion, and the local main in a repository with no remote. */
+export function baseRef(exists = (ref) => gitOk(['rev-parse', '--verify', '--quiet', ref])) {
+  return exists('origin/main') ? 'origin/main' : 'main';
+}
+
+function onBase(base, path) {
+  try {
+    return execFileSync('git', ['show', `${base}:${path}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   } catch {
     return null;
   }
@@ -128,15 +154,16 @@ function main([command, file]) {
       .filter((f) => f.endsWith('.test.js'))
       .map((f) => readFileSync(join('test', f), 'utf8'))
       .join('\n');
-    const problems = findProblems(specs, tests);
+    const problems = [...findProblems(specs, tests), ...duplicateNumbers(specs.map((s) => s.name))];
 
     // A criterion is the contract the tests were written against, so implementing a specification never
     // rewords one. Amending a specification is its own change, made deliberately with the override.
     if (process.env.ALLOW_CRITERIA_CHANGE !== '1') {
+      const base = baseRef();
       for (const { name, text } of specs) {
-        const before = onMain(`docs/specs/${name}`);
+        const before = onBase(base, `docs/specs/${name}`);
         for (const id of before ? changedCriteria(before, text) : []) {
-          problems.push(`${name}: ${id} differs from main. Criteria are not edited while implementing; ` +
+          problems.push(`${name}: ${id} differs from ${base}. Criteria are not edited while implementing; ` +
             'amend the specification on its own branch with ALLOW_CRITERIA_CHANGE=1.');
         }
       }

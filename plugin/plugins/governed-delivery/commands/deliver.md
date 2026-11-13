@@ -1,5 +1,5 @@
 ---
-description: Implement a ready specification end to end, from its branch to a merge message
+description: Implement a ready specification end to end, in its own folder, up to a pull request description
 argument-hint: <spec-number>
 ---
 
@@ -11,19 +11,21 @@ to renegotiate it. If you believe it is wrong, say so in a sentence or two and k
 - **Only a ready specification.** If `docs/specs/$1-*.md` does not have the line `Status: ready`, stop
   and say what it says instead. A draft has open questions a person has not answered yet.
 
-- **One delivery at a time.** `git branch --list 'deliver/*' --no-merged main` lists any delivery not yet
-  merged. If it lists one, stop and ask me which to finish; do not start alongside it. Two deliveries in
-  one checkout share a working tree, and each one's build reports on the other's half-finished edits.
+- **In its own folder.** `git branch --show-current` must be `deliver/$1-<slug>`. If it is anything else,
+  stop and say to run `scripts/start-delivery.sh $1` and open the folder it prints. Every delivery has a
+  folder of its own, so several can run at once, by different people, without sharing half-finished files
+  ([ADR 0007](../../docs/adr/0007-a-team-delivers-the-way-git-works.md)).
 - **A defect is reproduced before it is fixed.** If the specification says `Type: defect`, the first
-  commit after numbering is a test that fails on `main` for the reason the specification describes, with
+  commit after numbering is a test that fails on the team's main for the reason the specification describes, with
   the failing `./build.sh` output in the commit message. No fix is written until that commit exists. A
   fix for a defect nobody reproduced is a guess with a passing build.
-- **The criteria are not reworded.** `build.sh` fails if a numbered criterion differs from `main`. If one
+- **The criteria are not reworded.** `build.sh` fails if a numbered criterion differs from the team's main. If one
   is wrong, stop and say so; amending a specification is its own change.
 
 ## 1. Ground yourself before writing anything
 
-Run `git log --oneline -15 main` and `git log --oneline -- docs/specs/$1-*.md`, then spawn the
+The team's main is `origin/main` when there is a remote, and `main` when there is not. Run
+`git log --oneline -15 <the team's main>` and `git log --oneline -- docs/specs/$1-*.md`, then spawn the
 `spec-reader` agent with the number $1 and both outputs
 ([`.claude/agents/spec-reader.md`](../agents/spec-reader.md)). It has no shell, so the history is yours
 to give it. It reads the specification, the ADRs it cites and the code they name, and returns every
@@ -38,7 +40,7 @@ two run side by side rather than one after the other. Their two reports together
 one says what must be true, the other says what is true now.
 
 State back, in five lines or fewer: what you are building, the criteria you will satisfy, and anything
-stale. Then branch off current `main` as `deliver/<NNNN>-<slug>`.
+stale. You are already on the delivery's branch; do not make another.
 
 ## 2. Number the criteria
 
@@ -70,12 +72,13 @@ a summary of what you built ([ADR 0003](../../docs/adr/0003-the-reviewer-is-not-
 is that it has not heard your account.
 
 For each finding, fix it (with a test that fails before the fix), or record why it stands. Either way it
-goes in the merge message. If you fixed anything, review again on the new commit; a fix is new code
+goes in the pull request description. If you fixed anything, review again on the new commit; a fix is new code
 nobody has reviewed.
 
 ## 5. Finish
 
-Write the merge message, in this shape, and show it to me:
+Write the pull request description, in this shape, to `.delivery/pull-request.md` (git ignores that
+folder), and show it to me:
 
 ```
 Merge deliver/<NNNN>-<slug>: <what is now true, in plain words>
@@ -86,5 +89,7 @@ Merge deliver/<NNNN>-<slug>: <what is now true, in plain words>
 ## Review findings
 ```
 
-Do not merge. I merge after reading it. In a headless run, where nobody is there to answer, stop after
-the final commit and put the merge message in your last reply.
+Do not push, and do not open the pull request. `scripts/finish-delivery.sh` does that: it checks the
+specification's issue is assigned to the person delivering it, runs the build, pushes, and opens the pull
+request as a draft. In a session, tell me to run it. In a headless run, `scripts/agent.sh` runs it after you
+stop. Nobody merges until a person has reviewed the pull request.

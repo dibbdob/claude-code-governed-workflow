@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# A pretend headless `claude -p "/deliver <n>"` for scripts/agent.sh's tests: it does what a finished
+# delivery leaves behind (a commit, and the pull request description) and prints a run's JSON. No model.
+set -euo pipefail
+echo "delivered" > delivered.txt
+git -c user.name=Claude -c user.email=claude@example.invalid add delivered.txt
+git -c user.name=Claude -c user.email=claude@example.invalid commit --quiet -m "Deliver it"
+mkdir -p .delivery
+printf 'Merge %s: it is delivered\n\n## In plain terms\n' "$(git branch --show-current)" > .delivery/pull-request.md
+echo '{"num_turns": 1, "total_cost_usd": 0, "is_error": false, "result": "Delivered."}'

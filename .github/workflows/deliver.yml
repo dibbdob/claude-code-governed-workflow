@@ -1,0 +1,63 @@
+# Deliver a specification on GitHub's machines (ADR 0007). Put the label 'deliver' on a specification's
+# issue, and this runs scripts/agent.sh for the one person the issue is assigned to, ending in a draft pull
+# request. It spends API credit, so who may add labels is who may spend it.
+#
+# Needs, in the repository's settings:
+#   secret ANTHROPIC_API_KEY  for Claude Code, from an account with a spend limit.
+#   secret DELIVERY_TOKEN     a token for a bot account that can push and open pull requests. A pull request
+#                             opened with GitHub's own token starts no workflows, so it would arrive without
+#                             the build and could never merge.
+#   variable DELIVERY_BOT     that bot account's login, so the 'claimed' check knows its pull requests.
+name: deliver
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: deliver-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    if: github.event.label.name == 'deliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.DELIVERY_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --global @anthropic-ai/claude-code
+
+      - name: Find the specification, and the one person it is for
+        id: find
+        env:
+          GH_TOKEN: ${{ secrets.DELIVERY_TOKEN }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          spec="$(grep -lx "Issue: #${ISSUE}" docs/specs/*.md | head -n1 || true)"
+          [[ -n "$spec" ]] || { echo "No specification on main names issue #${ISSUE}." >&2; exit 1; }
+          who="$(gh issue view "$ISSUE" --json assignees --jq '.assignees[].login')"
+          [[ "$(grep -c . <<<"$who")" == 1 ]] ||
+            { echo "Issue #${ISSUE} needs exactly one person assigned before it can be delivered." >&2; exit 1; }
+          echo "number=$(basename "$spec" | cut -c1-4)" >> "$GITHUB_OUTPUT"
+          echo "for=$who" >> "$GITHUB_OUTPUT"
+
+      - name: Deliver
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ secrets.DELIVERY_TOKEN }}
+          DELIVERY_FOR: ${{ steps.find.outputs.for }}
+          NUMBER: ${{ steps.find.outputs.number }}
+        run: |
+          git config --global user.name "Ticketdesk delivery"
+          git config --global user.email "delivery@users.noreply.github.com"
+          ./scripts/agent.sh "$NUMBER"
