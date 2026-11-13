@@ -23,9 +23,11 @@ to renegotiate it. If you believe it is wrong, say so in a sentence or two and k
 
 ## 1. Ground yourself before writing anything
 
-Spawn the `spec-reader` agent with the number $1 ([`.claude/agents/spec-reader.md`](../agents/spec-reader.md)).
-It reads the specification, the ADRs it cites and recent `main`, and returns every acceptance criterion
-verbatim. It reads on a cheaper model and outside your context, so a long specification and its ADRs do
+Run `git log --oneline -15 main` and `git log --oneline -- docs/specs/$1-*.md`, then spawn the
+`spec-reader` agent with the number $1 and both outputs
+([`.claude/agents/spec-reader.md`](../agents/spec-reader.md)). It has no shell, so the history is yours
+to give it. It reads the specification, the ADRs it cites and the code they name, and returns every
+acceptance criterion verbatim. It reads on a cheaper model and outside your context, so a long specification and its ADRs do
 not fill the session that has to build. Its report is a reading aid; the specification stays the contract,
 so open it yourself where you build against it.
 

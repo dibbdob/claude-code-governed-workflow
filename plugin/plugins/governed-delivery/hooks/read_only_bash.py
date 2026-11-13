@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Hold a subagent's Bash to a short list of read-only commands (ADR 0004).
+"""Hold the independent reviewer's Bash to a short list of read-only commands (ADRs 0004 and 0006).
 
 A subagent's `tools` field can grant or withhold Bash, but cannot narrow it to particular commands. The
-agents in .claude/agents/ that must change nothing therefore run this as a PreToolUse hook on Bash,
-naming their profile:
+reviewer needs a shell, because it reads a pinned commit through git and must not have the Read tool
+(which would open .git/COMMIT_EDITMSG). So it runs this as a PreToolUse hook on Bash, naming its profile.
+The spec-reader has no shell at all, which needs no hook.
 
     python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/read_only_bash.py" reviewer || exit 2
 
@@ -21,10 +22,9 @@ pipe.
                                           not read)
                   git diff <a>...<b> | <a> <b>, git grep -n <pattern> <rev> -- <path>...,
                   git ls-tree [--name-only] <rev> [<path>], git rev-parse <rev>
-    spec-reader   git log, git show, git grep, git ls-files, git rev-parse, wc -l <path>
-    --by-agent-type   choose the profile from the hook input's agent_type instead: spec-reader and
-                      independent-reviewer (bare or plugin-namespaced) get theirs, and any other
-                      session, including the main one, is not restricted. This is the form a plugin
+    --by-agent-type   choose the profile from the hook input's agent_type instead: independent-reviewer
+                      (bare or plugin-namespaced) gets its own, and any other session, including the
+                      main one, is not restricted. This is the form a plugin
                       uses, from its hooks/hooks.json.
 
     filters       head and tail (-n N or -N), wc (-l, -w, -c), nl, grep (short options only, one
@@ -102,51 +102,6 @@ def reviewer_source(w):
     return False
 
 
-# Options that write or run something: --output sends git's output to a file, --ext-diff runs a configured
-# program, and grep's -O / --open-files-in-pager starts a program of the caller's choosing.
-RISKY_LONG = ('--output', '--ext-diff', '--open-files-in-pager')
-# git grep's short options that take the rest of their bundle as a value (-eTODO is -e TODO), checked
-# against git 2.46. Scanning stops at one of these; every other letter is read as an option of its own.
-GREP_VALUE_LETTERS = set('efABCm')
-
-
-def risky_option(subcommand, arg):
-    """Why git could read `arg` as one of the risky options, in any spelling it accepts, or None.
-
-    A long option is refused when its name is a prefix of a risky one, because git grep takes any
-    unambiguous prefix (--open for --open-files-in-pager). For git grep, a bundle of short options is read
-    letter by letter as git does (-iOvim is -i then -O vim), up to the first letter that takes a value.
-    Elsewhere -O only names a file to read, and is refused when it leads, as before.
-    """
-    if arg.startswith('--'):
-        name = arg.partition('=')[0]
-        hit = next((r for r in RISKY_LONG if len(name) > 2 and r.startswith(name)), None)
-        return f'git reads {arg!r} as {hit}, which writes a file or starts a program' if hit else None
-    if not arg.startswith('-'):
-        return None
-    if subcommand != 'grep':
-        return f'{arg!r} is -O, which this profile does not allow' if arg.startswith('-O') else None
-    for letter in arg[1:]:
-        if letter == 'O':
-            return (f'git grep reads {arg!r} as including -O, which starts a program. If it is a pattern, '
-                    f'attach it to -e, as in -e{arg}')
-        if letter in GREP_VALUE_LETTERS:
-            return None
-    return None
-
-
-def spec_reader_source(w):
-    if w[:2] in (['git', 'log'], ['git', 'show'], ['git', 'grep'], ['git', 'ls-files'], ['git', 'rev-parse']):
-        for arg in w[2:]:
-            reason = risky_option(w[1], arg)
-            if reason:
-                raise Refused(reason)
-        return True
-    if w[:2] == ['wc', '-l']:
-        return len(w) == 3 and not w[2].startswith('-')
-    return False
-
-
 def is_filter(w):
     name, args = w[0], w[1:]
     if name in ('head', 'tail'):
@@ -165,8 +120,8 @@ def is_filter(w):
     return False
 
 
-PROFILES = {'reviewer': reviewer_source, 'spec-reader': spec_reader_source}
-AGENT_PROFILES = {'independent-reviewer': 'reviewer', 'spec-reader': 'spec-reader'}
+PROFILES = {'reviewer': reviewer_source}
+AGENT_PROFILES = {'independent-reviewer': 'reviewer'}
 
 
 def profile_for_agent(agent_type):

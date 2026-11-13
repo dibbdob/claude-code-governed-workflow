@@ -20,8 +20,9 @@ it, making the changes a plugin needs:
 
 - it strips the `hooks` field from each agent, since it would be ignored;
 - it registers the read-only hook once, in the plugin's `hooks/hooks.json`, with `--by-agent-type`, so the
-  hook chooses a profile from the `agent_type` in its input. The two read-only agents get theirs whether
-  the name arrives bare or prefixed with the plugin's name; every other session, including the main one,
+  hook chooses a profile from the `agent_type` in its input. The reviewer gets its profile whether the
+  name arrives bare or prefixed with the plugin's name (since ADR 0006 the spec-reader has no shell to
+  hold); every other session, including the main one,
   is left alone;
 - it points the agents' prose at the plugin's copy of the hook.
 

@@ -1,6 +1,6 @@
 # 0004 A restriction is a hook, not a sentence
 
-Status: accepted
+Status: accepted; the spec-reader's part is superseded by [ADR 0006](0006-an-agent-that-can-do-without-a-shell-gets-none.md)
 
 ## Context
 

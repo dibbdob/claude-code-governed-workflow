@@ -8,7 +8,7 @@
     {
       "name": "governed-delivery",
       "source": "./plugins/governed-delivery",
-      "description": "Deliver a specification end to end: grounded by a read-only spec reader, reviewed by a reviewer who is not told why, with read-only subagents held by a hook."
+      "description": "Deliver a specification end to end: grounded by a read-only spec reader, reviewed by a reviewer who is not told why, with a spec reader that has no shell and a reviewer held by a hook."
     }
   ]
 }

@@ -32,8 +32,9 @@ change of its own, built with `ALLOW_CRITERIA_CHANGE=1`.
 ([command](.claude/commands/deliver.md)). It reads through the `spec-reader` subagent first
 ([ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md)), and is reviewed by the
 `independent-reviewer` subagent, pinned to one commit and given no rationale
-([ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md)). Both subagents' Bash is held to read-only
-commands by a hook in their frontmatter, whose tests run in `build.sh`
+([ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md)). The spec-reader has no shell
+([ADR 0006](docs/adr/0006-an-agent-that-can-do-without-a-shell-gets-none.md)); the reviewer's Bash is held
+to read-only commands by a hook in its frontmatter, whose tests run in `build.sh`
 ([ADR 0004](docs/adr/0004-a-restriction-is-a-hook-not-a-sentence.md)). After changing the hook, run
 `./build.sh`; nothing else exercises it outside a session.
 

@@ -3,7 +3,7 @@
 Deliver a specification end to end with Claude Code: `/write-spec` drafts it in a forked context,
 `/deliver` grounds itself through a read-only spec reader and a parallel code survey, builds tests-first
 against numbered acceptance criteria, and is reviewed by a reviewer who is pinned to one commit and not
-told why. Both read-only subagents are held to read-only Bash by a hook.
+told why. The spec reader has no shell; the reviewer's Bash is held to read-only commands by a hook.
 
 Generated from the source repository's `.claude/` by `tools/package_plugin.py`; edit there, not here.
 
