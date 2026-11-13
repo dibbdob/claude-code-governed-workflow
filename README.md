@@ -128,6 +128,47 @@ or start it by hand and work in the folder it prints, in a Claude Code session:
    account's token as the secret `DELIVERY_TOKEN`, and that account's login as the variable `DELIVERY_BOT`.
    [`deliver.yml`](.github/workflows/deliver.yml) says why each is needed.
 
+## Using it in another project
+
+The plugin carries the part that is Claude Code: `/deliver`, the spec-reader, the independent reviewer,
+and the hook that holds the reviewer to read-only commands. Everything else is the project's own, and is
+copied in.
+
+```mermaid
+flowchart LR
+  A["1. OpenSpec<br/>openspec init"] --> B["2. The plugin<br/>installed"]
+  B --> C["3. Copied in<br/>scripts, checks, config"]
+  C --> D["4. On GitHub<br/>workflows, ruleset"]
+```
+
+1. **OpenSpec.** Install the version this repository pins (2.0.0), run `openspec init --tools claude`, and
+   switch on its `verify` workflow as in "Setting it up for a team", step 2.
+2. **The plugin.** From a clone of this repository:
+
+   ```bash
+   claude plugin marketplace add ./plugin
+   claude plugin install governed-delivery@governed-workflow
+   ```
+
+3. **Copied in, and fitted to the project:**
+
+   | Copy | What it does | Fit it |
+   |---|---|---|
+   | [`scripts/`](scripts) | starts, claims and finishes a delivery; `agent.sh` runs one unattended | as they are, if the gate is `./build.sh` and changes are named after issues: `agent.sh` allows only the build, `openspec` and git |
+   | [`tools/specs.mjs`](tools/specs.mjs) | fails the build when a scenario has no test, or an open change's scenario is not an outline with examples | tests must name the scenario they cover in their title, as here |
+   | [`tools/links.mjs`](tools/links.mjs) | fails the build on a broken relative link | as it is |
+   | [`openspec/config.yaml`](openspec/config.yaml) | the rules on risk, worked examples and revisions | the risk rule names what is risky for the desk (a deadline, a priority); reword it for yours |
+   | [`build.sh`](build.sh) | the whole gate, which `/deliver` runs before every commit | keep the OpenSpec, scenario and link checks; replace the rest with your own |
+
+4. **On GitHub:** copy [`.github/workflows/`](.github/workflows) and [`scripts/approved-issues.sh`](scripts/approved-issues.sh),
+   and add the ruleset and secrets as in "Setting it up for a team".
+
+Then each change follows the same path as here: an issue, `/openspec-propose` named after it, its pull
+request merged, `scripts/start-delivery.sh`, `/deliver` in the folder it makes, `scripts/finish-delivery.sh`.
+
+The plugin has not yet been installed into another project for real (below); its manifests pass
+`claude plugin validate --strict`, and the build checks it matches `.claude/`.
+
 ## What has and has not been verified
 
 - **Verified by the build:** every gate, each shown failing on a planted breach before it was trusted;
