@@ -1,8 +1,8 @@
 // Ticketdesk: the rules that decide how urgent a support ticket is and when it must be answered by.
 //
-// Business hours are Monday to Friday, 09:00 to 17:00 UTC, except on public holidays. A response target
-// is counted in business hours, so a ticket opened at 16:00 on a Friday with four hours to run is due at
-// 12:00 on Monday.
+// Business hours are Monday to Friday, 09:00 to 17:00 UTC, except on the public holidays a caller lists.
+// A response target is counted in business hours, so a ticket opened at 16:00 on a Friday with four hours
+// to run is due at 12:00 on Monday.
 
 export const RESPONSE_HOURS = Object.freeze({ urgent: 4, high: 8, normal: 24, low: 40 });
 
@@ -32,7 +32,8 @@ export function priorityOf(ticket) {
  * The moment a ticket's first response is due, counting business hours only.
  * @param {Date} openedAt
  * @param {keyof typeof RESPONSE_HOURS} priority
- * @param {string[]} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a whole day
+ * @param {string[]} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a whole UTC
+ *   day, and anything else in the list is refused with a RangeError
  * @returns {Date}
  */
 export function responseDueAt(openedAt, priority, holidays = []) {
@@ -41,8 +42,8 @@ export function responseDueAt(openedAt, priority, holidays = []) {
     throw new RangeError(`Unknown priority: ${priority}`);
   }
 
-  const closed = new Set(holidays);
-  const isBusinessDay = (date) => isWeekday(date) && !closed.has(date.toISOString().slice(0, 10));
+  const closed = holidaySet(holidays);
+  const isBusinessDay = (date) => isWeekday(date) && !closed.has(utcDate(date));
 
   let remaining = hours * HOUR_MS;
   let now = nextOpening(new Date(openedAt.getTime()), isBusinessDay);
@@ -59,6 +60,26 @@ export function responseDueAt(openedAt, priority, holidays = []) {
   }
 
   return now;
+}
+
+// A holiday that is not exactly `YYYY-MM-DD` would never match a day, so it is refused rather than ignored.
+function holidaySet(holidays) {
+  if (!Array.isArray(holidays)) {
+    throw new RangeError('Holidays must be a list of YYYY-MM-DD dates');
+  }
+  for (const holiday of holidays) {
+    if (typeof holiday !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(holiday)) {
+      throw new RangeError(`Not a YYYY-MM-DD holiday: ${holiday}`);
+    }
+  }
+  return new Set(holidays);
+}
+
+// The UTC calendar date of a moment, as `YYYY-MM-DD`. Unlike toISOString, it does not throw on an
+// invalid date.
+function utcDate(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
 function isWeekday(date) {
