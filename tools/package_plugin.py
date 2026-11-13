@@ -14,6 +14,8 @@ The project's .claude/ is the one source. The plugin is a copy with the changes 
   "read-only" description and lose the hook that makes it true. The generator strips the field and the
   plugin registers the hook once, in hooks/hooks.json, choosing each agent's profile by agent_type.
 - Paths to the hook point at the plugin root instead of the project.
+- Links to the project's ADRs point at this repository on GitHub. An installed plugin has no docs/ beside
+  it, and the relative links would break even here, one folder deeper (`tools/links.mjs` checks).
 """
 
 import filecmp
@@ -27,6 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TARGET = ROOT / 'plugin' / 'plugins' / 'governed-delivery'
 GENERATED = ['agents', 'commands', 'hooks']
+DOCS_URL = 'https://github.com/dibbdob/claude-code-governed-workflow/blob/main/docs/'
 
 HOOKS_JSON = {
     'description': 'Hold the plugin\'s read-only subagents to read-only Bash commands.',
@@ -47,14 +50,21 @@ def strip_hooks_field(text):
     return re.sub(r'^hooks:\n(?:[ \t]+.*\n)+', '', text, count=1, flags=re.MULTILINE)
 
 
+def link_docs_on_github(text):
+    """Point links into the project's docs/ (two folders up from .claude/<kind>/) at GitHub."""
+    return text.replace('](../../docs/', '](' + DOCS_URL)
+
+
 def build(out):
     (out / 'agents').mkdir(parents=True)
     for agent in sorted((ROOT / '.claude' / 'agents').glob('*.md')):
-        text = strip_hooks_field(agent.read_text())
+        text = link_docs_on_github(strip_hooks_field(agent.read_text()))
         text = text.replace('`.claude/hooks/read_only_bash.py`', "the plugin's `hooks/read_only_bash.py`")
         (out / 'agents' / agent.name).write_text(text)
 
     shutil.copytree(ROOT / '.claude' / 'commands', out / 'commands', ignore=shutil.ignore_patterns('opsx'))
+    for command in (out / 'commands').rglob('*.md'):
+        command.write_text(link_docs_on_github(command.read_text()))
 
     (out / 'hooks').mkdir()
     shutil.copy2(ROOT / '.claude' / 'hooks' / 'read_only_bash.py', out / 'hooks' / 'read_only_bash.py')

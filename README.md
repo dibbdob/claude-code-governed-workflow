@@ -66,7 +66,7 @@ fixes went with it (stage 12).
 | **Specs with an established framework**: OpenSpec changes and specs, its own checks (`validate`, `validate --archived`, the `verify` workflow), and one check of ours: every scenario has a test | [`openspec/`](openspec), [`specs.mjs`](tools/specs.mjs), [tests](tools/specs.test.js), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
 | **Refinement as a pull request**: a change reaches main only through review, and its issue is then labelled ready | [`refined.yml`](.github/workflows/refined.yml), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
 | **Worked examples in Gherkin**: every scenario of a change is an outline with examples a person on the desk can check, and the build checks the outline | [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-scenario-is-an-outline-with-worked-examples.md) |
-| **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml), [an example change](openspec/changes/2-public-holidays) |
+| **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml), [an example change](openspec/changes/archive/2026-11-13-2-public-holidays) |
 | **A team, the way Git works**: a folder per delivery, starting offline, one issue per change saying who has it, one step that assigns and checks that only look | [`start-delivery.sh`](scripts/start-delivery.sh), [`claim-delivery.sh`](scripts/claim-delivery.sh), [`finish-delivery.sh`](scripts/finish-delivery.sh), [tests](tools/delivery.test.js), [ADR 0007](docs/adr/0007-a-team-delivers-the-way-git-works.md) |
 | **CI on GitHub**: the build and the ownership check on every pull request, and unattended deliveries started by a label | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml) |
 | **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), branch protection (below) |
@@ -91,21 +91,21 @@ install the same version for your machine:
 npm install --global @fission-ai/openspec@2.0.0
 ```
 
-To see the workflow work on a real change, the change `2-public-holidays` (issue #2) is approved and has not
-been built:
+The change `2-public-holidays` (issue #2) has already been delivered this way, unattended: the change is in
+[its archive](openspec/changes/archive/2026-11-13-2-public-holidays), and its commits are the ones titled
+`2-public-holidays: …` in this history. To see the workflow work on a change of your own, propose one with
+`/openspec-propose <what you want>`, named after its issue (`57-bank-holidays`), and once it is approved:
 
 ```bash
-./scripts/agent.sh 2                  # unattended: its own folder, /deliver run headless, then the build
+./scripts/agent.sh 57                  # unattended: its own folder, /deliver run headless, then the build
 ```
 
 or start it by hand and work in the folder it prints, in a Claude Code session:
 
 ```bash
-./scripts/start-delivery.sh 2                  # then, in that folder: /deliver 2-public-holidays
+./scripts/start-delivery.sh 57                 # then, in that folder: /deliver 57-bank-holidays
 ./scripts/finish-delivery.sh                   # from that folder, once /deliver has finished
 ```
-
-To propose a new change, `/openspec-propose <what you want>`, and name it after its issue: `57-bank-holidays`.
 
 ## Setting it up for a team
 
@@ -144,7 +144,8 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
 - **Run for real, headless** (13 November 2026, `./scripts/agent.sh 2`, 13 minutes, on a Pro subscription,
   which counted it as $3.50 of use): `/deliver` took issue #2 from its approved change to a draft pull
-  request (#6) whose `build` and `claimed` checks passed. It wrote each scenario's test before the code;
+  request whose `build` and `claimed` checks passed, on the repository's first copy (below); its commits are
+  the ones titled `2-public-holidays: …`. It wrote each scenario's test before the code;
   the spec-reader and the reviewer ran as subagents, and the reviewer's hook refused it `node`; OpenSpec's
   apply and verify skills ran; the change was archived, and the one thing it added beyond the spec was put
   first in the pull request for a person to confirm. What it taught, and what changed:
@@ -159,13 +160,16 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
     tested against the delivered code, and the delivery was merged.
 - **Not yet verified in a live session:** the packaged plugin's hook, and a delivery under the two-review
   limit and `dontAsk`.
-- **Run on GitHub** (13 November 2026, with a ruleset on `main` requiring a pull request and both checks):
-  - `build` passed on every push and pull request, and merging was refused while it was still running;
-  - `refined` labelled issue #2 `ready` when its change, renamed to `2-public-holidays`, was merged (#3).
-    The first attempt would have missed a renamed change; the fix, with its tests, came first (#1);
-  - `claimed`, on a trial delivery pull request (#4, closed unmerged): it failed while issue #2 was
-    unassigned, and the ruleset refused the merge; once the issue was assigned it passed, using the real
-    `gh` through `claim-delivery.sh --check`.
+- **Run on GitHub** (13 November 2026, with a ruleset on `main` requiring a pull request and both checks).
+  The repository was recreated once its history was final, so the issues and pull requests of its first
+  copy are gone; issue #1 says so.
+  - `build` passes on every push and pull request, and merging was refused while it was still running;
+  - `refined`, on the first copy: it labelled issue #2 `ready` when its change, renamed to
+    `2-public-holidays`, was merged. The first attempt would have missed a renamed change; the fix came
+    first, in `scripts/approved-issues.sh`, with its tests in `tools/approved-issues.test.js`;
+  - `claimed`, on this copy, on a trial delivery pull request (#3, closed unmerged): it failed while issue
+    #2 was unassigned, and the ruleset refused the merge; once the issue was assigned it passed, using the
+    real `gh` through `claim-delivery.sh --check`.
 - **Not yet run on GitHub:** the overnight `deliver` workflow, which needs the bot account, its token and
   an API key; and required approvals, which need a second person.
 - **Not yet used in a session:** OpenSpec's `propose` and `explore` skills, and the archive guidance's
