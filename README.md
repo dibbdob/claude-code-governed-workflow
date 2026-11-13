@@ -64,7 +64,7 @@ fixes went with it (stage 12).
 | **Plugin and marketplace**, generated from the project, validated, with a drift check | [`plugin/`](plugin), [`package_plugin.py`](tools/package_plugin.py), [ADR 0005](docs/adr/0005-the-plugin-is-generated-from-the-project.md) |
 | **Specs with an established framework**: OpenSpec changes and specs, its own checks (`validate`, `validate --archived`, the `verify` workflow), and one check of ours: every scenario has a test | [`openspec/`](openspec), [`specs.mjs`](tools/specs.mjs), [tests](tools/specs.test.js), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
 | **Refinement as a pull request**: a change reaches main only through review, and its issue is then labelled ready | [`refined.yml`](.github/workflows/refined.yml), [ADR 0008](docs/adr/0008-specs-are-openspec-changes.md) |
-| **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml), [an example change](openspec/changes/public-holidays) |
+| **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml), [an example change](openspec/changes/2-public-holidays) |
 | **A team, the way Git works**: a folder per delivery, starting offline, one issue per change saying who has it, one step that assigns and checks that only look | [`start-delivery.sh`](scripts/start-delivery.sh), [`claim-delivery.sh`](scripts/claim-delivery.sh), [`finish-delivery.sh`](scripts/finish-delivery.sh), [tests](tools/delivery.test.js), [ADR 0007](docs/adr/0007-a-team-delivers-the-way-git-works.md) |
 | **CI on GitHub**: the build and the ownership check on every pull request, and unattended deliveries started by a label | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml) |
 | **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), branch protection (below) |
@@ -89,16 +89,17 @@ install the same version for your machine:
 npm install --global @fission-ai/openspec@2.0.0
 ```
 
-To see the workflow work on a real change, the change `public-holidays` is approved and has not been built:
+To see the workflow work on a real change, the change `2-public-holidays` (issue #2) is approved and has not
+been built:
 
 ```bash
-./scripts/agent.sh public-holidays    # unattended: its own folder, /deliver run headless, then the build
+./scripts/agent.sh 2                  # unattended: its own folder, /deliver run headless, then the build
 ```
 
 or start it by hand and work in the folder it prints, in a Claude Code session:
 
 ```bash
-./scripts/start-delivery.sh public-holidays    # then, in that folder: /deliver public-holidays
+./scripts/start-delivery.sh 2                  # then, in that folder: /deliver 2-public-holidays
 ./scripts/finish-delivery.sh                   # from that folder, once /deliver has finished
 ```
 
@@ -138,7 +139,7 @@ To propose a new change, `/openspec-propose <what you want>`, and name it after 
   its build and archive guidance.
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
 - **Not yet verified in a live session:** `/deliver` end to end, Claude Code firing the reviewer's hook, and
-  the packaged plugin's hook. Running `./scripts/agent.sh public-holidays` exercises the first two.
+  the packaged plugin's hook. Running `./scripts/agent.sh 2` exercises the first two.
 - **Run on GitHub:** the `build` workflow, on the repository's first push (13 November 2026), which ran
   `./build.sh` on GitHub's machines and passed.
 - **Not yet run on GitHub:** the `claimed` check (it runs on a delivery's pull request), the `deliver` and
