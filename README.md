@@ -40,6 +40,8 @@ git log --graph --format='%h %s%n%b' main                # everything, with the 
 | 13 | `team-delivery` | Everything assumed one person on one machine: one delivery at a time, a local main, no pull requests |
 | 14 | `openspec` | A home-made spec format and numbering, with no refinement step, where an established framework does the job |
 | 15 | `first-delivery` | Everything had been tested against stand-ins; nothing had yet delivered a change for real, on GitHub, with nobody watching |
+| 16 | `refinement-on-github` | Every change had been refined before the repository reached GitHub; none had started as a brief in an issue |
+| 17 | `overnight-delivery` | The delivery started by a label had never run, so nothing showed it could deliver with nobody's machine involved |
 
 Some findings in the history came from checking the checks. The first UTC gate could not fail (`grep`
 given a directory without `-r`). With the hook's character scan disabled every hook test still passed, so
@@ -211,10 +213,24 @@ The plugin has not yet been installed into another project for real (below); its
   - `claimed`, on this copy, on a trial delivery pull request (#3, closed unmerged): it failed while issue
     #2 was unassigned, and the ruleset refused the merge; once the issue was assigned it passed, using the
     real `gh` through `claim-delivery.sh --check`.
-- **Not yet run on GitHub:** the overnight `deliver` workflow, which needs the bot account, its token and
-  an API key; and required approvals, which need a second person.
-- **Not yet used in a session:** OpenSpec's `propose` and `explore` skills, and the archive guidance's
-  "please confirm the intent" question, which only an attended delivery asks.
+- **Refined on GitHub** (13 November 2026): OpenSpec's `propose` skill, headless, wrote change
+  `4-security-reports-are-urgent` from the brief in issue #4, in 20 turns. Its pull request (#5) was
+  reviewed and merged, and `refined` labelled the issue `ready`.
+- **Delivered overnight on GitHub** (14 November 2026, the `deliver` workflow, started by labelling issue #4
+  `deliver`; 5 minutes, 66 turns, $2.04 of API use): the run delivered the change on GitHub's machines and
+  opened draft pull request #6, whose `build` and `claimed` checks passed. Its commits are credited to the
+  person assigned, at their no-reply address. The token was the owner's own fine-grained token, standing in
+  for a bot account, so `claimed` checked the pull request's author. The reviewer took one round. What it
+  found:
+  - the delivery tests handed their stand-in team the real `DELIVERY_FOR`, so every delivery on GitHub
+    failed its own build before it could push. It fixed the tests, outside the proposal, and put that first
+    in the pull request for a person to accept; it was accepted;
+  - the links check listed files with `git ls-files`, so after `openspec archive` it crashed on the moved
+    change until the move was staged. It now checks the files where they are.
+- **Not yet run on GitHub:** a delivery under a separate bot account, and required approvals, which need a
+  second person.
+- **Not yet used in a session:** OpenSpec's `explore` skill, and the archive guidance's "please confirm the
+  intent" question, which only an attended delivery asks.
 
 ## Layout
 
