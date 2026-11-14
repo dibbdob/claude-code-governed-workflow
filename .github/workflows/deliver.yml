@@ -63,6 +63,10 @@ jobs:
           DELIVERY_FOR: ${{ steps.find.outputs.for }}
           CHANGE: ${{ steps.find.outputs.change }}
         run: |
-          git config --global user.name "Ticketdesk delivery"
-          git config --global user.email "delivery@users.noreply.github.com"
+          # The commits are the assigned person's delivery, so they are theirs, at their GitHub no-reply
+          # address. A made-up address such as delivery@users.noreply.github.com credits whoever owns the
+          # login "delivery".
+          id="$(gh api "users/${DELIVERY_FOR}" --jq .id)"
+          git config --global user.name "$DELIVERY_FOR"
+          git config --global user.email "${id}+${DELIVERY_FOR}@users.noreply.github.com"
           ./scripts/agent.sh "$CHANGE"
