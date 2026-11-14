@@ -2,12 +2,50 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { priorityOf, responseDueAt } from '../src/sla.js';
 
+// Each row of a priority scenario's worked examples (openspec/specs/response-deadline/spec.md): the row as
+// the spec writes it, the ticket, when it was opened, and the priority and reply deadline agreed for it.
+function checkRows(rows) {
+  for (const [row, ticket, openedAt, priority, due] of rows) {
+    assert.equal(priorityOf(ticket), priority, row);
+    assert.equal(responseDueAt(new Date(openedAt), priorityOf(ticket)).toISOString(), due, row);
+  }
+}
+
 test('[response-deadline] An outage on the enterprise plan is urgent', () => {
-  assert.equal(priorityOf({ outage: true, plan: 'enterprise' }), 'urgent');
+  checkRows([
+    ['Wed 11 Nov 2026, 10:00 UTC', { outage: true, plan: 'enterprise' }, '2026-11-11T10:00:00Z', 'urgent', '2026-11-11T14:00:00.000Z'],
+  ]);
 });
 
 test('[response-deadline] An outage on any other plan is high', () => {
-  assert.equal(priorityOf({ outage: true, plan: 'starter' }), 'high');
+  checkRows([
+    ['the starter plan', { outage: true, plan: 'starter' }, '2026-11-11T10:00:00Z', 'high', '2026-11-12T10:00:00.000Z'],
+    ['no plan recorded', { outage: true }, '2026-11-13T16:00:00Z', 'high', '2026-11-16T16:00:00.000Z'],
+  ]);
+});
+
+test('[response-deadline] A security report is urgent whatever the plan', () => {
+  // What the customer reported (a leaked password, and so on) is recorded as the category `security`
+  checkRows([
+    ['the starter plan: a leaked password', { category: 'security', plan: 'starter' }, '2026-11-11T10:00:00Z', 'urgent', '2026-11-11T14:00:00.000Z'],
+    ["the enterprise plan: someone else's data on their screen", { category: 'security', plan: 'enterprise' }, '2026-11-11T16:30:00Z', 'urgent', '2026-11-12T12:30:00.000Z'],
+    ['no plan recorded: a login they did not make', { category: 'security' }, '2026-11-13T16:00:00Z', 'urgent', '2026-11-16T12:00:00.000Z'],
+  ]);
+});
+
+test('[response-deadline] A security report that is also an outage is urgent', () => {
+  checkRows([
+    ['the starter plan', { outage: true, category: 'security', plan: 'starter' }, '2026-11-11T10:00:00Z', 'urgent', '2026-11-11T14:00:00.000Z'],
+    ['the enterprise plan', { outage: true, category: 'security', plan: 'enterprise' }, '2026-11-13T16:00:00Z', 'urgent', '2026-11-16T12:00:00.000Z'],
+  ]);
+});
+
+test('[response-deadline] A ticket that is not a security report keeps its priority', () => {
+  checkRows([
+    ['the enterprise plan: a billing problem', { category: 'billing', plan: 'enterprise' }, '2026-11-13T16:00:00Z', 'normal', '2026-11-18T16:00:00.000Z'],
+    ['the starter plan: a question', { category: 'question', plan: 'starter' }, '2026-11-11T10:00:00Z', 'low', '2026-11-18T10:00:00.000Z'],
+    ['the starter plan: a problem of no recorded kind', { plan: 'starter' }, '2026-11-11T10:00:00Z', 'normal', '2026-11-16T10:00:00.000Z'],
+  ]);
 });
 
 test('a question is low', () => {
