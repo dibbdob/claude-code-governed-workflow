@@ -21,6 +21,10 @@ const git = (cwd, ...args) =>
 // not among them.
 const CHANGES = ['42-holidays', '43-weekends', 'unlinked-change'];
 
+// The environment the stand-in team runs in. A CI delivery sets DELIVERY_FOR for the real person it is for;
+// that person is not in the stand-in team, so it is dropped here, and a test that wants it sets its own.
+const { DELIVERY_FOR: _realPerson, ...outside } = process.env;
+
 function team(github = {}) {
   const root = mkdtempSync(join(tmpdir(), 'team-'));
   const shared = join(root, 'shared.git');
@@ -43,7 +47,7 @@ function team(github = {}) {
     issues: { 42: { assignees: [] }, 43: { assignees: [] } },
     ...github,
   }));
-  const env = (me) => ({ ...process.env, PATH: `${FAKE_GH}:${process.env.PATH}`, FAKE_GH_STATE: state, DELIVERY_DIR: join(root, `${me}-deliveries`) });
+  const env = (me) => ({ ...outside, PATH: `${FAKE_GH}:${process.env.PATH}`, FAKE_GH_STATE: state, DELIVERY_DIR: join(root, `${me}-deliveries`) });
 
   return {
     shared,
@@ -240,7 +244,7 @@ const agent = (person, t, env = {}) => {
   return spawnSync('bash', [join(SCRIPTS, 'agent.sh'), '42'], {
     cwd: person.dir,
     encoding: 'utf8',
-    env: { ...process.env, PATH: `${FAKE_GH}:${process.env.PATH}`, FAKE_GH_STATE: t.state,
+    env: { ...outside, PATH: `${FAKE_GH}:${process.env.PATH}`, FAKE_GH_STATE: t.state,
       DELIVERY_DIR: `${person.dir}-deliveries`, RUNS_DIR: `${person.dir}-runs`, ...env },
   });
 };

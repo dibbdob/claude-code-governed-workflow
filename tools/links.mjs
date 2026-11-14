@@ -29,7 +29,10 @@ export function brokenLinks(file, text, exists) {
 }
 
 function main() {
-  const files = execFileSync('git', ['ls-files', '*.md'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+  // The Markdown files on disk that git tracks or would track: a file moved but not yet staged, as
+  // `openspec archive` leaves a change, is checked where it is now, not where git last saw it.
+  const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', '*.md'], { cwd: root, encoding: 'utf8' })
+    .split('\n').filter((file) => file && existsSync(join(root, file)));
   let failed = 0;
   for (const file of files) {
     for (const target of brokenLinks(file, readFileSync(join(root, file), 'utf8'), existsSync)) {
