@@ -11,11 +11,17 @@ const CLOSE_HOUR = 17;
 const HOUR_MS = 60 * 60 * 1000;
 
 /**
- * Decide a ticket's priority from what the customer reported.
+ * Decide a ticket's priority from what the customer reported. A security report, category `security`, is
+ * urgent on every plan, with no plan recorded, and when it is also an outage. Otherwise an outage is urgent
+ * on the enterprise plan and high on any other. A `billing` ticket is normal, a `question` low, and any other
+ * ticket normal. Categories are matched exactly, so `Security` is not a security report.
  * @param {{ outage?: boolean, plan?: string, category?: string }} ticket
  * @returns {'urgent' | 'high' | 'normal' | 'low'}
  */
 export function priorityOf(ticket) {
+  if (ticket.category === 'security') {
+    return 'urgent';
+  }
   if (ticket.outage) {
     return ticket.plan === 'enterprise' ? 'urgent' : 'high';
   }
