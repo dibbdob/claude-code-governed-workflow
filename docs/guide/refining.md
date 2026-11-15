@@ -29,7 +29,7 @@ answer review comments, run `/refine 57` again.
 
 A refinement started one way can be carried on the other.
 
-## Before you approve
+## Before you merge
 
 - *In plain terms* says what will be true afterwards, in words the product's users would recognise.
 - The risk is stated, with a reason. Medium or high has a design and a task for it.
