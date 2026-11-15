@@ -1,5 +1,5 @@
 {
-  "_comment": "The desk's rules as worked examples, shared with the C# repositories. This is the canonical copy: claude-code-governed-workflow owns the rules (openspec/specs/response-deadline). ticket-intake-service and mcp-server-dotnet each hold a copy under their tests' Fixtures folder and fail if the code disagrees with it, and dibbdob/verify-all.sh fails while a copy differs from this one. Change the rules here, then copy this file; never edit a copy. Worked out by hand from the spec, not generated from the code. A deadline example with 'holidays' lists the public holidays it assumes, as UTC dates; one without assumes none.",
+  "_comment": "The desk's rules as worked examples, for any implementation of them to be tested against; this repository's tests hold src/sla.js to them (openspec/specs/response-deadline). Worked out by hand from the spec, not generated from the code. A deadline example with 'holidays' lists the public holidays it assumes, as UTC dates; one without assumes none.",
   "priority": [
     {
       "case": "an outage on the enterprise plan",

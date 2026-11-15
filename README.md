@@ -11,7 +11,7 @@ request, a label hands it to Anthropic's Claude Code action, and pull requests a
 
 The codebase itself, Ticketdesk, is deliberately small: the rules a support desk uses to set a ticket's
 priority and its response deadline in business hours. It is there so the workflow has something real to
-govern, and its rules are shared, as worked examples, with two C# services in sibling repositories.
+govern. To use the workflow on a project of your own, see [Using it in another project](#using-it-in-another-project).
 
 ## How a change gets made
 
@@ -60,7 +60,7 @@ approved, below the brief ([ADR 0010](docs/adr/0010-refinement-is-a-command-too.
 | **Specs with an established framework**: OpenSpec changes and specs, its own checks (`validate`, `validate --archived`, the `verify` workflow), and one check of ours: every scenario has a test | [`openspec/`](openspec), [`specs.mjs`](tools/specs.mjs), [tests](tools/specs.test.js), [ADR 0006](docs/adr/0006-specs-are-openspec-changes.md) |
 | **Refinement as a pull request**: a change reaches main only through review, and its issue is then labelled ready | [`refined.yml`](.github/workflows/refined.yml), [ADR 0006](docs/adr/0006-specs-are-openspec-changes.md) |
 | **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml) |
-| **Worked examples in Gherkin**, checked by the build, and shared as data with the C# services | [`specs.mjs`](tools/specs.mjs), [`desk-rules.json`](test/fixtures/desk-rules.json), [ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md) |
+| **Worked examples in Gherkin**, checked by the build, and kept as data any implementation can be tested against | [`specs.mjs`](tools/specs.mjs), [`desk-rules.json`](test/fixtures/desk-rules.json), [ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md) |
 | **Claude Code on GitHub, the standard way**: the build on every pull request, and deliveries started by a label through Anthropic's Claude Code action, which runs this project's `/deliver`, subagents and hook as they are | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml), [ADR 0008](docs/adr/0008-deliveries-run-on-the-standard-action.md) |
 | **A delivery's steps as tasks**: every change's tasks end with grounding, the review, the second review and verify, so a delivery that skips one fails the build | [`config.yaml`](openspec/config.yaml), [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md), [ADR 0011](docs/adr/0011-grounding-is-a-delivery-task.md) |
 | **Refinement as a command**: `/refine` interviews the author, writes the change with OpenSpec's skills, and publishes the spec pull request; on GitHub, a label and `@claude` comments; the approved change summarised on its issue | [`refine.md`](.claude/commands/refine.md), [`refinement.sh`](scripts/refinement.sh), [`refine.yml`](.github/workflows/refine.yml), [`issue-summary.mjs`](tools/issue-summary.mjs), [ADR 0010](docs/adr/0010-refinement-is-a-command-too.md) |
@@ -204,7 +204,7 @@ request.
 - **Verified by the build:** every gate, each shown failing on a planted breach before it was trusted;
   the hook's allow and refuse lists, its agent-type mode and its failure handling; each read-only agent's
   tool list; the plugin matching a fresh build of `.claude/`; the desk's rules against every worked example
-  they share with the C# services.
+  in `test/fixtures/desk-rules.json`.
 - **Verified against a stand-in model:** `scripts/agent.sh` on a throwaway repository with a pretend
   `claude` ([`tools/agent.test.js`](tools/agent.test.js)): a delivery on its own branch, a change not
   approved, uncommitted work, a run that claims success without archiving, and runs that fail before and
@@ -285,9 +285,15 @@ request.
   ([tests](tools/refinement.test.js)); the summary on an issue, written, replaced and noted
   ([tests](tools/issue-summary.test.js)); and every workflow checked by actionlint, shown failing on a
   planted typo in a step's output.
-- **Not yet run against a live model:** `/refine` in a session, with an author answering as it goes;
-  `revised` on a delivery that rewords a requirement; OpenSpec's `explore` skill; and the archive
-  guidance's "please confirm the intent" question, which only an attended delivery asks.
+- **`/refine` in a session, and a delivery that rewords a requirement, run live on 2026-11-15:** issue 35
+  (say when the desk is next open) was refined in a session with `scripts/refinement.sh`, on the owner's
+  subscription, and its spec pull request merged; `refined` labelled it `ready` and wrote its summary. The
+  `deliver` label delivered it in 18 turns for $0.70 on Sonnet 5.5, with the Grounding task ticked. One
+  requirement was planted with loose wording; the review caught it, the delivery reworded it, the pull
+  request listed it under "Changed since approval", and `revised` noted it on the issue.
+- **Not yet run against a live model:** `/refine` in a session with an author other than the developer
+  answering; OpenSpec's `explore` skill; the archive guidance's "please confirm the intent" question, which
+  only an attended delivery asks; and a delivery's `Closes #<n>` line closing its issue on merge.
 - **Gaps the run found, since closed:** the `deliver` and `refine` runs now install the same pinned
   actionlint as the build workflow (one shared step, `.github/actions/install-actionlint`), so the build
   Claude runs on GitHub's machine checks the workflows too; and grounding is now a Delivery task

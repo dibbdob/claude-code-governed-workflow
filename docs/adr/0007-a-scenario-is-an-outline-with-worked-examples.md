@@ -11,8 +11,8 @@ whether a deadline is right are on the desk, not in the code. A worked example, 
 against what they know. Writing the rule and its examples together is common practice, usually called
 specification by example, and Gherkin's scenario outline is its usual form.
 
-The desk's rules are also applied outside this repository, by two C# services, which need the same examples
-to hold their copies of the rules to.
+The same examples are worth having as data, apart from the specs: a second check on the code, worked out by
+hand, that any other implementation of the rules can be run against.
 
 ## Decision
 
@@ -25,16 +25,15 @@ to hold their copies of the rules to.
 - **Each example is tested.** The delivery's tests check every row of a scenario's examples, under the
   scenario's own name.
 - **The desk's examples are also data.** `test/fixtures/desk-rules.json` holds worked examples of every rule,
-  security reports and public holidays included, for `ticket-intake-service` and `mcp-server-dotnet` to run
-  against their own code. This repository owns the file and its tests hold `src/sla.js` to it; the others
-  hold copies, and `dibbdob/verify-all.sh` fails while a copy differs.
+  security reports and public holidays included, and its tests hold `src/sla.js` to it. Another
+  implementation of the rules, in any language, can copy the file and run against it.
 
 ## Consequences
 
 - A person on the desk can review a change's proposal in the desk's terms, on its pull request, and the
   reviewer of a delivery can check its tests against the same rows.
 - Nothing checks that every row has a test; `/deliver`'s test-first rule and the reviewer are what do.
-- A rule that changes here changes the shared file first, and the two C# repositories follow by copying it.
+- A rule that changes changes the examples file too, and a copy elsewhere follows by copying it.
 - Kept out on purpose: copying the criteria into the GitHub issue, labels for each step, codes on criteria
   and a required acceptance check. They would make the repository a project-management tool, which is not
   what it demonstrates; the proposal's pull request is where a change is agreed, and a person merging the

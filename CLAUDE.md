@@ -35,10 +35,9 @@ A change may be revised while it is delivered, as OpenSpec intends, while its in
 every revision for a person to confirm. `openspec/config.yaml` holds the rules for that and
 for risk: every proposal states a risk level, and a medium or high one gets a design with mitigations.
 
-The rules are shared with two C# repositories, `ticket-intake-service` and `mcp-server-dotnet`, through worked
-examples in `test/fixtures/desk-rules.json`, which this repository owns and `build.sh` checks
-([ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md)). A change to a rule
-that those repositories also apply changes that file first, and the copies there follow.
+The rules are also kept as worked examples in `test/fixtures/desk-rules.json`, worked out by hand and checked
+by `build.sh` ([ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md)). A change to a rule
+changes that file too.
 
 `build.sh` runs one at a time per checkout (`.build.lock`).
 
