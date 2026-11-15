@@ -1,123 +1,50 @@
 # Governed delivery with Claude Code
 
-A way of working with Claude Code for teams that want it to deliver changes, but want a person to agree what
-is built and to approve what is merged. A brief starts as a GitHub issue. `/refine` turns it into a
-specification with the person who raised it, reviewed as a pull request. Once that is merged, `/deliver`
-builds it test first on a branch of its own, has it reviewed independently, and hands back a pull request for
-a person to merge. It runs on GitHub with a label, or on your own machine under a Claude subscription.
-
-Specifications are [OpenSpec](https://github.com/Fission-AI/OpenSpec) changes. This repository includes a
-small example to work on, a support desk's rules for a ticket's priority and response deadline, and the
-scripts to set the workflow up in a project of your own.
-
-## How a change gets made
+A way to have Claude Code build changes while people stay in charge of what is built. A brief starts as a
+GitHub issue. `/refine` turns it into a specification with the person who raised it, and a pull request
+approves it. `/deliver` then builds it test first, has it reviewed independently, and hands back a pull
+request for a person to merge.
 
 ```mermaid
 flowchart LR
-  A["Issue<br/>a brief"] --> B["/refine<br/>a change, named after it"]
-  B --> C["Pull request<br/>reviewed and merged:<br/>approved"]
-  C --> D["/deliver<br/>label on GitHub,<br/>or agent.sh"]
-  D --> E["Pull request<br/>build, then a person"]
+  A["Issue<br/>a brief"] --> B["/refine"]
+  B --> C["Spec pull request<br/>reviewed and merged"]
+  C --> D["/deliver"]
+  D --> E["Code pull request<br/>build, then a person"]
 ```
 
-The person who raised the issue needs to know nothing of OpenSpec, git or the code: `/refine` asks them about
-the product, above all for worked examples, and writes the specification from their answers. Merging its pull
-request approves it, and the issue is labelled `ready` with a summary of what was agreed. `/deliver` then
-reads the specification through two read-only subagents, writes a failing test for each scenario before the
-code, has the work reviewed, archives the change, and writes the pull request description, listing first
-anything it reworded since approval.
+Nothing is built until its specification is merged, and a person merges the result. Both steps run on
+GitHub, started by a label, or on your own machine under your Claude subscription.
 
-The [guide](docs/guide/README.md) covers each step: [refining](docs/guide/refining.md),
-[delivering](docs/guide/delivering.md), [models](docs/guide/models.md),
-[setting up](docs/guide/setting-up.md) and [when something goes wrong](docs/guide/troubleshooting.md).
+## What a project needs
 
-## What you can rely on
-
-- **Nothing is built until its specification is approved.** `/deliver` refuses a change that is not on
-  `main`, and only a merged pull request puts it there. There is no flag to set by hand.
-- **The tests come from the specification.** Every scenario carries worked examples, and the build fails
-  when a scenario has no test naming it ([ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md)).
-- **The reviewer cannot be talked round.** It is given one commit and the tests, never the author's reasons,
-  and a hook holds it to read-only commands ([ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md),
-  [ADR 0004](docs/adr/0004-a-restriction-is-a-tool-list-or-a-hook.md)).
-- **A delivery cannot skip a step.** Reading, review and verification are tasks in every change, and a change
-  archived with one undone fails the build ([ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md)).
-- **A reworded requirement is never quiet.** It is listed first in the pull request, and noted on the issue,
-  for the person who asked for it to confirm.
-- **A person merges.** Sessions are denied `git push`, and on GitHub a ruleset makes a pull request
-  with a passing build the only way into `main`, merged by a person.
-- **Spending is capped.** A run on GitHub stops at $1.50 or 60 turns, and only someone who can label issues
-  can start one.
-
-Where an instruction to Claude could be ignored, something else enforces it: a tool list, a hook, or the
-build ([ADR 0001](docs/adr/0001-a-rule-points-at-what-enforces-it.md)).
-
-## What it asks of a project
-
-A project needs:
-
-- **OpenSpec**, pinned, for its specifications;
-- **a `build.sh` that is the whole gate**, which the workflow runs before every commit;
-- **changes named after their issues**, such as `57-bank-holidays`;
-- **tests that name the scenario they cover** in their title;
-- on GitHub, **the Claude GitHub app and an API key**.
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec), pinned, for the specifications
+- a `build.sh` that runs everything that must pass before a commit
+- changes named after their issues, such as `57-bank-holidays`
+- tests that name the scenario they cover
+- on GitHub, the Claude GitHub app and an API key
 
 ## Getting started
 
 ```bash
 git clone https://github.com/dibbdob/claude-code-governed-workflow.git
 cd claude-code-governed-workflow
-scripts/setup-machine.sh --plugin          # this machine: the tools, and the plugin
-scripts/adopt.sh ../your-project           # your project: everything else, ready to fit
+scripts/setup-machine.sh --plugin     # this machine: the tools, and the plugin
+scripts/adopt.sh ../your-project      # your project: everything else
 ```
 
-[Setting up](docs/guide/setting-up.md) says what each does, what to fit afterwards, and what to set on GitHub.
+[Setting up](docs/guide/setting-up.md) covers what to fit afterwards and what to set on GitHub.
 
-To work on this repository itself, you need Node 22.12 or later and Python 3, and
-[actionlint](https://github.com/rhysd/actionlint) for the workflow check (`brew install actionlint`). Then:
+## Your first change
 
-```bash
-./build.sh
-```
+1. Write the issue in plain words. Add the `refine` label, or run `/refine 57` in a session.
+2. Answer Claude's questions, review the spec pull request, and merge it. The issue is now `ready`.
+3. Add the `deliver` label, or run `./scripts/agent.sh 57`.
+4. Read the pull request, starting with anything marked *Changed since approval*, and merge it.
 
-The build is the whole gate: OpenSpec's validation, scenario coverage, the delivery tasks, the tests, the
-plugin matching `.claude/`, every relative link, the GitHub workflows and the hook's tests. Without
-actionlint, a build on your machine says the workflows were NOT CHECKED and carries on; on GitHub it fails.
+## More
 
-## How well it is tested
-
-- **By the build,** on every pull request: every gate, each shown failing on a planted breach before it was
-  trusted, the hook's allow and refuse lists, and the scripts against stand-ins for `claude` and `gh`.
-- **On live runs:** eight changes taken from an issue to a merged pull request, on GitHub and on a laptop;
-  `/refine` both on GitHub and in a session; a requirement reworded during a delivery and flagged for
-  confirmation; and the plugin installed in another repository, its hook refusing writes.
-- **Not yet run:** `/refine` with an author other than the developer; OpenSpec's `explore` skill; the
-  question an attended delivery asks before archiving a reworded change; and a delivery's pull request
-  closing its issue on merge.
-
-## Layout
-
-```
-.claude/
-  agents/        spec-reader, independent-reviewer
-  commands/      deliver, refine
-  hooks/         read_only_bash.py and its tests
-  skills/        links to OpenSpec's skills
-  settings.json  permissions
-.agents/skills/  OpenSpec's skills, shared by any AI tool (generated by openspec init and update)
-docs/guide/      how to refine, deliver and set up
-docs/adr/        why each decision was made
-openspec/
-  specs/         how the system works now, requirement by requirement
-  changes/       approved changes still to deliver, and archive/ for delivered ones
-.github/         the build check, the ready label and issue summary, and refinements and deliveries
-                 started by a label
-plugin/          a marketplace with one plugin, generated from .claude/
-scripts/         agent.sh runs a delivery unattended; refinement.sh publishes a refinement;
-                 headless-tools.txt and refine-tools.txt, what each may use on its own;
-                 setup-machine.sh and adopt.sh set up a machine and another project
-src/, test/      the example: a support desk's rules, their tests and worked examples
-tools/           specs.mjs, links.mjs, issue-summary.mjs, package_plugin.py, and the stand-in claude
-                 and gh for tests
-build.sh         the gate
-```
+- [Refining](docs/guide/refining.md) and [delivering](docs/guide/delivering.md): the steps, and what to check
+- [Reference](docs/guide/reference.md): labels, models and switching, troubleshooting
+- [How it works](docs/how-it-works.md): what you can rely on, how it is tested, and the repository layout
+- [Decision records](docs/adr): why each part is built as it is
