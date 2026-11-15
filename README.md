@@ -163,10 +163,27 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
   with tasks undone makes `validate --archived` fail; `openspec instructions` returns the project's risk
   rules and its build and archive guidance.
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
-- **Not yet run against a live model:** a change refined from an issue with `/openspec-propose`, delivered
-  by `scripts/agent.sh`, and delivered on GitHub through the Claude Code action; the packaged plugin's hook
-  in a live session; OpenSpec's `explore` skill; and the archive guidance's "please confirm the intent"
-  question, which only an attended delivery asks.
+- **Run on GitHub:** `./build.sh`, by the `build` workflow on every pull request and every push to `main`,
+  which main's ruleset requires before a merge.
+- **Run against a live model, on 2026-11-15:** two changes, each from a GitHub issue to a merged pull
+  request.
+  - Both were proposed with `/openspec-propose` in an attended session, as pull requests whose build checked
+    their scenarios; merging them approved them, and `refined` labelled their issues `ready`.
+  - Issue 1, a defect (an opening time that is not a date gave an "Invalid Date" deadline), was delivered on
+    GitHub by the `deliver` label through the Claude Code action, for $2.06 in 11 turns. Its first commit was
+    the failing test, with the failing build in its message; two rounds of review found four problems,
+    each fixed behind a test that failed first. The action pushes a branch and links to a pull request, as
+    it is meant to; a person opens it.
+  - Issue 2, a new function for the business hours left before a deadline, was delivered by
+    `scripts/agent.sh` for $2.05 in 30 turns. `dontAsk` refused two compound commands not on the tool list,
+    and the run carried on without them.
+  - The two were delivered at the same time from the same main, so the second to merge needed main merged
+    into it: both had added a requirement and code in the same places, and both were kept.
+  - Each reviewer left points for a person, in its pull request. One is a follow-up: once both changes are
+    in, the deadline refuses an opening time that is not a date while the hours left give `NaN` for one.
+- **Not yet run against a live model:** the packaged plugin's hook in a live session; OpenSpec's `explore`
+  skill; and the archive guidance's "please confirm the intent" question, which only an attended delivery
+  asks.
 
 ## Layout
 
