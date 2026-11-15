@@ -44,7 +44,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci --ignore-scripts
+      # OpenSpec from the project's pinned copy, on the PATH so /deliver and its skills can run it.
+      - run: |
+          npm ci --ignore-scripts
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Find the approved change
         id: find

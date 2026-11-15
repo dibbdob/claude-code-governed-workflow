@@ -79,7 +79,8 @@ test('publishing a new refinement commits only its change on its own branch, pus
   assert.equal(r.status, 0, r.stderr);
   assert.equal(git(repo.dir, 'branch', '--show-current').trim(), 'refine/57-bank-holidays');
   assert.match(git(repo.dir, 'log', '-1', '--format=%s').trim(), /^57-bank-holidays: Propose$/);
-  assert.match(git(repo.origin, 'branch', '--list', 'refine/57-bank-holidays'), /refine\/57-bank-holidays/);
+  // --git-dir names the bare remote outright: a runner with safe.bareRepository=explicit refuses to find one.
+  assert.match(git(repo.dir, '--git-dir', repo.origin, 'branch', '--list', 'refine/57-bank-holidays'), /refine\/57-bank-holidays/);
   assert.match(r.stdout, /== build passed/);
   assert.match(ghCalls(repo), /^pr create --base main --head refine\/57-bank-holidays --title Refine #57: bank holidays are closed days/m);
   assert.match(ghCalls(repo), /^issue comment 57 --body Spec pull request for this issue: https:\/\/github\.example\.invalid\/pull\/7/m);

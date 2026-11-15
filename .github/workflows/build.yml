@@ -6,6 +6,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # The refine workflow starts it on a spec pull request's branch, which it opens with a token whose events
+  # start no workflows.
+  workflow_dispatch:
 
 permissions:
   contents: read

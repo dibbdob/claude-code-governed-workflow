@@ -26,6 +26,7 @@ permissions:
   pull-requests: write
   issues: write
   id-token: write
+  actions: write
 
 env:
   OPENSPEC_TELEMETRY: '0'
@@ -84,8 +85,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      # OpenSpec from the project's pinned copy, on the PATH so its skills can run it.
       - if: steps.find.outputs.go == 'true'
-        run: npm ci --ignore-scripts
+        run: |
+          npm ci --ignore-scripts
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Read the tools and the model
         if: steps.find.outputs.go == 'true'
@@ -120,12 +124,14 @@ jobs:
             --allowedTools "${{ steps.setup.outputs.tools }}"
 
       # The action pushes a branch and stops; it does not open pull requests. A refinement's conversation
-      # happens on its spec pull request, so the first run opens it, with the Claude app's token so the
-      # build runs on it. A later run updates its description.
+      # happens on its spec pull request, so the first run opens it. The action has revoked its own token by
+      # now, so this uses the workflow's; a pull request opened with that starts no workflows, so the build
+      # is started on the branch explicitly, and its check lands on the pull request's commit. A later run
+      # updates the description; its push, with the action's token, runs the build as usual.
       - name: Open or update the spec pull request
         if: steps.find.outputs.go == 'true'
         env:
-          GH_TOKEN: ${{ steps.claude.outputs.github_token || github.token }}
+          GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ steps.find.outputs.issue }}
           PR: ${{ steps.find.outputs.pr }}
           BRANCH: ${{ steps.claude.outputs.branch_name }}
@@ -147,5 +153,6 @@ jobs:
             body="Refines #${ISSUE}. Merging this approves the change for delivery; it does not close the issue."
           fi
           url="$(gh pr create --repo "$REPO" --base main --head "$BRANCH" --title "$title" --body "$body")"
+          gh workflow run build.yml --repo "$REPO" --ref "$BRANCH"
           gh issue comment "$ISSUE" --repo "$REPO" \
             --body "Spec pull request for this issue: ${url}. Answer the questions there, in a comment that mentions @claude."
