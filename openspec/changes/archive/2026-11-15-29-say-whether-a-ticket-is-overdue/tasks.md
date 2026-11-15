@@ -11,6 +11,6 @@
 
 ## 2. Delivery
 
-- [ ] 2.1 Independent review: the independent-reviewer subagent, pinned to a commit; record the commit here
-- [ ] 2.2 Second review: on the commit with the first review's fixes; if it led to none, record 'not needed: no fixes' here
-- [ ] 2.3 OpenSpec verify: run openspec-verify-change; record its CRITICAL, WARNING and SUGGESTION counts here
+- [x] 2.1 Independent review: the independent-reviewer subagent, pinned to a commit; record the commit here: 85c7f7ac6a6847f92d04c4973d9596ac0c9e9d9a
+- [x] 2.2 Second review: on the commit with the first review's fixes; if it led to none, record 'not needed: no fixes' here: not needed: no fixes
+- [x] 2.3 OpenSpec verify: run openspec-verify-change; record its CRITICAL, WARNING and SUGGESTION counts here: 0 CRITICAL, 0 WARNING, 0 SUGGESTION
