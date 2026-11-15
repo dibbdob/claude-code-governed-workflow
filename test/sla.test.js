@@ -87,6 +87,28 @@ test('[response-deadline] Refusing a priority the desk does not know', () => {
   assert.equal(responseDueAt(opened, 'urgent').toISOString(), '2026-11-16T14:00:00.000Z');
 });
 
+test('[response-deadline] A priority named like a built-in property', () => {
+  // Each row of the scenario's worked examples, opened Mon 16 Nov 2026 at 10:00 UTC
+  // Every refused row is answered before any is judged, so a failure shows what each name got instead
+  const opened = new Date('2026-11-16T10:00:00Z');
+  const names = ['toString', 'constructor', '__proto__', 'hasOwnProperty'];
+  const answer = (given) => {
+    try {
+      return `due ${responseDueAt(opened, given).toISOString()}`;
+    } catch (error) {
+      return `${error.name}: ${error.message}`;
+    }
+  };
+  assert.deepEqual(
+    names.map((given) => [given, answer(given)]),
+    names.map((given) => [
+      given,
+      `RangeError: Unknown priority: ${given}. The priorities the desk knows: urgent, high, normal, low`,
+    ]),
+  );
+  assert.equal(responseDueAt(opened, 'low').toISOString(), '2026-11-23T10:00:00.000Z', 'low');
+});
+
 test('[response-deadline] An opening time that is not a date', () => {
   // Each row of the scenario's worked examples, priority urgent: the row as the spec writes it, and the
   // opening time. The refused rows are checked with no holidays and with some, the valid row with none
