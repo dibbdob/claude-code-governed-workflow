@@ -2,8 +2,9 @@
 
 ### Requirement: When the desk next opens
 
-The desk SHALL be able to say when it next opens after a given moment: the next 09:00 UTC on a business
-day, Monday to Friday, that is not one of the public holidays given.
+The desk SHALL be able to say when it next opens after a given moment: that moment itself if the desk is
+open then, otherwise the next 09:00 UTC on a business day, Monday to Friday, that is not one of the public
+holidays given.
 
 #### Scenario: When the desk next opens
 
