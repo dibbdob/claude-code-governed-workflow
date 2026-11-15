@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { businessHoursLeft, priorityOf, responseDueAt } from '../src/sla.js';
+import { businessHoursLeft, isOverdue, priorityOf, responseDueAt } from '../src/sla.js';
 
 // Each row of a priority scenario's worked examples (openspec/specs/response-deadline/spec.md): the row as
 // the spec writes it, the ticket, when it was opened, and the priority and reply deadline agreed for it.
@@ -406,3 +406,29 @@ for (const [scenario, rows] of Object.entries(agreed)) {
     }
   });
 }
+
+test('[response-deadline] Whether a ticket is overdue', () => {
+  const rows = [
+    ['Mon 16 Nov 2026, 14:00 UTC', 'Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T14:00:00Z', '2026-11-16T10:00:00Z', false],
+    ['Mon 16 Nov 2026, 14:00 UTC', 'Mon 16 Nov 2026, 14:00 UTC', '2026-11-16T14:00:00Z', '2026-11-16T14:00:00Z', false],
+    ['Mon 16 Nov 2026, 14:00 UTC', 'Mon 16 Nov 2026, 14:01 UTC', '2026-11-16T14:00:00Z', '2026-11-16T14:01:00Z', true],
+    ['Fri 13 Nov 2026, 16:00 UTC', 'Sat 14 Nov 2026, 12:00 UTC', '2026-11-13T16:00:00Z', '2026-11-14T12:00:00Z', true],
+    ['Thu 24 Dec 2026, 16:00 UTC', 'Fri 25 Dec 2026, 10:00 UTC (public holiday)', '2026-12-24T16:00:00Z', '2026-12-25T10:00:00Z', true],
+  ];
+  for (const [due, now, dueAt, nowAt, overdue] of rows) {
+    assert.equal(isOverdue(new Date(nowAt), new Date(dueAt)), overdue, `due ${due}, now ${now}`);
+  }
+});
+
+test('[response-deadline] Overdue for a time that is not a date', () => {
+  const good = new Date('2026-11-16T10:00:00Z');
+  const bad = new Date('not a date');
+  assert.throws(() => isOverdue(bad, new Date('2026-11-16T14:00:00Z')), {
+    name: 'RangeError',
+    message: /moment is not a date/i,
+  });
+  assert.throws(() => isOverdue(good, bad), { name: 'RangeError', message: /deadline is not a date/i });
+  // Not rows of the examples, but refused as businessHoursLeft refuses them
+  assert.throws(() => isOverdue('2026-11-16T10:00:00Z', good), { name: 'RangeError', message: /moment is not a date/i });
+  assert.throws(() => isOverdue(good, undefined), { name: 'RangeError', message: /deadline is not a date/i });
+});

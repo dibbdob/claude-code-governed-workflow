@@ -2,10 +2,10 @@
 
 ## 1. Whether a ticket is overdue
 
-- [ ] 1.1 Add tests named `[response-deadline] Whether a ticket is overdue` and `[response-deadline] Overdue
+- [x] 1.1 Add tests named `[response-deadline] Whether a ticket is overdue` and `[response-deadline] Overdue
   for a time that is not a date`, covering every row of their examples, and see them fail because the
   function does not exist yet
-- [ ] 1.2 Add and export the function from `src/sla.js`, answering true only when now is after the deadline,
+- [x] 1.2 Add and export the function from `src/sla.js`, answering true only when now is after the deadline,
   refusing a moment or deadline that is not a date as `businessHoursLeft` does; give it a doc comment; verify
   the tests from 1.1 pass and `./build.sh` passes as a whole
 

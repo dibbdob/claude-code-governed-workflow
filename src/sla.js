@@ -118,6 +118,28 @@ export function businessHoursLeft(now, due, holidays) {
   return left / HOUR_MS;
 }
 
+/**
+ * Whether a ticket is overdue: true only when the moment now is after its deadline. At the deadline it is not
+ * yet overdue. The two moments are compared as they are: weekends, evenings and holidays do not change it.
+ * @param {Date} now the moment to look at the ticket. Anything but a valid `Date` (an Invalid Date, text, a
+ *   number, nothing) is refused with a RangeError saying the moment is not a date, as `businessHoursLeft`
+ *   refuses it.
+ * @param {Date} due the deadline, as `responseDueAt` gives it. Anything but a valid `Date` is refused in the
+ *   same way, with a RangeError saying the deadline is not a date.
+ * @returns {boolean} yes or no
+ */
+export function isOverdue(now, due) {
+  const at = timeOf(now);
+  if (Number.isNaN(at)) {
+    throw new RangeError(`The moment is not a date: ${describe(now)}`);
+  }
+  const deadline = timeOf(due);
+  if (Number.isNaN(deadline)) {
+    throw new RangeError(`The deadline is not a date: ${describe(due)}`);
+  }
+  return at > deadline;
+}
+
 // The moment a Date holds, or NaN for anything that is not one. It asks the value itself rather than its
 // prototype, so a Date from another realm counts and an object dressed as one does not.
 function timeOf(value) {
