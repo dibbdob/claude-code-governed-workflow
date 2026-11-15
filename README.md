@@ -165,7 +165,7 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
 - **Run on GitHub:** `./build.sh`, by the `build` workflow on every pull request and every push to `main`,
   which main's ruleset requires before a merge.
-- **Run against a live model, on 2026-11-15:** two changes, each from a GitHub issue to a merged pull
+- **Run against a live model, on 2026-11-15:** three changes, each from a GitHub issue to a merged pull
   request.
   - Both were proposed with `/openspec-propose` in an attended session, as pull requests whose build checked
     their scenarios; merging them approved them, and `refined` labelled their issues `ready`.
@@ -179,8 +179,11 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
     and the run carried on without them.
   - The two were delivered at the same time from the same main, so the second to merge needed main merged
     into it: both had added a requirement and code in the same places, and both were kept.
-  - Each reviewer left points for a person, in its pull request. One is a follow-up: once both changes are
-    in, the deadline refuses an opening time that is not a date while the hours left give `NaN` for one.
+  - Each reviewer left points for a person, in its pull request. One was a follow-up: once both changes
+    were in, the deadline refused an opening time that is not a date while the hours left gave `NaN` for
+    one.
+  - Issue 8 was that follow-up, delivered by the `deliver` label for $1.67 in 10 turns: the failing test
+    first, then the fix, reusing change 1's checks. Review found no defects, so there was one round.
 - **Not yet run against a live model:** the packaged plugin's hook in a live session; OpenSpec's `explore`
   skill; and the archive guidance's "please confirm the intent" question, which only an attended delivery
   asks.
