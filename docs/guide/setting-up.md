@@ -26,7 +26,7 @@ It never overwrites a file the project already has, and it commits nothing.
 To pick up a newer version of the workflow later, pull this repository and run `adopt.sh` again. It adds
 what is new and lists each file of yours that differs, for you to compare.
 
-It ends by listing what to fit. Most of it needs nothing:
+It ends by listing what to fit:
 
 | File | What to change |
 |---|---|

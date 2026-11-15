@@ -25,7 +25,7 @@ answer review comments, run `/refine 57` again.
 3. The author answers on the pull request, mentioning `@claude`:
    *"@claude Q1 yes. Q2 bank holidays count as closed days."* Each comment is another run, which revises the
    change and replies. Each run spends API credit, capped at $1.00 and 40 turns.
-4. The developer reviews in the same thread, then approves and merges.
+4. The developer reviews in the same thread, then merges.
 
 A refinement started one way can be carried on the other.
 

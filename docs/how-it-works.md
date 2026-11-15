@@ -15,8 +15,9 @@
   for the person who asked for it to confirm.
 - **A person merges.** Sessions are denied `git push`, and on GitHub a ruleset makes a pull request
   with a passing build the only way into `main`, merged by a person.
-- **Spending is capped.** A run on GitHub stops at $1.50 or 60 turns, and only someone who can label issues
-  can start one.
+- **Spending is capped.** On GitHub a delivery stops at $1.50 or 60 turns, and a refinement run at $1.00 or
+  40 turns. Only someone who can label issues can start one, and only someone with write access can carry
+  a refinement on with `@claude`.
 
 Where an instruction to Claude could be ignored, something else enforces it: a tool list, a hook, or the
 build ([ADR 0001](adr/0001-a-rule-points-at-what-enforces-it.md)).
@@ -29,7 +30,8 @@ build ([ADR 0001](adr/0001-a-rule-points-at-what-enforces-it.md)).
 2. Writes the change, named after the issue, with plain terms, a risk level, scenarios and tasks.
 3. Runs the build, so the spec pull request does not arrive failing.
 4. Revises from the author's answers and the reviewer's comments, asking the author where they disagree.
-5. Reads the change back in plain terms and publishes the pull request. It never approves or merges.
+5. Reads the change back in plain terms and publishes it: in a session it opens the spec pull request, and
+   on GitHub it posts a link for the author to open it. It never approves or merges.
 
 `/deliver` ([command](../.claude/commands/deliver.md)):
 

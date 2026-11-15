@@ -38,6 +38,7 @@ GitHub has no per-run override, so a change that needs a stronger model is deliv
 | *'57' is not an approved change on main*, from `agent.sh` | The same, locally. Also check your local `main` is up to date. |
 | *Issue #n is already refined*, from `/refine` | Its change is on `main`. A change to an approved specification is a new issue. |
 | *A refinement changes only its change folder* | `refinement.sh publish` found other files changed. Discard them, or commit them elsewhere. |
+| A refinement run posts no link to a spec pull request | The run pushed nothing. Claude's comment on the issue says why. |
 | No reply to an `@claude` comment | The commenter lacks write access, the branch does not start `refine/`, or the comment was edited rather than new. |
 | `/deliver` stops because it is on `main` | Make a branch first: `git switch -c deliver/<change>`. |
 | *Commit or stash your changes first* | `agent.sh` and `refinement.sh start` need a clean checkout. |
