@@ -27,15 +27,20 @@ This runs under your Claude login, so a subscription's own limits apply instead 
 echo ${ANTHROPIC_API_KEY:+"API key set: this run will bill the API"}   # prints nothing on a subscription
 ```
 
-**Unattended**, from a clean, up-to-date `main`:
+**Unattended**, with `main` up to date. Your own checkout can be on any branch, with work in progress:
 
 ```bash
 ./scripts/agent.sh 57                              # the change for issue 57
 ./scripts/agent.sh 57 --model claude-opus-5-5      # the same, on another model, for one run
 ```
 
-It makes the branch, runs the delivery, then checks what it left: nothing uncommitted, the change archived,
-the build passing. You push the branch and open the pull request.
+It makes the branch in a worktree of its own, beside your checkout (`<checkout>-deliveries/<change>`), runs the
+delivery there, then checks what it left: nothing uncommitted, the change archived, the build passing. You
+push the branch and open the pull request with the description in `runs/<change>.md`. Two changes can be
+delivered at once from two terminals.
+
+The worktree is removed when the run ends, unless it left something uncommitted; then the run says where it
+is. A change whose `deliver/` branch already exists is refused, so delete the branch to deliver it again.
 
 **Attended**, to watch or steer:
 
