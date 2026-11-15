@@ -77,7 +77,8 @@ export function responseDueAt(openedAt, priority, holidays) {
  * @param {Date} due the deadline, as `responseDueAt` gives it
  * @param {string[] | null} [holidays] public holidays, as `responseDueAt` takes them, refused as it refuses
  *   them with a RangeError
- * @returns {number} hours, or NaN when `now` or `due` is not a date
+ * @returns {number} hours, or NaN when `now` or `due` is an invalid Date (one that is not a Date at all is
+ *   not handled, and throws a TypeError)
  */
 export function businessHoursLeft(now, due, holidays) {
   const closed = holidaySet(holidays);
