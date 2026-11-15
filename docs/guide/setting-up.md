@@ -44,7 +44,7 @@ It ends by listing what to fit. Most of it needs nothing:
    Not needed if Claude only runs on your machine.
 
    ```bash
-   gh label create refine && gh label create deliver
+   gh label create refine --force && gh label create deliver --force
    ```
 3. Write access for spec authors who refine on GitHub. The action answers `@claude` only from people with
    write access.
