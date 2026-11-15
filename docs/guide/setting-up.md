@@ -32,9 +32,28 @@ It ends by listing what to fit:
 | File | What to change |
 |---|---|
 | `build.sh` | Put the project's own build and tests where the starting one says, such as `dotnet build` and `dotnet test`. A project that already had a `build.sh` keeps it: add the OpenSpec, scenario, link and actionlint checks to it. |
-| `tools/specs.mjs` | Tests must put the scenario they cover in their title, such as `[response-deadline] A ticket opened late on a Friday`. It reads `test/*.test.js`; for tests elsewhere, change the line that reads them. |
+| `scripts/test-citations.json` | Tests must put the scenario they cover in their title, such as `[response-deadline] A ticket opened late on a Friday`. This file says where the tests are and how a title is read; see [Tests in another language](#tests-in-another-language). |
 | `openspec/config.yaml` | Rewrite the risk rule to name what is risky for this product, such as payments or permissions. If the project had a config of its own, it was kept: first add this workflow's `rules:` and `operations:` to it, or the build fails every change `/refine` writes, for having no Delivery tasks. |
 | `.github/workflows/build.yml` | Add the project's toolchain before the build, such as `actions/setup-dotnet`. |
+
+### Tests in another language
+
+`tools/specs.mjs` reads `scripts/test-citations.json`: the folders the tests are in (`dirs`), the endings
+of their file names (`suffixes`), and how a title is found. `"style": "node-test"` is a title given to
+`test()` or `it()`. `"style": "quoted"` is any quoted string that starts with the citation, which fits most
+other test frameworks:
+
+| Framework | Test | Config |
+|---|---|---|
+| xUnit | `[Fact(DisplayName = "[response-deadline] A Friday ticket")]` | `{"dirs": ["tests"], "suffixes": ["Tests.cs"], "style": "quoted"}` |
+| Go | `t.Run("[response-deadline] A Friday ticket", ...)` | `{"dirs": ["."], "suffixes": ["_test.go"], "style": "quoted"}` |
+| pytest | a docstring, `"""[response-deadline] A Friday ticket"""` | `{"dirs": ["tests"], "suffixes": [".py"], "style": "quoted"}` |
+
+Where a title is not a string, as in Rust, give a `"pattern"` instead of a style: a regular expression, read
+a line at a time, with the named groups `capability` and `scenario`, such as
+`"^\\s*// scenario: \\[(?<capability>[a-z0-9/-]+)\\] (?<scenario>.+)$"` (backslashes doubled, as JSON needs).
+Folders named `node_modules`, and hidden ones, are never read. Run `node tools/specs.mjs citations` to see
+what it finds.
 
 ## On GitHub, once
 
