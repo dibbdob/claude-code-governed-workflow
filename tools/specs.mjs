@@ -1,7 +1,9 @@
 // The checks OpenSpec does not make, which build.sh runs beside `openspec validate`: every scenario in
 // openspec/specs has a test that names it, as `[<capability>] <scenario>`, and no test names a scenario that
 // neither the specs nor an open change has (ADR 0006); and every scenario in an open change has worked
-// examples, a table under it a person can check without reading code (ADR 0007).
+// examples, a table under it a person can check without reading code (ADR 0007); and every open change's
+// tasks end with /deliver's own steps, so that `openspec validate --archived` fails a delivery that skipped
+// one (ADR 0009).
 //
 // Rewording a change during delivery is allowed, as OpenSpec intends, while its intent holds: archiving
 // lists what changed since approval for a person to confirm (openspec/config.yaml).
@@ -56,6 +58,23 @@ export function examplesProblems(changes) {
   }));
 }
 
+/** The tasks every change ends with: /deliver's review, second review and verify (ADR 0009). */
+export const DELIVERY_TASKS = ['Independent review:', 'Second review:', 'OpenSpec verify:'];
+
+/**
+ * Problems with the Delivery group of open changes' tasks: missing, or without one of its three tasks. Once
+ * it is there, OpenSpec itself refuses to count a change archived with one of them unticked.
+ */
+export function deliveryTasksProblems(changes) {
+  return changes.flatMap((c) => {
+    const group = c.text.match(/^## \d+\. Delivery\s*$([\s\S]*?)(?=^## |(?![\s\S]))/m);
+    if (!group) return [`${c.change}: its tasks have no "## <n>. Delivery" group (openspec/config.yaml)`];
+    const tasks = [...group[1].matchAll(/^- \[[ xX]\] \d+\.\d+ (.*)$/gm)].map((m) => m[1]);
+    return DELIVERY_TASKS.filter((t) => !tasks.some((task) => task.startsWith(t)))
+      .map((t) => `${c.change}: its Delivery group has no "${t.slice(0, -1)}" task`);
+  });
+}
+
 /** Every `[capability] Scenario name` a test title cites. */
 export function citations(tests) {
   return [...tests.matchAll(/\btest\(\s*['"`]\[([a-z0-9/-]+)\]\s+([^'"`]+?)['"`]/g)]
@@ -91,9 +110,12 @@ function check() {
   const changeFiles = files('openspec/changes').map(posix).filter((p) => /\/specs\/.+\.md$/.test(p));
   const openChanges = changeFiles.filter((p) => !p.startsWith('openspec/changes/archive/'))
     .map((p) => ({ change: p.split('/')[2], capability: p.replace(/^openspec\/changes\/[^/]+\/specs\//, '').replace(/\/spec\.md$/, ''), text: readFileSync(p, 'utf8') }));
+  const openTasks = readdirSync('openspec/changes').filter((d) => d !== 'archive')
+    .filter((d) => existsSync(join('openspec/changes', d, 'tasks.md')) || existsSync(join('openspec/changes', d, 'proposal.md')))
+    .map((d) => ({ change: d, text: existsSync(join('openspec/changes', d, 'tasks.md')) ? readFileSync(join('openspec/changes', d, 'tasks.md'), 'utf8') : '' }));
   const tests = files('test').filter((p) => p.endsWith('.test.js')).map((p) => readFileSync(p, 'utf8')).join('\n');
 
-  const problems = [...coverageProblems(specs, openChanges, tests), ...examplesProblems(openChanges)];
+  const problems = [...coverageProblems(specs, openChanges, tests), ...examplesProblems(openChanges), ...deliveryTasksProblems(openTasks)];
   problems.forEach((p) => console.error(p));
   return problems.length === 0 ? 0 : 1;
 }

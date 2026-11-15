@@ -25,6 +25,14 @@ rules:
   tasks:
     - >-
       For each mitigation in the design, include a task that puts it in place and says how it is checked.
+    - >-
+      End the tasks with this group, numbered after the others, worded exactly so: a heading "## <n>.
+      Delivery", then three tasks, "- [ ] <n>.1 Independent review: the independent-reviewer subagent,
+      pinned to a commit; record the commit here", "- [ ] <n>.2 Second review: on the commit with the
+      first review's fixes; if it led to none, record 'not needed: no fixes' here", and "- [ ] <n>.3
+      OpenSpec verify: run openspec-verify-change; record its CRITICAL, WARNING and SUGGESTION counts
+      here". They are /deliver's own steps, kept as tasks so that a change cannot be archived with one
+      skipped. The build fails when an open change lacks them.
 
 operations:
   apply:

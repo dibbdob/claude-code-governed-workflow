@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scenarios, citations, coverageProblems, scenarioBlocks, exampleRows, exampleColumns, placeholders, examplesProblems } from './specs.mjs';
+import { scenarios, citations, coverageProblems, scenarioBlocks, exampleRows, exampleColumns, placeholders, examplesProblems, deliveryTasksProblems } from './specs.mjs';
 
 const spec = (...names) => names.map((n) => `### Requirement: R\n\nIt SHALL.\n\n#### Scenario: ${n}\n\n- **WHEN** a\n- **THEN** b\n`).join('\n');
 
@@ -87,4 +87,25 @@ test('a placeholder with no column, or a column no step uses, is a problem', () 
     '57-x: the scenario "S" (c) has the column "priority", which no step uses',
     '57-x: the scenario "S" (c) has the column "reply due", which no step uses',
   ]);
+});
+
+const delivery = (n = 3, lines = ['Independent review: record the commit', "Second review: or 'not needed: no fixes'", 'OpenSpec verify: the counts']) =>
+  `# Tasks\n\n## 1. Build\n\n- [ ] 1.1 Do it\n\n## ${n}. Delivery\n\n${lines.map((l, i) => `- [ ] ${n}.${i + 1} ${l}`).join('\n')}\n\n## Workflow follow-up\n\n- Archive it.\n`;
+
+test("an open change's tasks end with the Delivery group, ticked or not", () => {
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: delivery() }]), []);
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: delivery().replaceAll('- [ ]', '- [x]') }]), []);
+});
+
+test('an open change with no Delivery group is a problem', () => {
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: '# Tasks\n\n## 1. Build\n\n- [ ] 1.1 Do it\n' }]),
+    ['57-holidays: its tasks have no "## <n>. Delivery" group (openspec/config.yaml)']);
+});
+
+test('a Delivery group missing one of its three tasks is a problem, as is a task outside the group', () => {
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: delivery(2, ['Independent review: x', 'OpenSpec verify: y']) }]),
+    ['57-holidays: its Delivery group has no "Second review" task']);
+  const outside = '# Tasks\n\n## 1. Build\n\n- [ ] 1.1 Second review: here instead\n\n' + delivery(2, ['Independent review: x', 'OpenSpec verify: y']).replace('# Tasks\n\n', '');
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: outside }]),
+    ['57-holidays: its Delivery group has no "Second review" task']);
 });

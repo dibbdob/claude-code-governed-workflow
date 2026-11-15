@@ -74,6 +74,10 @@ is that it has not heard your account.
 For each finding, fix it (with a test that fails before the fix), or record why it stands. Either way it
 goes in the pull request description. If you fixed anything, review again on the new commit.
 
+Tick the change's Delivery tasks as you go, each with what it asks you to record: the first review's
+commit, then the second review's commit, or "not needed: no fixes" when the first led to none. These tasks
+are how the project knows the review happened: a change archived with one unticked fails the build.
+
 Review at most twice. A thorough reviewer always finds something, and each fix invites another round, the
 later ones about inputs nobody sends ([ADR 0003](https://github.com/dibbdob/claude-code-governed-workflow/blob/main/docs/adr/0003-the-reviewer-is-not-told-why.md)). After
 the second review, fix only a finding that breaks a requirement or scenario of the change, and do not review
@@ -87,7 +91,8 @@ done, every requirement implemented, the design (including its risk mitigations)
 self-check by this session, not an independent review; the reviewer in step 3 is that.
 
 Fix each CRITICAL issue (with a test that fails before the fix, where one applies) and run `./build.sh`
-again, or record why it stands. WARNING and SUGGESTION issues go in the pull request description.
+again, or record why it stands. WARNING and SUGGESTION issues go in the pull request description. Then tick
+the Delivery task for verify, with the three counts.
 
 ## 5. Archive the change
 
