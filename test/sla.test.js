@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { priorityOf, responseDueAt } from '../src/sla.js';
 
@@ -74,8 +75,8 @@ test('[response-deadline] A priority the desk does not know', () => {
 });
 
 test('[response-deadline] An opening time that is not a date', () => {
-  // Each row of the scenario's worked examples, priority urgent, with no holidays and with some: the row as
-  // the spec writes it, and the opening time
+  // Each row of the scenario's worked examples, priority urgent: the row as the spec writes it, and the
+  // opening time. The refused rows are checked with no holidays and with some, the valid row with none
   const refused = [
     ['a date that is not a real one (Invalid Date)', new Date('not a date')],
     ['the text "2026-11-16T10:00:00Z", not a date', '2026-11-16T10:00:00Z'],
@@ -160,6 +161,15 @@ test('a real holiday before the year 1000 is accepted', () => {
   // 24 to 26 December 0999 are weekdays: 1 hour on the 24th, the 25th is a holiday, 3 more on the 26th
   const due = responseDueAt(new Date('0999-12-24T16:00:00Z'), 'urgent', ['0999-12-25']);
   assert.equal(due.toISOString(), '0999-12-26T12:00:00.000Z');
+});
+
+test('an opening time is judged by what it is, not by what it claims to be', () => {
+  // Something dressed as a Date is still refused with a RangeError, not a TypeError
+  assert.throws(() => responseDueAt(Object.create(Date.prototype), 'urgent'), { name: 'RangeError', message: /opening time is not a date: an object/ });
+  assert.throws(() => responseDueAt({}, 'urgent'), { name: 'RangeError', message: /opening time is not a date: an object/ });
+  // A real Date made elsewhere (another realm) is a date: Mon 16 Nov 2026, 10:00 UTC, due 14:00 UTC
+  const elsewhere = vm.runInNewContext("new Date('2026-11-16T10:00:00Z')");
+  assert.equal(responseDueAt(elsewhere, 'urgent').toISOString(), '2026-11-16T14:00:00.000Z');
 });
 
 test('an opening time that is not a date, with holidays, is refused', () => {
