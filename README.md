@@ -48,7 +48,8 @@ product, and the **developer**, who reviews and merges. Commands run in your pro
 
 1. Write the issue in plain words. Add the `refine` label, or run `/refine 57` in a session. The change it
    writes is named after the issue, such as `57-bank-holidays`.
-2. Answer Claude's questions, review the spec pull request, and merge it. The issue is now `ready`.
+2. Answer Claude's questions on the spec pull request, then review it and merge it. On GitHub you open it
+   from the link Claude posts. The issue is now `ready`.
 3. Add the `deliver` label and open the pull request it links to. Or run `./scripts/agent.sh 57`, push the
    branch and open the pull request yourself.
 4. Read the pull request, starting with anything marked *Changed since approval*, and merge it.

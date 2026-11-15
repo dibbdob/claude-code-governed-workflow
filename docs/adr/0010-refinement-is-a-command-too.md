@@ -32,9 +32,10 @@ folder.
   changed.
 - **On GitHub, the `refine` label starts it and `@claude` comments carry it on.** The `refine` workflow runs
   the action in its standard tag mode. The first run drafts the change from the issue, with its
-  assumptions written down and its questions numbered, and the workflow opens the spec pull request with
-  its own token and starts the build on the branch: the action has revoked its token by then, and a pull
-  request opened with the workflow's token starts no workflows of its own. Each comment that mentions `@claude` on that pull
+  assumptions written down and its questions numbered, and the workflow comments a link that opens the
+  spec pull request, filled in, for the author to open, as a delivery does. Opening it with the workflow's
+  token would need the repository to let GitHub Actions create and approve pull requests, one setting that
+  would let any workflow approve one; the first trial in an adopted project found it off by default. Each comment that mentions `@claude` on that pull
   request is another run on the same branch, which reads the thread and revises. The thread is the
   conversation's memory. Runs are capped at $1.00 and 40 turns on the default model.
 - **The approval is unchanged.** A person reviews the spec pull request and merges it; `refined` labels the
