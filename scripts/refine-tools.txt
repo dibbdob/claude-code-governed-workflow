@@ -1,0 +1,13 @@
+Read
+Edit
+Write
+Glob
+Grep
+Skill
+Bash(./build.sh)
+Bash(openspec *)
+Bash(git status)
+Bash(git diff *)
+Bash(git log *)
+Bash(git show *)
+Bash(git ls-tree *)

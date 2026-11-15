@@ -1,0 +1,35 @@
+# Note on an issue when its delivery reworded the approved change (ADR 0010). /deliver may revise a
+# requirement while its intent holds, and lists each revision first in its pull request description, under
+# "Changed since approval". When a delivery's pull request says so, this adds one line to the summary on the
+# issue, pointing at that pull request, so the issue never quietly claims the approved wording is current.
+name: revised
+
+on:
+  pull_request:
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  note:
+    if: startsWith(github.event.pull_request.head.ref, 'deliver/') && contains(github.event.pull_request.body, '## Changed since approval')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Add the revision to the issue's summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # deliver/<issue>-<what> from scripts/agent.sh, or deliver/issue-<issue>-<when> from the deliver workflow.
+          [[ "$BRANCH" =~ ^deliver/(issue-)?([0-9]+)- ]] || { echo "No issue number in $BRANCH."; exit 0; }
+          issue="${BASH_REMATCH[2]}"
+          gh issue view "$issue" --json body --jq .body > "$RUNNER_TEMP/body.md"
+          node tools/issue-summary.mjs revised "$RUNNER_TEMP/body.md" "$PR" > "$RUNNER_TEMP/new-body.md"
+          cmp -s "$RUNNER_TEMP/body.md" "$RUNNER_TEMP/new-body.md" || gh issue edit "$issue" --body-file "$RUNNER_TEMP/new-body.md"

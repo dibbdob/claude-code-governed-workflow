@@ -42,6 +42,15 @@ that those repositories also apply changes that file first, and the copies there
 
 `build.sh` runs one at a time per checkout (`.build.lock`).
 
+## Refining a change
+
+`/refine <issue>` turns an issue into a change with the person who raised it, up to a spec pull request
+([command](.claude/commands/refine.md), [ADR 0010](docs/adr/0010-refinement-is-a-command-too.md)). It writes
+only the change folder. In a session, `scripts/refinement.sh` is the one way it reaches GitHub: `git push`
+stays denied. On GitHub, the `refine` label drafts it and `@claude` comments on the spec pull request revise
+it ([`refine.yml`](.github/workflows/refine.yml)). When the change is merged, `refined` labels the issue
+`ready` and writes the change's summary on it with `tools/issue-summary.mjs`.
+
 ## Delivering a change
 
 `/deliver <change>` takes an approved change from its own branch to a pull request description, archiving

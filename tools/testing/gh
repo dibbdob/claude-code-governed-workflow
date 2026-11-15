@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# A pretend `gh` for scripts/refinement.sh's tests. It records each call, one per line, in $FAKE_GH_LOG, and
+# answers the two questions the script asks: which pull request is open for a branch ($FAKE_GH_PR, or none),
+# and the address of one it opens. No network.
+set -euo pipefail
+printf '%s\n' "$*" >> "${FAKE_GH_LOG:-/dev/null}"
+case "$1 ${2:-}" in
+  'pr list') echo "${FAKE_GH_PR:-}" ;;
+  'pr create') echo 'https://github.example.invalid/pull/7' ;;
+esac

@@ -1,0 +1,37 @@
+# The check main's branch protection requires before a pull request can merge: the whole gate, ./build.sh.
+# Started by the governed workflow's scripts/adopt.sh; add the project's own toolchain (setup-dotnet, say)
+# before the build.
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  OPENSPEC_TELEMETRY: '0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # actionlint checks the workflows, which build.sh runs. Pinned by its checksum.
+      - name: Install actionlint
+        run: |
+          version=1.7.12
+          sum=8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+          file="actionlint_${version}_linux_amd64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$file" "https://github.com/rhysd/actionlint/releases/download/v${version}/${file}"
+          echo "${sum}  $RUNNER_TEMP/$file" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$file" -C "$RUNNER_TEMP" actionlint
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - run: ./build.sh
