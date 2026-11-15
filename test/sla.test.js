@@ -73,6 +73,41 @@ test('[response-deadline] A priority the desk does not know', () => {
   assert.throws(() => responseDueAt(new Date(), 'whenever'), RangeError);
 });
 
+test('[response-deadline] An opening time that is not a date', () => {
+  // Each row of the scenario's worked examples, priority urgent, with no holidays and with some: the row as
+  // the spec writes it, and the opening time
+  const refused = [
+    ['a date that is not a real one (Invalid Date)', new Date('not a date')],
+    ['the text "2026-11-16T10:00:00Z", not a date', '2026-11-16T10:00:00Z'],
+    ['nothing at all', undefined],
+    // Not a row of the examples, but named by the proposal: a number is not a date either
+    ['a number', Date.UTC(2026, 10, 16, 10)],
+  ];
+  // What each row gives, side by side, so a failure shows every row and not just the first
+  const outcome = (opened, holidays) => {
+    try {
+      return `due ${responseDueAt(opened, 'urgent', holidays)}`;
+    } catch (error) {
+      return error instanceof RangeError && /opening time is not a date/i.test(error.message)
+        ? 'refused: the opening time is not a date'
+        : `${error.name}: ${error.message}`;
+    }
+  };
+  const given = [];
+  const wanted = [];
+  for (const [row, opened] of refused) {
+    for (const holidays of [undefined, ['2026-11-10']]) {
+      const where = `${row}, ${holidays ? 'with holidays' : 'no holidays'}`;
+      given.push(`${where}: ${outcome(opened, holidays)}`);
+      wanted.push(`${where}: refused: the opening time is not a date`);
+    }
+  }
+  assert.deepEqual(given, wanted);
+
+  // Mon 16 Nov 2026, 10:00 UTC: due Mon 16 Nov, 14:00 UTC, as before this change
+  assert.equal(responseDueAt(new Date('2026-11-16T10:00:00Z'), 'urgent').toISOString(), '2026-11-16T14:00:00.000Z');
+});
+
 test('[response-deadline] A deadline that runs into a public holiday', () => {
   // Monday 10:00 + 8 business hours: 7 on Monday, Tuesday is a holiday, 1 on Wednesday = Wednesday 10:00
   const due = responseDueAt(new Date('2026-11-09T10:00:00Z'), 'high', ['2026-11-10']);

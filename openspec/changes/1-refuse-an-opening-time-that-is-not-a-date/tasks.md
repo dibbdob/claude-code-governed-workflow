@@ -2,7 +2,7 @@
 
 ## 1. Show the defect
 
-- [ ] 1.1 Add a test named `[response-deadline] An opening time that is not a date` covering every row of the
+- [x] 1.1 Add a test named `[response-deadline] An opening time that is not a date` covering every row of the
   scenario's examples, and commit it while it fails on main for the reason the proposal gives (an invalid
   date comes back as a deadline; text and nothing fail with a `TypeError`), with the failing `./build.sh`
   output in the commit message
