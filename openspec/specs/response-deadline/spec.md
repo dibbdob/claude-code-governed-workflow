@@ -1,0 +1,312 @@
+# response-deadline Specification
+
+## Purpose
+
+A customer is promised a first response within a number of business hours that depends on how urgent
+their ticket is. Agents need the deadline as a moment in time, not as a number of hours.
+
+## Requirements
+
+### Requirement: Priority follows what the customer reported
+
+The desk SHALL decide a ticket's priority from what the customer reported, so that an outage is never
+treated as routine, and a security problem is urgent whatever the customer's plan.
+
+#### Scenario: An outage on the enterprise plan is urgent
+
+- **GIVEN** a customer on the enterprise plan reports an outage, opened at `<opened>`
+- **WHEN** its priority is decided and its reply deadline worked out
+- **THEN** the priority is urgent, and the reply is due at `<reply due>`
+
+| opened | reply due |
+|---|---|
+| Wed 11 Nov 2026, 10:00 UTC | Wed 11 Nov, 14:00 UTC |
+
+#### Scenario: An outage on any other plan is high
+
+- **GIVEN** a customer on `<plan>` reports an outage that is not a security problem, opened at `<opened>`
+- **WHEN** its priority is decided and its reply deadline worked out
+- **THEN** the priority is high, and the reply is due at `<reply due>`
+
+| plan | opened | reply due |
+|---|---|---|
+| the starter plan | Wed 11 Nov 2026, 10:00 UTC | Thu 12 Nov, 10:00 UTC |
+| no plan recorded | Fri 13 Nov 2026, 16:00 UTC | Mon 16 Nov, 16:00 UTC |
+
+#### Scenario: A security report is urgent whatever the plan
+
+- **GIVEN** a customer on `<plan>` reports a security problem: `<what they report>`
+- **AND** the ticket is opened at `<opened>`
+- **WHEN** its priority is decided and its reply deadline worked out
+- **THEN** the priority is urgent, and the reply is due at `<reply due>`
+
+| plan | what they report | opened | reply due |
+|---|---|---|---|
+| the starter plan | a leaked password | Wed 11 Nov 2026, 10:00 UTC | Wed 11 Nov, 14:00 UTC |
+| the enterprise plan | someone else's data on their screen | Wed 11 Nov 2026, 16:30 UTC | Thu 12 Nov, 12:30 UTC |
+| no plan recorded | a login they did not make | Fri 13 Nov 2026, 16:00 UTC | Mon 16 Nov, 12:00 UTC |
+
+#### Scenario: A security report that is also an outage is urgent
+
+- **GIVEN** a customer on `<plan>` reports an outage that is also a security problem, opened at `<opened>`
+- **WHEN** its priority is decided and its reply deadline worked out
+- **THEN** the priority is urgent, not high, and the reply is due at `<reply due>`
+
+| plan | opened | reply due |
+|---|---|---|
+| the starter plan | Wed 11 Nov 2026, 10:00 UTC | Wed 11 Nov, 14:00 UTC |
+| the enterprise plan | Fri 13 Nov 2026, 16:00 UTC | Mon 16 Nov, 12:00 UTC |
+
+#### Scenario: A ticket that is not a security report keeps its priority
+
+- **GIVEN** a customer on `<plan>` reports `<what they report>`, which is not a security problem
+- **AND** the ticket is opened at `<opened>`
+- **WHEN** its priority is decided and its reply deadline worked out
+- **THEN** the priority is `<priority>`, as it was before this change, and the reply is due at `<reply due>`
+
+| plan | what they report | opened | priority | reply due |
+|---|---|---|---|---|
+| the enterprise plan | a billing problem | Fri 13 Nov 2026, 16:00 UTC | normal (24 hours) | Wed 18 Nov, 16:00 UTC |
+| the starter plan | a question | Wed 11 Nov 2026, 10:00 UTC | low (40 hours) | Wed 18 Nov, 10:00 UTC |
+| the starter plan | a problem of no recorded kind | Wed 11 Nov 2026, 10:00 UTC | normal (24 hours) | Mon 16 Nov, 10:00 UTC |
+
+### Requirement: Deadlines count business hours only
+
+A response deadline SHALL be counted in business hours, Monday to Friday, 09:00 to 17:00 UTC.
+
+#### Scenario: A ticket opened during business hours
+
+- **WHEN** a ticket is opened during business hours and its deadline is computed
+- **THEN** only business hours count towards the deadline
+
+#### Scenario: A ticket opened late on a Friday
+
+- **WHEN** a ticket is opened late on a Friday and its deadline is computed
+- **THEN** the weekend does not count towards the deadline
+
+### Requirement: An unknown priority is refused
+
+A deadline SHALL NOT be computed for a priority the desk does not know.
+
+#### Scenario: A priority the desk does not know
+
+- **WHEN** a deadline is asked for with a priority the desk does not know
+- **THEN** the request is refused
+
+### Requirement: Public holidays are not business hours
+
+Given a list of public holidays, a response deadline SHALL skip each of them as a whole day, as it skips
+a weekend.
+
+#### Scenario: A deadline that runs into a public holiday
+
+- **GIVEN** a ticket opened at `<opened>` with priority `<priority>`
+- **AND** the public holidays `<public holidays>`
+- **WHEN** its reply deadline is worked out
+- **THEN** each holiday is skipped as a weekend is, and the reply is due at `<reply due>`
+
+| opened | priority | public holidays | reply due |
+|---|---|---|---|
+| Thu 24 Dec 2026, 15:00 UTC | urgent (4 hours) | Fri 25 Dec | Mon 28 Dec, 11:00 UTC |
+| Wed 23 Dec 2026, 09:00 UTC | normal (24 hours) | Fri 25 Dec | Mon 28 Dec, 17:00 UTC |
+| Thu 24 Dec 2026, 16:00 UTC | high (8 hours) | Fri 25 Dec and Mon 28 Dec | Tue 29 Dec, 16:00 UTC |
+
+#### Scenario: A ticket opened on a public holiday
+
+- **GIVEN** a ticket opened at `<opened>`, on a public holiday, with priority `<priority>`
+- **AND** the public holidays `<public holidays>`
+- **WHEN** its reply deadline is worked out
+- **THEN** counting starts at 09:00 on the next business day, and the reply is due at `<reply due>`
+
+| opened | priority | public holidays | reply due |
+|---|---|---|---|
+| Fri 25 Dec 2026, 10:00 UTC | urgent (4 hours) | Fri 25 Dec | Mon 28 Dec, 13:00 UTC |
+| Fri 25 Dec 2026, 07:30 UTC | high (8 hours) | Fri 25 Dec | Mon 28 Dec, 17:00 UTC |
+
+#### Scenario: No list of holidays
+
+- **GIVEN** a ticket opened at `<opened>` with priority `<priority>`
+- **AND** no list of public holidays
+- **WHEN** its reply deadline is worked out
+- **THEN** the reply is due at `<reply due>`, as it was before this change
+
+| opened | priority | reply due |
+|---|---|---|
+| Thu 24 Dec 2026, 15:00 UTC | urgent (4 hours) | Fri 25 Dec, 11:00 UTC |
+
+### Requirement: The business hours left before a deadline
+
+The desk SHALL be able to ask how many business hours are left between a given moment and a ticket's
+deadline, counting only business hours and skipping the public holidays given, as a deadline is counted.
+A ticket at or past its deadline SHALL have none left.
+
+#### Scenario: Business hours left before a deadline
+
+- **GIVEN** a ticket due at `<due>`
+- **AND** the public holidays `<public holidays>`
+- **WHEN** it is looked at at `<now>`
+- **THEN** it has `<hours left>` business hours left
+
+| due | public holidays | now | hours left |
+|---|---|---|---|
+| Mon 16 Nov 2026, 14:00 UTC | none | Mon 16 Nov 2026, 10:00 UTC | 4 |
+| Mon 16 Nov 2026, 10:00 UTC | none | Fri 13 Nov 2026, 16:00 UTC | 2 |
+| Mon 28 Dec 2026, 11:00 UTC | Fri 25 Dec | Thu 24 Dec 2026, 15:00 UTC | 4 |
+| Mon 16 Nov 2026, 10:00 UTC | none | Sat 14 Nov 2026, 12:00 UTC | 1 |
+| Mon 16 Nov 2026, 10:30 UTC | none | Mon 16 Nov 2026, 10:00 UTC | 0.5 |
+| Mon 16 Nov 2026, 14:00 UTC | none | Mon 16 Nov 2026, 14:00 UTC | 0 |
+| Mon 16 Nov 2026, 14:00 UTC | none | Tue 17 Nov 2026, 09:00 UTC | 0 |
+
+### Requirement: An opening time that is not a date is refused
+
+A response deadline SHALL NOT be computed from an opening time that is not a valid date; the request is
+refused and says that the opening time is the problem.
+
+#### Scenario: An opening time that is not a date
+
+- **GIVEN** a ticket whose opening time is `<opened>`, with priority urgent
+- **WHEN** its reply deadline is worked out
+- **THEN** the answer is `<answer>`
+
+| opened | answer |
+|---|---|
+| a date that is not a real one (Invalid Date) | refused: the opening time is not a date |
+| the text "2026-11-16T10:00:00Z", not a date | refused: the opening time is not a date |
+| nothing at all | refused: the opening time is not a date |
+| Mon 16 Nov 2026, 10:00 UTC | due Mon 16 Nov, 14:00 UTC, as before this change |
+
+### Requirement: The hours left are refused for a time that is not a date
+
+The business hours left SHALL NOT be counted from a moment or to a deadline that is not a valid date; the
+request is refused and says which of the two is the problem.
+
+#### Scenario: Hours left for a time that is not a date
+
+- **GIVEN** a ticket due at `<due>`
+- **WHEN** it is looked at at `<now>`
+- **THEN** the answer is `<answer>`
+
+| due | now | answer |
+|---|---|---|
+| Mon 16 Nov 2026, 14:00 UTC | a date that is not a real one (Invalid Date) | refused: the moment is not a date |
+| Mon 16 Nov 2026, 14:00 UTC | nothing at all | refused: the moment is not a date |
+| a date that is not a real one (Invalid Date) | Mon 16 Nov 2026, 10:00 UTC | refused: the deadline is not a date |
+| the text "2026-11-16T14:00:00Z", not a date | Mon 16 Nov 2026, 10:00 UTC | refused: the deadline is not a date |
+| Mon 16 Nov 2026, 14:00 UTC | Mon 16 Nov 2026, 10:00 UTC | 4 hours left, as before this change |
+
+### Requirement: A refused priority names the ones the desk knows
+
+When a deadline is refused for a priority the desk does not know, the refusal SHALL name the priority that
+was given and the priorities the desk does know, from most to least urgent.
+
+#### Scenario: Refusing a priority the desk does not know
+
+- **GIVEN** a ticket opened on Mon 16 Nov 2026 at 10:00 UTC with priority `<priority>`
+- **WHEN** its reply deadline is worked out
+- **THEN** the answer is `<answer>`
+
+| priority | answer |
+|---|---|
+| whenever | refused, naming whenever and the known priorities urgent, high, normal, low |
+| Urgent | refused, naming Urgent and the known priorities urgent, high, normal, low |
+| urgent | due Mon 16 Nov, 14:00 UTC, as before this change |
+
+### Requirement: A priority named like a built-in property is refused
+
+A deadline SHALL NOT be computed for a priority that is not one of the desk's own, even when its name is one
+every object has; it is refused like any other priority the desk does not know.
+
+#### Scenario: A priority named like a built-in property
+
+- **GIVEN** a ticket opened on Mon 16 Nov 2026 at 10:00 UTC with priority `<priority>`
+- **WHEN** its reply deadline is worked out
+- **THEN** the answer is `<answer>`
+
+| priority | answer |
+|---|---|
+| toString | refused, naming toString and the known priorities urgent, high, normal, low |
+| constructor | refused, naming constructor and the known priorities urgent, high, normal, low |
+| __proto__ | refused, naming __proto__ and the known priorities urgent, high, normal, low |
+| hasOwnProperty | refused, naming hasOwnProperty and the known priorities urgent, high, normal, low |
+| low | due Mon 23 Nov, 10:00 UTC, as before this change |
+
+### Requirement: A priority that is not text is refused and described
+
+A deadline asked for with a priority that is not text SHALL be refused like any other unknown priority, and
+the refusal SHALL describe what was given rather than fail while refusing it.
+
+#### Scenario: A priority that is not text
+
+- **GIVEN** a ticket opened on Mon 16 Nov 2026 at 10:00 UTC with priority `<priority>`
+- **WHEN** its reply deadline is worked out
+- **THEN** the answer is `<answer>`
+
+| priority | answer |
+|---|---|
+| a symbol | refused, naming it as a symbol and the known priorities urgent, high, normal, low |
+| an object | refused, naming it as an object and the known priorities urgent, high, normal, low |
+| the number 42 | refused, naming it as a number and the known priorities urgent, high, normal, low |
+| the text whenever | refused, naming whenever and the known priorities, exactly as before this change |
+| urgent | due Mon 16 Nov, 14:00 UTC, as before this change |
+
+### Requirement: Whether a ticket is overdue
+
+The desk SHALL be able to ask whether a ticket is overdue, given its deadline and the moment now, and be
+answered yes or no. A ticket is overdue only when the moment now is after its deadline; at the deadline it
+is not yet overdue. The answer compares the two moments as they are: weekends and holidays do not change it.
+
+#### Scenario: Whether a ticket is overdue
+
+- **GIVEN** a ticket due at `<due>`
+- **WHEN** it is looked at at `<now>`
+- **THEN** the answer to whether it is overdue is `<overdue>`
+
+| due | now | overdue |
+|---|---|---|
+| Mon 16 Nov 2026, 14:00 UTC | Mon 16 Nov 2026, 10:00 UTC | no |
+| Mon 16 Nov 2026, 14:00 UTC | Mon 16 Nov 2026, 14:00 UTC | no |
+| Mon 16 Nov 2026, 14:00 UTC | Mon 16 Nov 2026, 14:01 UTC | yes |
+| Fri 13 Nov 2026, 16:00 UTC | Sat 14 Nov 2026, 12:00 UTC | yes |
+| Thu 24 Dec 2026, 16:00 UTC | Fri 25 Dec 2026, 10:00 UTC (Fri 25 Dec is a public holiday) | yes |
+
+#### Scenario: Overdue for a time that is not a date
+
+- **GIVEN** a ticket due at `<due>`
+- **WHEN** it is looked at at `<now>`
+- **THEN** the answer is `<answer>`
+
+| due | now | answer |
+|---|---|---|
+| Mon 16 Nov 2026, 14:00 UTC | a date that is not a real one (Invalid Date) | refused: the moment is not a date |
+| a date that is not a real one (Invalid Date) | Mon 16 Nov 2026, 10:00 UTC | refused: the deadline is not a date |
+
+### Requirement: When the desk next opens
+
+The desk SHALL be able to say when it next opens after a given moment: that moment itself if the desk is
+open then, otherwise the next 09:00 UTC on a business day, Monday to Friday, that is not one of the public
+holidays given.
+
+#### Scenario: When the desk next opens
+
+- **GIVEN** the public holidays `<public holidays>`
+- **WHEN** a customer writes in at `<moment>`
+- **THEN** the desk next opens at `<next open>`
+
+| moment | public holidays | next open |
+|---|---|---|
+| Fri 13 Nov 2026, 17:30 UTC | none | Mon 16 Nov, 09:00 UTC |
+| Mon 16 Nov 2026, 07:00 UTC | none | Mon 16 Nov, 09:00 UTC |
+| Mon 16 Nov 2026, 10:00 UTC | none | Mon 16 Nov, 10:00 UTC |
+| Mon 16 Nov 2026, 17:00 UTC | none | Tue 17 Nov, 09:00 UTC |
+| Thu 24 Dec 2026, 17:30 UTC | Fri 25 Dec | Mon 28 Dec, 09:00 UTC |
+
+#### Scenario: When the desk next opens, for a moment that is not a date
+
+- **GIVEN** a customer writes in at `<moment>`
+- **WHEN** the desk is asked when it next opens
+- **THEN** the answer is `<answer>`
+
+| moment | answer |
+|---|---|
+| a date that is not a real one (Invalid Date) | refused: the moment is not a date |
+| nothing at all | refused: the moment is not a date |

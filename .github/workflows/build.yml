@@ -1,0 +1,34 @@
+# The check main's branch protection requires before a pull request can merge: the whole gate, ./build.sh,
+# run on GitHub rather than on whoever's laptop.
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # The refine workflow starts it on a spec pull request's branch, which it opens with a token whose events
+  # start no workflows.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # OpenSpec's usage reporting stays off in CI (ADR 0006).
+  OPENSPEC_TELEMETRY: '0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The spec check compares changes with the team's main, so it needs main's history.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # actionlint checks the workflows, which build.sh runs; pinned by its checksum.
+      - uses: ./.github/actions/install-actionlint
+      - run: ./build.sh
+

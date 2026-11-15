@@ -1,0 +1,14 @@
+{
+  "name": "governed-workflow",
+  "owner": {
+    "name": "Jan Wilson"
+  },
+  "description": "One plugin: a governed way to deliver an OpenSpec change with Claude Code.",
+  "plugins": [
+    {
+      "name": "governed-delivery",
+      "source": "./plugins/governed-delivery",
+      "description": "Deliver an approved OpenSpec change end to end: grounded by a spec reader with no shell, reviewed by a reviewer who is not told why and is held to read-only commands by a hook."
+    }
+  ]
+}

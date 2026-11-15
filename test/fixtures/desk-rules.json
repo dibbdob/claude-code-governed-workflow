@@ -1,0 +1,161 @@
+{
+  "_comment": "The desk's rules as worked examples, for any implementation of them to be tested against; this repository's tests hold src/sla.js to them (openspec/specs/response-deadline). Worked out by hand from the spec, not generated from the code. A deadline example with 'holidays' lists the public holidays it assumes, as UTC dates; one without assumes none.",
+  "priority": [
+    {
+      "case": "an outage on the enterprise plan",
+      "category": "outage",
+      "outage": true,
+      "plan": "enterprise",
+      "priority": "urgent"
+    },
+    {
+      "case": "an outage on the starter plan",
+      "category": "outage",
+      "outage": true,
+      "plan": "starter",
+      "priority": "high"
+    },
+    {
+      "case": "an outage with no plan recorded",
+      "category": "outage",
+      "outage": true,
+      "plan": "unknown",
+      "priority": "high"
+    },
+    {
+      "case": "an outage reported as a bug",
+      "category": "bug",
+      "outage": true,
+      "plan": "team",
+      "priority": "high"
+    },
+    {
+      "case": "a billing problem",
+      "category": "billing",
+      "outage": false,
+      "plan": "enterprise",
+      "priority": "normal"
+    },
+    {
+      "case": "a question",
+      "category": "question",
+      "outage": false,
+      "plan": "starter",
+      "priority": "low"
+    },
+    {
+      "case": "a feature request is routine",
+      "category": "feature_request",
+      "outage": false,
+      "plan": "team",
+      "priority": "normal"
+    },
+    {
+      "case": "a bug without an outage",
+      "category": "bug",
+      "outage": false,
+      "plan": "unknown",
+      "priority": "normal"
+    },
+    {
+      "case": "an account problem",
+      "category": "account",
+      "outage": false,
+      "plan": "enterprise",
+      "priority": "normal"
+    },
+    {
+      "case": "a security report on the starter plan",
+      "category": "security",
+      "outage": false,
+      "plan": "starter",
+      "priority": "urgent"
+    },
+    {
+      "case": "a security report with no plan recorded",
+      "category": "security",
+      "outage": false,
+      "plan": "unknown",
+      "priority": "urgent"
+    },
+    {
+      "case": "a security report that is also an outage",
+      "category": "security",
+      "outage": true,
+      "plan": "team",
+      "priority": "urgent"
+    }
+  ],
+  "deadline": [
+    {
+      "case": "urgent, opened mid-morning on a Monday",
+      "opened": "2026-11-16T10:00:00Z",
+      "priority": "urgent",
+      "due": "2026-11-16T14:00:00Z"
+    },
+    {
+      "case": "urgent, opened late on a Friday",
+      "opened": "2026-11-13T16:00:00Z",
+      "priority": "urgent",
+      "due": "2026-11-16T12:00:00Z"
+    },
+    {
+      "case": "normal, opened on a Saturday",
+      "opened": "2026-11-14T12:00:00Z",
+      "priority": "normal",
+      "due": "2026-11-18T17:00:00Z"
+    },
+    {
+      "case": "high, opened before opening time",
+      "opened": "2026-11-17T08:00:00Z",
+      "priority": "high",
+      "due": "2026-11-17T17:00:00Z"
+    },
+    {
+      "case": "high, opened exactly at closing time",
+      "opened": "2026-11-17T17:00:00Z",
+      "priority": "high",
+      "due": "2026-11-18T17:00:00Z"
+    },
+    {
+      "case": "low, forty hours is five whole days",
+      "opened": "2026-11-16T09:00:00Z",
+      "priority": "low",
+      "due": "2026-11-20T17:00:00Z"
+    },
+    {
+      "case": "normal, opened half an hour before the weekend",
+      "opened": "2026-11-13T16:30:00Z",
+      "priority": "normal",
+      "due": "2026-11-18T16:30:00Z"
+    },
+    {
+      "case": "urgent, opened on Christmas Eve afternoon, Christmas a holiday",
+      "opened": "2026-12-24T15:00:00Z",
+      "priority": "urgent",
+      "holidays": [
+        "2026-12-25"
+      ],
+      "due": "2026-12-28T11:00:00Z"
+    },
+    {
+      "case": "high, opened on New Year's Day, a holiday on a Friday",
+      "opened": "2027-01-01T10:00:00Z",
+      "priority": "high",
+      "holidays": [
+        "2027-01-01"
+      ],
+      "due": "2027-01-04T17:00:00Z"
+    },
+    {
+      "case": "normal, two holidays either side of a weekend",
+      "opened": "2026-12-24T09:00:00Z",
+      "priority": "normal",
+      "holidays": [
+        "2026-12-25",
+        "2026-12-28"
+      ],
+      "due": "2026-12-30T17:00:00Z"
+    }
+  ]
+}
