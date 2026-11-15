@@ -39,7 +39,9 @@ export function priorityOf(ticket) {
  * @param {Date} openedAt when the ticket was opened. Anything but a valid `Date` (an Invalid Date, text, a
  *   number, nothing) is refused with a RangeError saying the opening time is not a date.
  * @param {keyof typeof RESPONSE_HOURS} priority one the desk knows. Any other is refused with a RangeError
- *   naming the priority given and the known ones, from most to least urgent: urgent, high, normal, low.
+ *   naming the priority given and the known ones, from most to least urgent: urgent, high, normal, low. A
+ *   text priority is named as given; one that is not text is refused too, described as `a symbol`, `an
+ *   object` or `a number` (`null` and `undefined` as themselves), whatever it is.
  * @param {string[] | null} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a
  *   whole UTC day. With no list, none are skipped. A list that is not one, or holds anything but a real
  *   `YYYY-MM-DD` date, is refused with a RangeError.
@@ -51,10 +53,11 @@ export function responseDueAt(openedAt, priority, holidays) {
     throw new RangeError(`The opening time is not a date: ${describe(openedAt)}`);
   }
 
-  // Known means one of the table's own: a name every object inherits, such as toString, is not a priority
-  if (!Object.hasOwn(RESPONSE_HOURS, priority)) {
+  // Known means text that is one of the table's own: a name every object inherits, such as toString, is not
+  // a priority, and nothing that is not text is, so it is never turned into a key (that can throw)
+  if (typeof priority !== 'string' || !Object.hasOwn(RESPONSE_HOURS, priority)) {
     throw new RangeError(
-      `Unknown priority: ${priority}. The priorities the desk knows: ${Object.keys(RESPONSE_HOURS).join(', ')}`,
+      `Unknown priority: ${typeof priority === 'string' ? priority : kindOf(priority)}. The priorities the desk knows: ${Object.keys(RESPONSE_HOURS).join(', ')}`,
     );
   }
 
@@ -137,9 +140,18 @@ function describe(value) {
     Date.prototype.getTime.call(value);
     return 'Invalid Date'; // a real Date, so an invalid one
   } catch {
-    const type = typeof value;
-    return `${/^[aeiou]/.test(type) ? 'an' : 'a'} ${type}`;
+    return kindOf(value);
   }
+}
+
+// What kind of thing a value is, for an error message: `a symbol`, `an object`, `a number`; null and
+// undefined as themselves.
+function kindOf(value) {
+  if (value === undefined || value === null) {
+    return String(value);
+  }
+  const type = typeof value;
+  return `${/^[aeiou]/.test(type) ? 'an' : 'a'} ${type}`;
 }
 
 // No list (undefined or null) means no holidays. A holiday that is not a real date written exactly as

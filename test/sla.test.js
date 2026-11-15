@@ -109,6 +109,57 @@ test('[response-deadline] A priority named like a built-in property', () => {
   assert.equal(responseDueAt(opened, 'low').toISOString(), '2026-11-23T10:00:00.000Z', 'low');
 });
 
+test('[response-deadline] A priority that is not text', () => {
+  // Each row of the scenario's worked examples, opened Mon 16 Nov 2026 at 10:00 UTC
+  // Every row is answered before any is judged, so a failure shows what each one got instead
+  const opened = new Date('2026-11-16T10:00:00Z');
+  const known = 'The priorities the desk knows: urgent, high, normal, low';
+  const answer = (given) => {
+    try {
+      return `due ${responseDueAt(opened, given).toISOString()}`;
+    } catch (error) {
+      return `${error.name}: ${error.message}`;
+    }
+  };
+  const rows = [
+    [Symbol('urgent'), `RangeError: Unknown priority: a symbol. ${known}`],
+    [{}, `RangeError: Unknown priority: an object. ${known}`],
+    [42, `RangeError: Unknown priority: a number. ${known}`],
+    ['whenever', `RangeError: Unknown priority: whenever. ${known}`],
+    ['urgent', 'due 2026-11-16T14:00:00.000Z'],
+  ];
+  assert.deepEqual(
+    rows.map(([given]) => answer(given)),
+    rows.map(([, wanted]) => wanted),
+  );
+});
+
+test('a priority that is not text is refused whatever it is, never failing while it is refused', () => {
+  const opened = new Date('2026-11-16T10:00:00Z');
+  const hostile = { toString() { throw new Error('boom'); } };
+  const rows = [
+    [Object.create(null), 'an object'],
+    [hostile, 'an object'],
+    [new Date(), 'an object'],
+    [['urgent'], 'an object'],
+    [new String('urgent'), 'an object'],
+    [null, 'null'],
+    [undefined, 'undefined'],
+  ];
+  const answer = (given) => {
+    try {
+      return `due ${responseDueAt(opened, given).toISOString()}`;
+    } catch (error) {
+      return `${error.name}: ${error.message}`;
+    }
+  };
+  const known = 'The priorities the desk knows: urgent, high, normal, low';
+  assert.deepEqual(
+    rows.map(([given]) => answer(given)),
+    rows.map(([, named]) => `RangeError: Unknown priority: ${named}. ${known}`),
+  );
+});
+
 test('[response-deadline] An opening time that is not a date', () => {
   // Each row of the scenario's worked examples, priority urgent: the row as the spec writes it, and the
   // opening time. The refused rows are checked with no holidays and with some, the valid row with none
