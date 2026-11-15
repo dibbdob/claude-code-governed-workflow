@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Set another project up to refine and deliver changes the way this one does: everything README's "Using it
-# in another project" says to copy in, done in one go. Run it from a clone of this repository, after
-# scripts/setup-machine.sh.
+# Set another project up to refine and deliver changes the way this one does: the scripts, checks and
+# workflows, and /refine and /deliver with their agents and hook, copied in in one go. Run it from a clone
+# of this repository, after scripts/setup-machine.sh.
 #
 #   scripts/adopt.sh <path-to-the-other-project>
 #
@@ -36,6 +36,25 @@ copy() { # <path>, the same in both repositories
     echo "  KEPT   $1 (yours differs; compare with $from)"
     kept+=("$1")
   fi
+}
+
+# The commands and agents link to this repository's decision records, which the other project does not
+# have. Their copies link to them on GitHub instead, as the plugin's do (tools/package_plugin.py).
+docs_url="$(sed -n "s/^DOCS_URL = '\(.*\)'\$/\1/p" "$here/tools/package_plugin.py")"
+[[ -n "$docs_url" ]] || { echo "tools/package_plugin.py no longer names DOCS_URL." >&2; exit 1; }
+copy_claude() { # <path under .claude/>
+  local from to="$target/$1"
+  from="$(mktemp)"
+  sed "s#](../../docs/#](${docs_url}#g" "$here/$1" > "$from"
+  if [[ ! -e "$to" ]]; then
+    mkdir -p "$(dirname "$to")" && cp "$from" "$to" && echo "  added  $1"
+  elif cmp -s "$from" "$to"; then
+    echo "  same   $1"
+  else
+    echo "  KEPT   $1 (yours differs; compare with $here/$1)"
+    kept+=("$1")
+  fi
+  rm -f "$from"
 }
 
 echo "== OpenSpec in the project"
@@ -86,6 +105,15 @@ for f in build.sh .github/workflows/build.yml; do
   fi
 done
 
+# In the project, not only in each person's plugin: a run started by a label on GitHub has the checkout
+# and nothing else, and its workflow runs these.
+echo "== /refine and /deliver, their agents and the reviewer's hook"
+for f in .claude/commands/refine.md .claude/commands/deliver.md .claude/agents/spec-reader.md \
+  .claude/agents/independent-reviewer.md; do
+  copy_claude "$f"
+done
+copy .claude/hooks/read_only_bash.py
+
 echo "== permissions and ignored files"
 node -e '
   const fs = require("fs"); const [ours, theirs] = process.argv.slice(1);
@@ -113,17 +141,18 @@ cat <<EOF
 
 Done. Nothing is committed: review it with  git -C "$target" diff  and  git -C "$target" status.
 
-Fit these to the project by hand (README, "Using it in another project"):
+Fit these to the project by hand (docs/guide/setting-up.md has the detail):
   - openspec/config.yaml: the risk rule names what is risky for the example desk (a deadline, a priority).
     Name what is risky for this product.
   - build.sh: keep the OpenSpec, scenario, link and actionlint checks; put the project's own build and
     tests where it says so. scripts/ and the workflows assume ./build.sh is the whole gate.
   - Tests: tools/specs.mjs looks for tests in test/*.test.js, titled test('[capability] Scenario name').
     For tests in another language or place, change the line in it that reads them.
-  - GitHub: the ruleset on main, the Claude GitHub app and the ANTHROPIC_API_KEY secret (README, "Setting
-    it up on GitHub"). If the project has a general @claude workflow, keep it off refine/ pull requests.
-  - Each developer: scripts/setup-machine.sh --plugin, from a clone of this repository, for /refine and
-    /deliver.
+  - GitHub: the ruleset on main and, to start runs with a label, the Claude GitHub app and the
+    ANTHROPIC_API_KEY secret. If the project has a general @claude workflow, keep it off refine/ pull
+    requests.
+  - Each developer: scripts/setup-machine.sh, from a clone of this repository, for the tools. /refine and
+    /deliver now come with the project, so the plugin is not needed here.
 EOF
 if (( ${#kept[@]} )); then
   echo
