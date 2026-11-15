@@ -18,7 +18,7 @@ The spec pull request says `Refines #n`, so merging it leaves the issue open. Th
 | The delivery session | Claude Sonnet 5.5, from [`delivery-model.txt`](../../scripts/delivery-model.txt) |
 | `spec-reader` | Claude Haiku 5.5 |
 | `independent-reviewer` | The session's model |
-| `/refine` | The default on GitHub; the session's model otherwise |
+| `/refine` | On GitHub, the model in `delivery-model.txt`. In a session, the session's model |
 
 Model IDs: `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`.
 

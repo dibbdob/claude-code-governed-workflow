@@ -23,6 +23,9 @@ scripts, the checks and the workflows. It sets up OpenSpec with this workflow's 
 denied. The commands live in the project, so a run on GitHub and every person's session use the same ones.
 It never overwrites a file the project already has, and it commits nothing.
 
+To pick up a newer version of the workflow later, pull this repository and run `adopt.sh` again. It adds
+what is new and lists each file of yours that differs, for you to compare.
+
 It ends by listing what to fit. Most of it needs nothing:
 
 | File | What to change |

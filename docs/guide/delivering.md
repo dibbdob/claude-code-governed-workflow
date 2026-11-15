@@ -5,8 +5,8 @@ opens and merges the pull request.
 
 ## On GitHub
 
-Before adding the label: the issue is labelled `ready`, it is assigned to you, and nobody else has a delivery
-of the same change in flight.
+Before adding the label, check the issue is labelled `ready`. Nothing stops two deliveries of the same
+change, so assign the issue to yourself first.
 
 1. Add `deliver` to the issue. If there is no approved change for it, the run fails at once, in the Actions
    tab.

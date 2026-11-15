@@ -61,7 +61,8 @@ To see one from start to finish: [the issue](https://github.com/dibbdob/claude-c
 
 - [Refining](docs/guide/refining.md) and [delivering](docs/guide/delivering.md): the steps, and what to check
 - [Reference](docs/guide/reference.md): labels, models and switching, troubleshooting
-- [How it works](docs/how-it-works.md): what you can rely on, how it is tested, and the repository layout
+- [How it works](docs/how-it-works.md): what you can rely on, what each step does, and how it is tested
+- [Working on this repository](docs/developing.md): the build, and the layout
 - [Decision records](docs/adr): why each part is built as it is
 
 Released under the [MIT licence](LICENSE).
