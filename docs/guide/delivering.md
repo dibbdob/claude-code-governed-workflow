@@ -29,8 +29,8 @@ is needed.
 
 | | On GitHub (`deliver` label) | On your machine (`agent.sh`, or a session) |
 |---|---|---|
-| Who pays | The repository's `ANTHROPIC_API_KEY`, per token | Your login: on a subscription, no charge per run, counted against the plan's limits |
-| Dollar cap | $1.50 a run | None; the plan has its own limits |
+| Runs under | The repository's `ANTHROPIC_API_KEY` | Your Claude login: on a subscription, the plan's limits apply |
+| Limit | $1.50 a run | None; the plan has its own limits |
 | Model | Always the default, Sonnet 5.5 | The default, or `--model` for one run; any model in a session |
 | Turn limit | 60 | 60 with `agent.sh`; none in a session |
 | Archive checked | By the person reviewing the pull request | By `agent.sh`, before it finishes |

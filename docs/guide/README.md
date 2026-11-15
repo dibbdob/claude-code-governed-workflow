@@ -7,7 +7,7 @@ on GitHub with a label or on your own machine under a Claude subscription.
 1. [Refining a change](refining.md): `/refine` on GitHub or in a session, and what to check before approving
 2. [Delivering a change](delivering.md): what `/deliver` does, on GitHub or on your machine, and what to
    check in its pull request
-3. [Models and costs](models-and-costs.md): which model does what, and what runs have cost
+3. [Models](models.md): which model does what, and how to switch
 4. [Setting up](setting-up.md): each machine, each project, and GitHub
 5. [When something goes wrong](troubleshooting.md)
 
