@@ -46,9 +46,9 @@ build ([ADR 0001](adr/0001-a-rule-points-at-what-enforces-it.md)).
   trusted, the hook's allow and refuse lists, and the scripts against stand-ins for `claude` and `gh`.
 - **On live runs:** eight changes taken from an issue to a merged pull request, on GitHub and on a laptop;
   `/refine` both on GitHub and in a session; a requirement reworded during a delivery and flagged for
-  confirmation; and the plugin installed in another repository, its hook refusing writes.
-- **Not yet run:** `/refine` with an author other than the developer; OpenSpec's `explore` skill; the
-  question an attended delivery asks before archiving a reworded change; and a delivery's pull request
-  closing its issue on merge.
+  confirmation; the plugin installed in another repository, its hook refusing writes; and a new project
+  adopted, refined and delivered by label, its delivery's pull request closing the issue on merge.
+- **Not yet run:** `/refine` with an author other than the developer; OpenSpec's `explore` skill;
+  and the question an attended delivery asks before archiving a reworded change.
 
 To change the workflow itself, see [Working on this repository](developing.md).

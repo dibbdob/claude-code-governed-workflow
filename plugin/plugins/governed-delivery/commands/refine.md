@@ -108,8 +108,8 @@ Then publish it:
   open) and links it on the issue. Give the author the link. Tell them a developer reviews it next, and that
   they can come back to the same session, or run `/refine $1` again, to answer review comments.
 - **On GitHub**, commit the change folder with a message starting with the change name and a colon, and
-  push with the tools you were given. The workflow opens the spec pull request from
-  `.refine/pull-request.md` when there is none. Put the plain-terms read-back and the numbered open
+  push with the tools you were given. When there is no spec pull request yet, the workflow comments a link
+  that opens one from `.refine/pull-request.md`, for the author to click. Put the plain-terms read-back and the numbered open
   questions in your comment, and end it with how to answer: a comment on the spec pull request that
   mentions `@claude`.
 

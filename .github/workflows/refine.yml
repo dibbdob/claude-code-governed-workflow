@@ -1,7 +1,7 @@
 # Refine an issue on GitHub's machines, through a conversation in comments (ADR 0010). Put the label 'refine'
 # on an issue, and Anthropic's Claude Code action runs /refine on a branch of its own: it drafts the change
-# from the issue, with its assumptions and numbered questions, and this workflow opens the spec pull request.
-# The author answers on that pull request in a comment that mentions @claude, and each such comment is
+# from the issue, with its assumptions and numbered questions, and this workflow links to the spec pull
+# request for the author to open. The author answers on that pull request in a comment that mentions @claude, and each such comment is
 # another run, which revises the change on the same branch. A developer reviews the same pull request;
 # merging it is the approval.
 #
@@ -25,7 +25,6 @@ permissions:
   pull-requests: write
   issues: write
   id-token: write
-  actions: write
 
 env:
   OPENSPEC_TELEMETRY: '0'
@@ -126,11 +125,11 @@ jobs:
             --allowedTools "${{ steps.setup.outputs.tools }}"
 
       # The action pushes a branch and stops; it does not open pull requests. A refinement's conversation
-      # happens on its spec pull request, so the first run opens it. The action has revoked its own token by
-      # now, so this uses the workflow's; a pull request opened with that starts no workflows, so the build
-      # is started on the branch explicitly, and its check lands on the pull request's commit. A later run
-      # updates the description; its push, with the action's token, runs the build as usual.
-      - name: Open or update the spec pull request
+      # happens on its spec pull request, so the first run links to one, filled in, for the author to open,
+      # as a delivery does. The workflow's token could open it only if the repository let GitHub Actions
+      # create and approve pull requests, and that one setting would let any workflow approve one. A person
+      # opening it also starts the build. A later run updates the description.
+      - name: Link to the spec pull request, or update it
         if: steps.find.outputs.go == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -144,8 +143,10 @@ jobs:
             [[ -f "$description" ]] && gh pr edit "$PR" --repo "$REPO" --body "$(tail -n +2 "$description")"
             exit 0
           fi
-          if [[ -z "$BRANCH" ]] || ! git ls-remote --exit-code origin "refs/heads/$BRANCH" >/dev/null; then
-            echo "Nothing was pushed, so there is no spec pull request to open. The comment on the issue says why."
+          # Asked of GitHub with the workflow's token, not of git: the checkout's credential is the action's,
+          # which it has revoked by now, so git would answer that nothing was pushed.
+          if [[ -z "$BRANCH" ]] || ! gh api "repos/$REPO/git/ref/heads/$BRANCH" --silent; then
+            echo "Nothing was pushed, so there is no spec pull request to link to. The comment on the issue says why."
             exit 0
           fi
           if [[ -f "$description" ]]; then
@@ -154,7 +155,7 @@ jobs:
             title="Refine #${ISSUE}: $(gh issue view "$ISSUE" --repo "$REPO" --json title --jq .title)"
             body="Refines #${ISSUE}. Merging this approves the change for delivery; it does not close the issue."
           fi
-          url="$(gh pr create --repo "$REPO" --base main --head "$BRANCH" --title "$title" --body "$body")"
-          gh workflow run build.yml --repo "$REPO" --ref "$BRANCH"
-          gh issue comment "$ISSUE" --repo "$REPO" \
-            --body "Spec pull request for this issue: ${url}. Answer the questions there, in a comment that mentions @claude."
+          uri() { jq -rn --arg s "$1" '$s|@uri'; }
+          url="https://github.com/${REPO}/compare/main...${BRANCH}?quick_pull=1&title=$(uri "$title")&body=$(uri "$body")"
+          gh issue comment "$ISSUE" --repo "$REPO" --body "The draft is ready. [Open its spec pull request](${url}),
+          with the title and description filled in, then answer the questions there in a comment that mentions @claude."
