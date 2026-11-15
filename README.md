@@ -11,7 +11,7 @@ request, a label hands it to Anthropic's Claude Code action, and pull requests a
 
 The codebase itself, Ticketdesk, is deliberately small: the rules a support desk uses to set a ticket's
 priority and its response deadline in business hours. It is there so the workflow has something real to
-govern. To use the workflow on a project of your own, see [Using it in another project](#using-it-in-another-project).
+govern. To use the workflow on a project of your own, see [Setting up](docs/guide/setting-up.md).
 
 ## How a change gets made
 
@@ -23,26 +23,16 @@ flowchart LR
   D --> E["Pull request<br/>build, then a person"]
 ```
 
-`/refine <issue>` ([`refine.md`](.claude/commands/refine.md)) takes a brief to a spec pull request with
-the person who raised it, who needs to know nothing of OpenSpec, git or the code: it asks for what only they
-can give, worked examples above all, writes the change with OpenSpec's own skills, checks it builds, reads it
-back in plain terms, and publishes it for review. In a session, `scripts/refinement.sh` does the git and
-GitHub part. On GitHub, the `refine` label drafts it and each `@claude` comment on the spec pull request
-revises it. Once it is merged, `refined` labels the issue `ready` and writes a summary of the change, as
-approved, below the brief ([ADR 0010](docs/adr/0010-refinement-is-a-command-too.md)).
+`/refine <issue>` takes a brief to a specification with the person who raised it, who needs to know nothing
+of OpenSpec, git or the code, and publishes it as a pull request. Merging it approves the change, and the
+`refined` workflow labels the issue `ready` and writes a summary of the change on it. `/deliver <change>`
+then builds it on a branch of its own: grounding by two read-only subagents, tests before code, an
+independent review, OpenSpec's verify and archive, and a pull request description that lists anything
+reworded since approval.
 
-`/deliver` itself, in order ([`deliver.md`](.claude/commands/deliver.md)):
-
-1. **Gates.** The change is on main (approved); the session is on a branch of its own; a defect is reproduced
-   by a failing test before it is fixed; requirements are revised only while their intent holds.
-2. **Grounding, in parallel.** The `spec-reader`, with no shell, returns every requirement and scenario word
-   for word; `Explore` surveys the code they touch.
-3. **Building**, through OpenSpec's apply step: a test named after every scenario, written first, and
-   `./build.sh` before every commit.
-4. **Independent review**, by a reviewer given one commit and the test citations, and nothing else.
-5. **OpenSpec's verify**, then **archive**, which folds the change into the main specs, listing any
-   requirement revised since approval for a person to confirm.
-6. **A pull request description**, with the risk, the revisions and every review finding.
+**The [guide](docs/guide/README.md) says how to use it:** [refining](docs/guide/refining.md),
+[delivering](docs/guide/delivering.md), [models and costs](docs/guide/models-and-costs.md),
+[setting up](docs/guide/setting-up.md) and [when something goes wrong](docs/guide/troubleshooting.md).
 
 ## What it demonstrates
 
@@ -64,7 +54,7 @@ approved, below the brief ([ADR 0010](docs/adr/0010-refinement-is-a-command-too.
 | **Claude Code on GitHub, the standard way**: the build on every pull request, and deliveries started by a label through Anthropic's Claude Code action, which runs this project's `/deliver`, subagents and hook as they are | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml), [ADR 0008](docs/adr/0008-deliveries-run-on-the-standard-action.md) |
 | **A delivery's steps as tasks**: every change's tasks end with grounding, the review, the second review and verify, so a delivery that skips one fails the build | [`config.yaml`](openspec/config.yaml), [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md), [ADR 0011](docs/adr/0011-grounding-is-a-delivery-task.md) |
 | **Refinement as a command**: `/refine` interviews the author, writes the change with OpenSpec's skills, and publishes the spec pull request; on GitHub, a label and `@claude` comments; the approved change summarised on its issue | [`refine.md`](.claude/commands/refine.md), [`refinement.sh`](scripts/refinement.sh), [`refine.yml`](.github/workflows/refine.yml), [`issue-summary.mjs`](tools/issue-summary.mjs), [ADR 0010](docs/adr/0010-refinement-is-a-command-too.md) |
-| **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), branch protection (below) |
+| **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), [the ruleset](docs/guide/setting-up.md#on-github-once) |
 
 ## Run it
 
@@ -86,118 +76,9 @@ which brings shellcheck for the scripts in each step). Without it, a laptop buil
 NOT CHECKED and carries on; on GitHub the build workflow installs a pinned release first, and a build there
 without it fails.
 
-OpenSpec's skills in a Claude Code session (`/openspec-propose` and the others) run the `openspec` command, so
-install the same version for your machine:
-
-```bash
-npm install --global @fission-ai/openspec@2.0.0
-```
-
-To see the workflow work, propose a change with `/openspec-propose <what you want>`, named after its issue
-(`57-bank-holidays`), and once its pull request is merged:
-
-```bash
-./scripts/agent.sh 57                  # unattended: its own branch, /deliver run headless, then the build
-./scripts/agent.sh 57 --model claude-opus-5-5   # the same, on a stronger model than the default
-```
-
-It runs as the `deliver` workflow on GitHub does, with the same tools, default model and turn limit, under
-your own Claude Code login rather than the API key.
-
-or make the branch yourself and run it in a Claude Code session:
-
-```bash
-git switch -c deliver/57-bank-holidays         # then, in a session: /deliver 57-bank-holidays
-```
-
-Either way, push the branch and open a pull request with the description `/deliver` wrote in
-`.delivery/pull-request.md`. On GitHub, labelling the issue `deliver` does all of it but the last click.
-
-## Setting it up on GitHub
-
-1. Put the repository on GitHub. Add a ruleset for `main` that requires a pull request, one approval, the
-   `build` check, and branches to be up to date before merging. On a private repository that needs GitHub
-   Pro or a team plan. With one person, set approvals to 0 until there is a second.
-2. Everyone sets their machine up once, spec authors who refine in a session included, from a clone of this
-   repository:
-
-   ```bash
-   scripts/setup-machine.sh            # installs what is missing; says what it did
-   scripts/setup-machine.sh --check    # says what is missing, and changes nothing
-   ```
-
-   It checks Node, git, Python and Claude Code; installs the pinned OpenSpec and turns on its `verify`
-   workflow (not in OpenSpec's default profile, and `openspec update` would remove it); installs actionlint
-   and the GitHub CLI with Homebrew where it can; and starts `gh auth login` if you are not signed in, which
-   `/refine` publishes through. `--plugin` also installs the governed-delivery plugin, for working in
-   another project. Run it again at any time: it changes only what is missing.
-
-3. Start every piece of work as a GitHub issue with a brief. Refine it with `/refine <issue>` in a session,
-   or the `refine` label on GitHub: either way its change is proposed on a branch and reviewed as a pull
-   request, which is the refinement. Once it is approved and merged, the change is ready, and the `refined`
-   workflow labels the issue `ready` and writes the change's summary on it. Whoever the issue is assigned to
-   has the work.
-4. For refinements and deliveries on GitHub's machines (the `refine` and `deliver` labels), install the
-   [Claude GitHub app](https://github.com/apps/claude) on the repository and add the secret
-   `ANTHROPIC_API_KEY`. [`deliver.yml`](.github/workflows/deliver.yml) says why each is needed. The action
-   answers `@claude` only from people with write access to the repository.
-
-## Using it in another project
-
-The plugin carries the part that is Claude Code: `/deliver`, `/refine`, the spec-reader, the independent reviewer,
-and the hook that holds the reviewer to read-only commands. Everything else is the project's own, and is
-copied in.
-
-```mermaid
-flowchart LR
-  A["1. This machine<br/>setup-machine.sh --plugin"] --> B["2. The project<br/>adopt.sh"]
-  B --> C["3. Fitted<br/>by a person"]
-  C --> D["4. On GitHub<br/>ruleset, app, secret"]
-```
-
-Two scripts do the setting up, from a clone of this repository:
-
-```bash
-scripts/setup-machine.sh --plugin           # this machine, once: the tools, and the plugin for your user
-scripts/adopt.sh ../the-other-project       # the project, once: everything below, ready to fit
-```
-
-`adopt.sh` initialises OpenSpec in the project with this project's rules, pins OpenSpec in its
-`package.json`, copies in the scripts, checks and workflows, merges the permissions and `.gitignore` lines,
-and writes a starting `build.sh` and build workflow if the project has none. It never overwrites a file
-the project already has: one that differs is kept and listed. It commits nothing, so `git status` and
-`git diff` show all it did, and running it again changes nothing. It ends with what a person still has to
-fit, which is the right-hand column below.
-
-1. **OpenSpec**, initialised for Claude Code, with this project's `openspec/config.yaml`.
-2. **The plugin**, installed for each developer by `setup-machine.sh --plugin`. By hand:
-
-   ```bash
-   claude plugin marketplace add ./plugin
-   claude plugin install governed-delivery@governed-workflow
-   ```
-
-3. **Copied in, and fitted to the project:**
-
-   | Copy | What it does | Fit it |
-   |---|---|---|
-   | [`scripts/`](scripts) | `agent.sh` runs a delivery unattended, with the tools in `headless-tools.txt`; `refinement.sh` starts and publishes a refinement in a session; `refine-tools.txt` is what a refinement on GitHub may use | as they are, if the gate is `./build.sh` and changes are named after issues: the lists allow only the build, `openspec` and git |
-   | [`.claude/settings.json`](.claude/settings.json) | allows the build, `openspec` and `refinement.sh`; denies `git push` and the commands that throw work away | merge into your own; keep `git push` denied, so `refinement.sh` stays the one way a refinement leaves a machine |
-   | [`tools/specs.mjs`](tools/specs.mjs) | fails the build when a scenario has no test, or an open change's scenario is not an outline with examples | tests must name the scenario they cover in their title, as here; it reads `test/*.test.js`, so for tests in another language or place, change the line that reads them |
-   | [`tools/links.mjs`](tools/links.mjs) | fails the build on a broken relative link | as it is |
-   | [`tools/issue-summary.mjs`](tools/issue-summary.mjs) | writes an approved change's summary on its issue, for the `refined` and `revised` workflows | as it is |
-   | [`openspec/config.yaml`](openspec/config.yaml) | the rules on risk, worked examples and revisions | the risk rule names what is risky for the desk (a deadline, a priority); reword it for yours |
-   | [`build.sh`](build.sh) | the whole gate, which `/deliver` and `/refine` run before every commit; a project with none gets [a starting one](scripts/adopt/build.sh) | keep the OpenSpec, scenario, link and actionlint checks; put the project's own build and tests in place of the rest |
-
-4. **On GitHub:** the workflows and [`scripts/approved-issues.sh`](scripts/approved-issues.sh) are copied in;
-   add the ruleset, the app and the secret as in "Setting it up on GitHub". The workflows install
-   actionlint with one shared step, [`install-actionlint`](.github/actions/install-actionlint/action.yml),
-   which is copied in too; a project with its own build workflow adds that step ([as here](.github/workflows/build.yml)). If the project already has a general `@claude` workflow, keep it off pull requests
-   whose branch starts `refine/`, or both will answer.
-
-Then each change follows the same path as here: an issue, `/refine` in a session or the `refine` label,
-its spec pull request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and a pull
-request.
+To set up a machine, use the workflow on a project of your own, or put it on GitHub, see
+[Setting up](docs/guide/setting-up.md). To deliver a change once it is approved, see
+[Delivering a change](docs/guide/delivering.md).
 
 ## What has and has not been verified
 
@@ -310,6 +191,7 @@ request.
   skills/        links to OpenSpec's skills
   settings.json  permissions
 .agents/skills/  OpenSpec's skills, shared by any AI tool (generated by openspec init and update)
+docs/guide/      how to refine, deliver and set up
 docs/adr/        why each decision was made
 openspec/
   specs/         how the system works now, requirement by requirement
