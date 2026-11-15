@@ -243,11 +243,58 @@ test('the hours left refuse a holiday list as a deadline does, even past the dea
   }
 });
 
-test('the hours left before or after a moment that is not a date are not a number', () => {
-  const date = new Date('2026-11-16T10:00:00Z');
-  const notADate = new Date('not a date');
-  assert.ok(Number.isNaN(businessHoursLeft(notADate, date)));
-  assert.ok(Number.isNaN(businessHoursLeft(date, notADate)));
+test('[response-deadline] Hours left for a time that is not a date', () => {
+  // Each refused row of the scenario's worked examples: the row as the spec writes it, the deadline, the
+  // moment, and which of the two is refused. Each is checked with no holidays and with some.
+  const due = new Date('2026-11-16T14:00:00Z');
+  const now = new Date('2026-11-16T10:00:00Z');
+  const refused = [
+    ['due Mon 16 Nov 2026, 14:00 UTC, now a date that is not a real one (Invalid Date)', due, new Date('not a date'), 'moment'],
+    ['due Mon 16 Nov 2026, 14:00 UTC, now nothing at all', due, undefined, 'moment'],
+    ['due a date that is not a real one (Invalid Date), now Mon 16 Nov 2026, 10:00 UTC', new Date('not a date'), now, 'deadline'],
+    ['due the text "2026-11-16T14:00:00Z", not a date, now Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T14:00:00Z', now, 'deadline'],
+    // Not rows of the examples, but named by the proposal: a number is not a date either
+    ['due Mon 16 Nov 2026, 14:00 UTC, now a number', due, Date.UTC(2026, 10, 16, 10), 'moment'],
+    ['due a number, now Mon 16 Nov 2026, 10:00 UTC', Date.UTC(2026, 10, 16, 14), now, 'deadline'],
+  ];
+  // What each row gives, side by side, so a failure shows every row and not just the first
+  const outcome = (rowDue, rowNow, holidays) => {
+    try {
+      return `${businessHoursLeft(rowNow, rowDue, holidays)} hours left`;
+    } catch (error) {
+      const which = /^The (moment|deadline) is not a date: /.exec(error.message);
+      return error instanceof RangeError && which
+        ? `refused: the ${which[1]} is not a date`
+        : `${error.name}: ${error.message}`;
+    }
+  };
+  const given = [];
+  const wanted = [];
+  for (const [row, rowDue, rowNow, which] of refused) {
+    for (const holidays of [undefined, ['2026-11-10']]) {
+      const where = `${row}, ${holidays ? 'with holidays' : 'no holidays'}`;
+      given.push(`${where}: ${outcome(rowDue, rowNow, holidays)}`);
+      wanted.push(`${where}: refused: the ${which} is not a date`);
+    }
+  }
+  assert.deepEqual(given, wanted);
+
+  // due Mon 16 Nov 2026, 14:00 UTC, now Mon 16 Nov 2026, 10:00 UTC: 4 hours left, as before this change
+  assert.equal(businessHoursLeft(now, due), 4);
+});
+
+test('the moment and the deadline are judged by what they are, as an opening time is', () => {
+  const now = new Date('2026-11-16T10:00:00Z');
+  const due = new Date('2026-11-16T14:00:00Z');
+  // An object dressed as a Date is refused, naming which of the two it was
+  assert.throws(() => businessHoursLeft(Object.create(Date.prototype), due), { name: 'RangeError', message: /^The moment is not a date: an object$/ });
+  assert.throws(() => businessHoursLeft(now, {}), { name: 'RangeError', message: /^The deadline is not a date: an object$/ });
+  assert.throws(() => businessHoursLeft(now, null), { name: 'RangeError', message: /^The deadline is not a date: null$/ });
+  // A Date from another realm is a Date
+  const foreign = (iso) => vm.runInNewContext(`new Date('${iso}')`);
+  assert.equal(businessHoursLeft(foreign('2026-11-16T10:00:00Z'), foreign('2026-11-16T14:00:00Z')), 4);
+  // Past the deadline, a moment that is not a date is still refused, not answered with 0
+  assert.throws(() => businessHoursLeft(new Date('not a date'), new Date('2026-11-01T00:00:00Z')), { name: 'RangeError', message: /^The moment is not a date: Invalid Date$/ });
 });
 
 // The worked examples agreed for each scenario (openspec/specs/response-deadline/spec.md), row by row: each
