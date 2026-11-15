@@ -12,7 +12,7 @@
 
 ## 2. Delivery
 
-- [ ] 2.1 Grounding: the spec-reader and Explore subagents, side by side; record what the spec-reader found stale here, or 'nothing stale'
+- [x] 2.1 Grounding: the spec-reader and Explore subagents, side by side; record what the spec-reader found stale here, or 'nothing stale': nothing stale
 - [ ] 2.2 Independent review: the independent-reviewer subagent, pinned to a commit; record the commit here
 - [ ] 2.3 Second review: on the commit with the first review's fixes; if it led to none, record 'not needed: no fixes' here
 - [ ] 2.4 OpenSpec verify: run openspec-verify-change; record its CRITICAL, WARNING and SUGGESTION counts here
