@@ -19,8 +19,9 @@ without it, it tells you to install them yourself.
 ## Each project
 
 [`adopt.sh`](../../scripts/adopt.sh) copies in `/refine` and `/deliver` with their agents and hook, the
-scripts, the checks and the workflows. It sets up OpenSpec with this workflow's rules, and keeps `git push`
-denied. The commands live in the project, so a run on GitHub and every person's session use the same ones.
+scripts, the checks and the workflows. It sets up OpenSpec with this workflow's rules, or, in a project that
+already has its own `openspec/config.yaml`, keeps that and says to add them. It keeps `git push` denied.
+The commands live in the project, so a run on GitHub and every person's session use the same ones.
 It never overwrites a file the project already has, and it commits nothing.
 
 To pick up a newer version of the workflow later, pull this repository and run `adopt.sh` again. It adds
@@ -32,7 +33,7 @@ It ends by listing what to fit:
 |---|---|
 | `build.sh` | Put the project's own build and tests where the starting one says, such as `dotnet build` and `dotnet test`. A project that already had a `build.sh` keeps it: add the OpenSpec, scenario, link and actionlint checks to it. |
 | `tools/specs.mjs` | Tests must put the scenario they cover in their title, such as `[response-deadline] A ticket opened late on a Friday`. It reads `test/*.test.js`; for tests elsewhere, change the line that reads them. |
-| `openspec/config.yaml` | Rewrite the risk rule to name what is risky for this product, such as payments or permissions. |
+| `openspec/config.yaml` | Rewrite the risk rule to name what is risky for this product, such as payments or permissions. If the project had a config of its own, it was kept: first add this workflow's `rules:` and `operations:` to it, or the build fails every change `/refine` writes, for having no Delivery tasks. |
 | `.github/workflows/build.yml` | Add the project's toolchain before the build, such as `actions/setup-dotnet`. |
 
 ## On GitHub, once

@@ -107,7 +107,7 @@ function main([command, ...args]) {
   throw new Error('usage: issue-summary.mjs section <change-dir> <approved-on> <spec-url> <pr|-> | apply <body> <section> | revised <body> <pr>');
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     process.stdout.write(main(process.argv.slice(2)));
   } catch (error) {

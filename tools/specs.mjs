@@ -133,7 +133,7 @@ function check() {
   return problems.length === 0 ? 0 : 1;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv[2] !== 'check') {
     console.error('usage: node tools/specs.mjs check');
     process.exit(2);
