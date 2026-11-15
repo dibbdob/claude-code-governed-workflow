@@ -38,7 +38,8 @@ export function priorityOf(ticket) {
  * The moment a ticket's first response is due, counting business hours only.
  * @param {Date} openedAt when the ticket was opened. Anything but a valid `Date` (an Invalid Date, text, a
  *   number, nothing) is refused with a RangeError saying the opening time is not a date.
- * @param {keyof typeof RESPONSE_HOURS} priority
+ * @param {keyof typeof RESPONSE_HOURS} priority one the desk knows. Any other is refused with a RangeError
+ *   naming the priority given and the known ones, from most to least urgent: urgent, high, normal, low.
  * @param {string[] | null} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a
  *   whole UTC day. With no list, none are skipped. A list that is not one, or holds anything but a real
  *   `YYYY-MM-DD` date, is refused with a RangeError.
@@ -52,7 +53,9 @@ export function responseDueAt(openedAt, priority, holidays) {
 
   const hours = RESPONSE_HOURS[priority];
   if (hours === undefined) {
-    throw new RangeError(`Unknown priority: ${priority}`);
+    throw new RangeError(
+      `Unknown priority: ${priority}. The priorities the desk knows: ${Object.keys(RESPONSE_HOURS).join(', ')}`,
+    );
   }
 
   const closed = holidaySet(holidays);

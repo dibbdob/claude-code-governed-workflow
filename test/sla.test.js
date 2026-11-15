@@ -74,6 +74,19 @@ test('[response-deadline] A priority the desk does not know', () => {
   assert.throws(() => responseDueAt(new Date(), 'whenever'), RangeError);
 });
 
+test('[response-deadline] Refusing a priority the desk does not know', () => {
+  // Each row of the scenario's worked examples, opened Mon 16 Nov 2026 at 10:00 UTC
+  const opened = new Date('2026-11-16T10:00:00Z');
+  for (const given of ['whenever', 'Urgent']) {
+    assert.throws(
+      () => responseDueAt(opened, given),
+      new RangeError(`Unknown priority: ${given}. The priorities the desk knows: urgent, high, normal, low`),
+      given,
+    );
+  }
+  assert.equal(responseDueAt(opened, 'urgent').toISOString(), '2026-11-16T14:00:00.000Z');
+});
+
 test('[response-deadline] An opening time that is not a date', () => {
   // Each row of the scenario's worked examples, priority urgent: the row as the spec writes it, and the
   // opening time. The refused rows are checked with no holidays and with some, the valid row with none
