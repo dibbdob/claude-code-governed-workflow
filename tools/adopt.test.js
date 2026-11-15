@@ -142,6 +142,16 @@ test("an OpenSpec config the project already had is kept, though it has no rules
   assert.equal(r.status, 0, r.stderr);
   assert.equal(read(dir, 'openspec/config.yaml'), config);
   assert.match(r.stdout, /Kept as they were, because the project already had them: .*openspec\/config\.yaml/);
+  assert.match(r.stdout, /has none of this workflow's rules[\s\S]*fails every change \/refine writes/);
+  assert.doesNotMatch(r.stdout, /the risk rule names what is risky for the example desk/);
+});
+
+test("a project's own config that already has this workflow's rules is only told to fit the risk rule", () => {
+  const config = `${readFileSync('openspec/config.yaml', 'utf8')}\ncontext: |\n  Our own product.\n`;
+  const r = adopt(project({ 'openspec/config.yaml': config }));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /the risk rule names what is risky for the example desk/);
+  assert.doesNotMatch(r.stdout, /has none of this workflow's rules/);
 });
 
 test('a project that already depends on OpenSpec is not given a second copy', () => {

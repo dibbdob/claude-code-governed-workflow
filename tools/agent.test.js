@@ -147,3 +147,8 @@ test('the deliver workflow reads the same default model and tool list as agent.s
   assert.match(workflow, /scripts\/headless-tools\.txt/);
   assert.doesNotMatch(workflow, /--model claude-/, 'no model is written into the workflow itself');
 });
+
+test('an unattended run may ask which branch it is on, but not delete or move one', () => {
+  const tools = readFileSync('scripts/headless-tools.txt', 'utf8').split('\n');
+  assert.deepEqual(tools.filter((t) => t.startsWith('Bash(git branch')), ['Bash(git branch --show-current)']);
+});

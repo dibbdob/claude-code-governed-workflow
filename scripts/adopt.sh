@@ -150,13 +150,23 @@ for line in node_modules runs/ .build.lock/ .delivery/ .refine/; do
 done
 (( added )) && echo "  added  lines to .gitignore" || echo "  same   .gitignore"
 
+# A config the project kept has rules of its own, or none. Without this workflow's, OpenSpec never ends a
+# change's tasks with the Delivery group, and the build fails every change /refine writes.
+if grep -q 'Grounding:' "$target/openspec/config.yaml" 2>/dev/null; then
+  config_fit="openspec/config.yaml: the risk rule names what is risky for the example desk (a deadline, a
+    priority). Name what is risky for this product."
+else
+  config_fit="openspec/config.yaml is the project's own, kept, and has none of this workflow's rules. Add the
+    rules: and operations: from $here/openspec/config.yaml to it first: until it has the tasks rule, the
+    build fails every change /refine writes, for having no Delivery group."
+fi
+
 cat <<EOF
 
 Done. Nothing is committed: review it with  git -C "$target" diff  and  git -C "$target" status.
 
 Fit these to the project by hand (docs/guide/setting-up.md has the detail):
-  - openspec/config.yaml: the risk rule names what is risky for the example desk (a deadline, a priority).
-    Name what is risky for this product.
+  - ${config_fit}
   - build.sh: keep the OpenSpec, scenario, link and actionlint checks; put the project's own build and
     tests where it says so. scripts/ and the workflows assume ./build.sh is the whole gate.
   - Tests: tools/specs.mjs looks for tests in test/*.test.js, titled test('[capability] Scenario name').
