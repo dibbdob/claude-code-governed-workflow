@@ -65,15 +65,29 @@ publish)
   others="$(git status --porcelain --untracked-files=all | cut -c4- | grep -v "^openspec/changes/${change}/" || true)"
   [[ -z "$others" ]] || { printf 'A refinement changes only its change folder. Also changed:\n%s\n' "$others" >&2; exit 1; }
 
-  branch="$(git branch --show-current)"
-  if [[ "$branch" == main ]]; then
+  current="$(git branch --show-current)"
+  if [[ "$current" == main ]]; then
     branch="refine/${change}"
-    git switch --quiet -c "$branch"
-  elif [[ "$branch" != "refine/${issue}-"* && "$branch" != "refine/issue-${issue}-"* ]]; then
-    echo "On ${branch}; a refinement is published from main or from its refine/${issue}-... branch." >&2
+    # The new branch is main and the change on top. A commit on main that the remote does not have would go
+    # up with it, and a spec pull request carries nothing but its specification.
+    git fetch --quiet "$remote"
+    ahead="$(git rev-list --count "${main}..HEAD")"
+    (( ahead == 0 )) ||
+      { echo "main has ${ahead} commit(s) that ${main} does not; push or move them before publishing a refinement." >&2; exit 1; }
+  elif [[ "$current" == "refine/${issue}-"* || "$current" == "refine/issue-${issue}-"* ]]; then
+    branch="$current"
+  else
+    echo "On ${current}; a refinement is published from main or from its refine/${issue}-... branch." >&2
     exit 1
   fi
 
+  # Everything that can refuse does so before anything is pushed.
+  description=.refine/pull-request.md
+  pr="$(gh pr list --head "$branch" --state open --json url --jq '.[0].url')"
+  [[ -n "$pr" || -f "$description" ]] ||
+    { echo "Write the spec pull request's description to ${description} first." >&2; exit 1; }
+
+  [[ "$current" != main ]] || git switch --quiet -c "$branch"
   ./build.sh
 
   if [[ -n "$(git status --porcelain)" ]]; then
@@ -83,10 +97,7 @@ publish)
   fi
   git push --quiet -u "$remote" "HEAD:refs/heads/${branch}"
 
-  description=.refine/pull-request.md
-  pr="$(gh pr list --head "$branch" --state open --json url --jq '.[0].url')"
   if [[ -z "$pr" ]]; then
-    [[ -f "$description" ]] || { echo "Write the spec pull request's description to ${description} first." >&2; exit 1; }
     pr="$(gh pr create --base main --head "$branch" --title "$(head -n1 "$description")" \
       --body "$(tail -n +2 "$description")")"
     gh issue comment "$issue" --body "Spec pull request for this issue: ${pr}. Review it there; mention @claude in a comment to have it revised."

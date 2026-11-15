@@ -58,23 +58,34 @@ copy_claude() { # <path under .claude/>
 }
 
 echo "== OpenSpec in the project"
+initialised=false
 if [[ -d "$target/openspec" ]]; then
   echo "  same   openspec/ (already initialised)"
 else
   (cd "$target" && openspec init --tools claude --no-animation >/dev/null) && echo "  added  openspec/, and OpenSpec's skills for Claude Code"
+  initialised=true
 fi
-# A config with no rules is the one openspec init writes; this project's rules take its place.
-if [[ -f "$target/openspec/config.yaml" ]] && grep -q '^rules:' "$target/openspec/config.yaml"; then
-  if cmp -s "$here/openspec/config.yaml" "$target/openspec/config.yaml"; then echo "  same   openspec/config.yaml"
-  else echo "  KEPT   openspec/config.yaml (it has rules of its own; compare with $here/openspec/config.yaml)"; kept+=(openspec/config.yaml); fi
-else
+# The config openspec init has just written has no rules, and this project's take its place. A config the
+# project had before is its own, rules or not, and is kept like any other file.
+if $initialised || [[ ! -f "$target/openspec/config.yaml" ]]; then
   cp "$here/openspec/config.yaml" "$target/openspec/config.yaml" && echo "  added  openspec/config.yaml (this project's rules)"
+elif cmp -s "$here/openspec/config.yaml" "$target/openspec/config.yaml"; then
+  echo "  same   openspec/config.yaml"
+else
+  echo "  KEPT   openspec/config.yaml (yours differs; add this project's rules from $here/openspec/config.yaml)"
+  kept+=(openspec/config.yaml)
 fi
 
 echo "== OpenSpec pinned, for the build and the workflows (npm ci)"
-if [[ -f "$target/package.json" ]] &&
-  [[ "$(node -p 'require(process.argv[1]).devDependencies?.["@fission-ai/openspec"] ?? ""' "$target/package.json")" == "$pinned" ]]; then
+# The version the project already asks for, under either kind of dependency.
+theirs="$( [[ -f "$target/package.json" ]] && node -p '
+  const p = require(process.argv[1]);
+  p.devDependencies?.["@fission-ai/openspec"] ?? p.dependencies?.["@fission-ai/openspec"] ?? ""' "$target/package.json" || true)"
+if [[ "$theirs" == "$pinned" ]]; then
   echo "  same   package.json pins OpenSpec $pinned"
+elif [[ -n "$theirs" ]]; then
+  echo "  KEPT   package.json (it asks for OpenSpec $theirs; this workflow is built and tested on $pinned)"
+  kept+=(package.json)
 else
   [[ -f "$target/package.json" ]] || printf '{\n  "private": true\n}\n' > "$target/package.json"
   node -e '
@@ -131,6 +142,8 @@ node -e '
   console.log("  added  permissions to .claude/settings.json (git push stays denied; refinement.sh is allowed)");
 ' "$here/.claude/settings.json" "$target/.claude/settings.json"
 touch "$target/.gitignore"
+# A last line with no newline would have the first line added joined onto it, and both would stop working.
+[[ ! -s "$target/.gitignore" || -z "$(tail -c 1 "$target/.gitignore")" ]] || echo >> "$target/.gitignore"
 added=0
 for line in node_modules runs/ .build.lock/ .delivery/ .refine/; do
   grep -qxF "$line" "$target/.gitignore" || { echo "$line" >> "$target/.gitignore"; added=1; }
