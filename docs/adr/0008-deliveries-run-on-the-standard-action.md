@@ -23,7 +23,8 @@ is code to maintain.
 - **On GitHub, the `deliver` label runs the action in its standard tag mode.** It runs `/deliver` on a
   `deliver/` branch the action makes, with the tools `scripts/headless-tools.txt` lists, and its default
   permission mode. It runs on the model `scripts/delivery-model.txt` names (Claude Sonnet 5.5), capped at
-  $1.50 a run (`--max-budget-usd`) as well as by the turn limit. Setting it up is installing the Claude GitHub app and adding `ANTHROPIC_API_KEY`.
+  $1.50 a run (`--max-budget-usd`) as well as by the turn limit. Setting it up is installing the Claude
+  GitHub app and adding `ANTHROPIC_API_KEY`.
 - **On a laptop, `scripts/agent.sh` runs `/deliver` headless** on a `deliver/<change>` branch made from main,
   with `--permission-mode dontAsk`, the same tool list, the same default model and the same turn limit, then
   checks what it left: nothing uncommitted, the change archived, the build passing. A person pushes the

@@ -51,8 +51,7 @@ you when the branch is ready.
 
 - **Changed since approval:** requirements the delivery reworded. Ask the spec author to confirm the intent is
   the same before merging.
-- **Archive:** nothing on GitHub checks this on a GitHub run. Confirm `openspec/changes/<change>` moved to
-  `archive/`.
+- **Archive:** nothing checks this on a GitHub run. Confirm `openspec/changes/<change>` moved to `archive/`.
 - **Review findings:** points the reviewer left for a person to judge.
 - **Tasks:** the Delivery group's four tasks, each ticked with what it found.
 
