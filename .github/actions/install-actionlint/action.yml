@@ -1,0 +1,17 @@
+# actionlint on the runner's PATH, so ./build.sh checks the workflows: pinned to a release by its checksum,
+# so what runs changes only through a pull request. The build workflow uses it, and so do the deliver and
+# refine workflows, whose sessions run ./build.sh too.
+name: Install actionlint
+description: Install a pinned actionlint release on the PATH
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        version=1.7.12
+        sum=8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        file="actionlint_${version}_linux_amd64.tar.gz"
+        curl -fsSL -o "$RUNNER_TEMP/$file" "https://github.com/rhysd/actionlint/releases/download/v${version}/${file}"
+        echo "${sum}  $RUNNER_TEMP/$file" | sha256sum --check --strict
+        tar -xzf "$RUNNER_TEMP/$file" -C "$RUNNER_TEMP" actionlint
+        echo "$RUNNER_TEMP" >> "$GITHUB_PATH"

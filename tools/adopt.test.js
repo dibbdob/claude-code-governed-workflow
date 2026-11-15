@@ -46,7 +46,7 @@ test('a project gets the scripts, checks, workflows, rules, pin, permissions and
   assert.equal(r.status, 0, r.stderr);
   for (const f of ['scripts/agent.sh', 'scripts/refinement.sh', 'scripts/refine-tools.txt', 'tools/specs.mjs',
     'tools/issue-summary.mjs', '.github/workflows/refine.yml', '.github/workflows/deliver.yml', 'build.sh',
-    '.github/workflows/build.yml', 'package-lock.json']) {
+    '.github/workflows/build.yml', '.github/actions/install-actionlint/action.yml', 'package-lock.json']) {
     assert.ok(existsSync(join(dir, f)), `${f} is added`);
   }
   assert.equal(read(dir, 'scripts/refinement.sh'), read(process.cwd(), 'scripts/refinement.sh'));

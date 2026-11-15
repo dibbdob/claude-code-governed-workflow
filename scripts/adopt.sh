@@ -72,7 +72,7 @@ echo "== scripts, checks and workflows"
 for f in scripts/agent.sh scripts/refinement.sh scripts/approved-issues.sh scripts/headless-tools.txt \
   scripts/refine-tools.txt scripts/delivery-model.txt tools/specs.mjs tools/links.mjs tools/issue-summary.mjs \
   .github/workflows/deliver.yml .github/workflows/refine.yml .github/workflows/refined.yml \
-  .github/workflows/revised.yml; do
+  .github/workflows/revised.yml .github/actions/install-actionlint/action.yml; do
   copy "$f"
 done
 for f in build.sh .github/workflows/build.yml; do
