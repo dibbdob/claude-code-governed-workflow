@@ -134,6 +134,32 @@ test('[response-deadline] A priority that is not text', () => {
   );
 });
 
+test('a priority that is not text is refused whatever it is, never failing while it is refused', () => {
+  const opened = new Date('2026-11-16T10:00:00Z');
+  const hostile = { toString() { throw new Error('boom'); } };
+  const rows = [
+    [Object.create(null), 'an object'],
+    [hostile, 'an object'],
+    [new Date(), 'an object'],
+    [['urgent'], 'an object'],
+    [new String('urgent'), 'an object'],
+    [null, 'null'],
+    [undefined, 'undefined'],
+  ];
+  const answer = (given) => {
+    try {
+      return `due ${responseDueAt(opened, given).toISOString()}`;
+    } catch (error) {
+      return `${error.name}: ${error.message}`;
+    }
+  };
+  const known = 'The priorities the desk knows: urgent, high, normal, low';
+  assert.deepEqual(
+    rows.map(([given]) => answer(given)),
+    rows.map(([, named]) => `RangeError: Unknown priority: ${named}. ${known}`),
+  );
+});
+
 test('[response-deadline] An opening time that is not a date', () => {
   // Each row of the scenario's worked examples, priority urgent: the row as the spec writes it, and the
   // opening time. The refused rows are checked with no holidays and with some, the valid row with none
