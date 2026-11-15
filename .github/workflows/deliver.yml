@@ -48,6 +48,8 @@ jobs:
       - run: |
           npm ci --ignore-scripts
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+      # So the ./build.sh that /deliver runs checks the workflows too.
+      - uses: ./.github/actions/install-actionlint
 
       - name: Find the approved change
         id: find

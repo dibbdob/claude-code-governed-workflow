@@ -48,6 +48,11 @@ contradicts. The two run side by side. One says what must be true, the other wha
 State back, in five lines or fewer: what you are building, the scenarios you will satisfy, and anything
 stale. You are already on the delivery's branch; do not make another.
 
+Then tick the change's Grounding task, recording what the spec-reader found stale, or "nothing stale". Do
+this however small the change looks: the reading is for what you would not have thought to check, and a
+change archived with the task unticked fails the build
+([ADR 0011](../../docs/adr/0011-grounding-is-a-delivery-task.md)).
+
 ## 2. Build, with OpenSpec's apply step
 
 Run OpenSpec's `openspec-apply-change` skill on `$1`. It works through the change's tasks in order and tracks

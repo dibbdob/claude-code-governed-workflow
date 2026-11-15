@@ -89,7 +89,7 @@ test('a placeholder with no column, or a column no step uses, is a problem', () 
   ]);
 });
 
-const delivery = (n = 3, lines = ['Independent review: record the commit', "Second review: or 'not needed: no fixes'", 'OpenSpec verify: the counts']) =>
+const delivery = (n = 3, lines = ["Grounding: or 'nothing stale'", 'Independent review: record the commit', "Second review: or 'not needed: no fixes'", 'OpenSpec verify: the counts']) =>
   `# Tasks\n\n## 1. Build\n\n- [ ] 1.1 Do it\n\n## ${n}. Delivery\n\n${lines.map((l, i) => `- [ ] ${n}.${i + 1} ${l}`).join('\n')}\n\n## Workflow follow-up\n\n- Archive it.\n`;
 
 test("an open change's tasks end with the Delivery group, ticked or not", () => {
@@ -102,10 +102,15 @@ test('an open change with no Delivery group is a problem', () => {
     ['57-holidays: its tasks have no "## <n>. Delivery" group (openspec/config.yaml)']);
 });
 
-test('a Delivery group missing one of its three tasks is a problem, as is a task outside the group', () => {
-  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: delivery(2, ['Independent review: x', 'OpenSpec verify: y']) }]),
+test('a Delivery group missing one of its four tasks is a problem, as is a task outside the group', () => {
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: delivery(2, ['Grounding: x', 'Independent review: x', 'OpenSpec verify: y']) }]),
     ['57-holidays: its Delivery group has no "Second review" task']);
-  const outside = '# Tasks\n\n## 1. Build\n\n- [ ] 1.1 Second review: here instead\n\n' + delivery(2, ['Independent review: x', 'OpenSpec verify: y']).replace('# Tasks\n\n', '');
+  const outside = '# Tasks\n\n## 1. Build\n\n- [ ] 1.1 Second review: here instead\n\n' + delivery(2, ['Grounding: x', 'Independent review: x', 'OpenSpec verify: y']).replace('# Tasks\n\n', '');
   assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: outside }]),
     ['57-holidays: its Delivery group has no "Second review" task']);
+});
+
+test('a Delivery group with no Grounding task is a problem, so a delivery cannot skip its reading unseen', () => {
+  assert.deepEqual(deliveryTasksProblems([{ change: '57-holidays', text: delivery(2, ['Independent review: x', "Second review: y", 'OpenSpec verify: z']) }]),
+    ['57-holidays: its Delivery group has no "Grounding" task']);
 });

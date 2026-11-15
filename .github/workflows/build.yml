@@ -28,16 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      # actionlint checks the workflows, which build.sh runs when it is installed. The release is pinned by
-      # its checksum, so what runs here changes only through a pull request.
-      - name: Install actionlint
-        run: |
-          version=1.7.12
-          sum=8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
-          file="actionlint_${version}_linux_amd64.tar.gz"
-          curl -fsSL -o "$RUNNER_TEMP/$file" "https://github.com/rhysd/actionlint/releases/download/v${version}/${file}"
-          echo "${sum}  $RUNNER_TEMP/$file" | sha256sum --check --strict
-          tar -xzf "$RUNNER_TEMP/$file" -C "$RUNNER_TEMP" actionlint
-          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      # actionlint checks the workflows, which build.sh runs; pinned by its checksum.
+      - uses: ./.github/actions/install-actionlint
       - run: ./build.sh
 

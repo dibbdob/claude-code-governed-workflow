@@ -58,11 +58,11 @@ export function examplesProblems(changes) {
   }));
 }
 
-/** The tasks every change ends with: /deliver's review, second review and verify (ADR 0009). */
-export const DELIVERY_TASKS = ['Independent review:', 'Second review:', 'OpenSpec verify:'];
+/** The tasks every change ends with: /deliver's grounding, review, second review and verify (ADRs 0009, 0011). */
+export const DELIVERY_TASKS = ['Grounding:', 'Independent review:', 'Second review:', 'OpenSpec verify:'];
 
 /**
- * Problems with the Delivery group of open changes' tasks: missing, or without one of its three tasks. Once
+ * Problems with the Delivery group of open changes' tasks: missing, or without one of its four tasks. Once
  * it is there, OpenSpec itself refuses to count a change archived with one of them unticked.
  */
 export function deliveryTasksProblems(changes) {

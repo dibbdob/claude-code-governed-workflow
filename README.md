@@ -62,7 +62,7 @@ approved, below the brief ([ADR 0010](docs/adr/0010-refinement-is-a-command-too.
 | **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml) |
 | **Worked examples in Gherkin**, checked by the build, and shared as data with the C# services | [`specs.mjs`](tools/specs.mjs), [`desk-rules.json`](test/fixtures/desk-rules.json), [ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md) |
 | **Claude Code on GitHub, the standard way**: the build on every pull request, and deliveries started by a label through Anthropic's Claude Code action, which runs this project's `/deliver`, subagents and hook as they are | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml), [ADR 0008](docs/adr/0008-deliveries-run-on-the-standard-action.md) |
-| **A delivery's steps as tasks**: every change's tasks end with the review, the second review and verify, so a delivery that skips one fails the build | [`config.yaml`](openspec/config.yaml), [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md) |
+| **A delivery's steps as tasks**: every change's tasks end with grounding, the review, the second review and verify, so a delivery that skips one fails the build | [`config.yaml`](openspec/config.yaml), [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md), [ADR 0011](docs/adr/0011-grounding-is-a-delivery-task.md) |
 | **Refinement as a command**: `/refine` interviews the author, writes the change with OpenSpec's skills, and publishes the spec pull request; on GitHub, a label and `@claude` comments; the approved change summarised on its issue | [`refine.md`](.claude/commands/refine.md), [`refinement.sh`](scripts/refinement.sh), [`refine.yml`](.github/workflows/refine.yml), [`issue-summary.mjs`](tools/issue-summary.mjs), [ADR 0010](docs/adr/0010-refinement-is-a-command-too.md) |
 | **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), branch protection (below) |
 
@@ -190,8 +190,9 @@ fit, which is the right-hand column below.
    | [`build.sh`](build.sh) | the whole gate, which `/deliver` and `/refine` run before every commit; a project with none gets [a starting one](scripts/adopt/build.sh) | keep the OpenSpec, scenario, link and actionlint checks; put the project's own build and tests in place of the rest |
 
 4. **On GitHub:** the workflows and [`scripts/approved-issues.sh`](scripts/approved-issues.sh) are copied in;
-   add the ruleset, the app and the secret as in "Setting it up on GitHub". The build workflow installs
-   actionlint itself; a project with its own build workflow adds that step ([as here](.github/workflows/build.yml)). If the project already has a general `@claude` workflow, keep it off pull requests
+   add the ruleset, the app and the secret as in "Setting it up on GitHub". The workflows install
+   actionlint with one shared step, [`install-actionlint`](.github/actions/install-actionlint/action.yml),
+   which is copied in too; a project with its own build workflow adds that step ([as here](.github/workflows/build.yml)). If the project already has a general `@claude` workflow, keep it off pull requests
    whose branch starts `refine/`, or both will answer.
 
 Then each change follows the same path as here: an issue, `/refine` in a session or the `refine` label,
@@ -287,9 +288,11 @@ request.
 - **Not yet run against a live model:** `/refine` in a session, with an author answering as it goes;
   `revised` on a delivery that rewords a requirement; OpenSpec's `explore` skill; and the archive
   guidance's "please confirm the intent" question, which only an attended delivery asks.
-- **Known gaps:** the `deliver` and `refine` runs do not install actionlint, so the build Claude runs on
-  GitHub's machine may not check the workflows; the pull request's own build does. And a delivery that
-  skips its grounding is not caught by the build.
+- **Gaps the run found, since closed:** the `deliver` and `refine` runs now install the same pinned
+  actionlint as the build workflow (one shared step, `.github/actions/install-actionlint`), so the build
+  Claude runs on GitHub's machine checks the workflows too; and grounding is now a Delivery task
+  ([ADR 0011](docs/adr/0011-grounding-is-a-delivery-task.md)), so a delivery that skips it fails the build
+  when its change is archived. Neither has yet been seen on a live run.
 
 ## Layout
 

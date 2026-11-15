@@ -89,6 +89,9 @@ jobs:
         run: |
           npm ci --ignore-scripts
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+      # So the ./build.sh that /refine runs checks the workflows too.
+      - if: steps.find.outputs.go == 'true'
+        uses: ./.github/actions/install-actionlint
 
       - name: Read the tools and the model
         if: steps.find.outputs.go == 'true'
