@@ -39,7 +39,8 @@ build ([ADR 0001](adr/0001-a-rule-points-at-what-enforces-it.md)).
 2. Reads the change through the read-only `spec-reader` subagent, and surveys the code it touches.
 3. Writes a failing test for each scenario, then the code, running `./build.sh` before every commit.
 4. Has the `independent-reviewer` review one commit, and fixes each finding behind a test that fails first.
-5. Verifies the change, lists any requirement reworded since approval, and archives it.
+5. Verifies the change, lists any requirement reworded since approval, and archives it: the change moves to
+   `openspec/changes/archive/` and its requirements join `openspec/specs/`.
 6. Writes the pull request description. It does not open the pull request.
 
 ## How well it is tested
