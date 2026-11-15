@@ -9,7 +9,7 @@
 
 ## 2. Refuse it
 
-- [ ] 2.1 Make `responseDueAt` treat a priority as known only when it is one of the desk's own, not one an
+- [x] 2.1 Make `responseDueAt` treat a priority as known only when it is one of the desk's own, not one an
   object inherits; verify the test from 1.1 passes, the valid row included, and `./build.sh` passes as a whole
 
 ## Workflow follow-up

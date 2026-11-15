@@ -51,8 +51,8 @@ export function responseDueAt(openedAt, priority, holidays) {
     throw new RangeError(`The opening time is not a date: ${describe(openedAt)}`);
   }
 
-  const hours = RESPONSE_HOURS[priority];
-  if (hours === undefined) {
+  // Known means one of the table's own: a name every object inherits, such as toString, is not a priority
+  if (!Object.hasOwn(RESPONSE_HOURS, priority)) {
     throw new RangeError(
       `Unknown priority: ${priority}. The priorities the desk knows: ${Object.keys(RESPONSE_HOURS).join(', ')}`,
     );
@@ -61,7 +61,7 @@ export function responseDueAt(openedAt, priority, holidays) {
   const closed = holidaySet(holidays);
   const isBusinessDay = (date) => isWeekday(date) && !closed.has(utcDate(date));
 
-  let remaining = hours * HOUR_MS;
+  let remaining = RESPONSE_HOURS[priority] * HOUR_MS;
   let now = nextOpening(new Date(opened), isBusinessDay);
 
   while (remaining > 0) {
