@@ -1,0 +1,73 @@
+# Deliver an OpenSpec change on GitHub's machines, the standard way (ADRs 0006 and 0008). Put the label
+# 'deliver' on the issue a change is named after, and Anthropic's Claude Code action runs /deliver on a branch
+# of its own, keeps a progress comment on the issue, pushes the branch, and links to a pull request for a
+# person to open. It spends API credit, so who may add labels is who may spend it.
+#
+# The action is set up as its documentation describes. What makes the delivery governed is this project's
+# own and comes with the checkout: /deliver, the spec-reader, the reviewer and its hook (.claude/), the tools
+# a headless run may use (scripts/headless-tools.txt, shared with scripts/agent.sh), and the build that
+# gates the pull request.
+#
+# Needs, on the repository:
+#   the Claude GitHub app, installed (https://github.com/apps/claude), whose token pushes the branch and
+#                          comments on the issue. Its pushes start workflows, unlike GitHub's own token's.
+#   secret ANTHROPIC_API_KEY  for Claude Code, from an account with a spend limit.
+name: deliver
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+env:
+  OPENSPEC_TELEMETRY: '0'
+
+concurrency:
+  group: deliver-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    if: github.event.label.name == 'deliver'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+
+      - name: Find the approved change
+        id: find
+        env:
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          change="$(ls -d openspec/changes/"${ISSUE}"-*/ 2>/dev/null | head -n1 | xargs -r basename)"
+          [[ -n "$change" ]] ||
+            { echo "No approved change on main is named after issue #${ISSUE} (openspec/changes/${ISSUE}-...)." >&2; exit 1; }
+          echo "change=$change" >> "$GITHUB_OUTPUT"
+          echo "tools=$(paste -sd, scripts/headless-tools.txt)" >> "$GITHUB_OUTPUT"
+
+      # v1, pinned to the commit it named on 14 November 2026. A moving tag would change what runs here
+      # without a pull request.
+      - uses: anthropics/claude-code-action@f3b070c88125d33dbae5653df5f143101d4ea9dc
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          label_trigger: deliver
+          track_progress: true
+          branch_prefix: deliver/
+          prompt: |
+            Run this project's /deliver command (.claude/commands/deliver.md) for the OpenSpec change
+            ${{ steps.find.outputs.change }}. You are on its branch already. When it has written the pull
+            request description, push the branch, and put the description in your comment on this issue.
+          claude_args: >-
+            --max-turns 60
+            --allowedTools "${{ steps.find.outputs.tools }}"

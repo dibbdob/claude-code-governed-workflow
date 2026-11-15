@@ -56,9 +56,11 @@ is held to read-only commands by a hook in its frontmatter, whose tests run in `
 `.claude/settings.json` allows the build and read-only git, and denies `git push`, `git reset --hard` and the
 commands that throw away uncommitted work (`git checkout --`, `git restore`, `git clean`, `git stash drop`).
 
-A delivery runs on a branch of its own. `./scripts/agent.sh <issue-or-change>` makes one from main and runs
-`/deliver` headless on it, then checks it is committed, archived and builds. The tools it allows are listed
-in `scripts/headless-tools.txt`.
+A delivery runs on a branch of its own ([ADR 0008](docs/adr/0008-deliveries-run-on-the-standard-action.md)).
+`./scripts/agent.sh <issue-or-change>` makes one from main and runs `/deliver` headless on it, then checks it
+is committed, archived and builds. On GitHub, the `deliver` label runs it through Anthropic's Claude Code
+action, set up the standard way ([`deliver.yml`](.github/workflows/deliver.yml)). Both read the tools they
+allow from `scripts/headless-tools.txt`, so a change to that list is one edit.
 
 ## The plugin
 
