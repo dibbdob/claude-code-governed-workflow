@@ -27,7 +27,9 @@ A test names the scenario it covers in its title, `[response-deadline] A ticket 
 `build.sh` fails when a scenario in `openspec/specs/` has no test naming it, when a scenario in an open change
 is not a Gherkin outline whose placeholders match its table of worked examples
 ([ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md)), and when an archived change has
-tasks left undone.
+tasks left undone, or when an open change's tasks do not end with the Delivery group: the review, the second
+review and verify, which `/deliver` ticks as it does them
+([ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md)).
 
 A change may be revised while it is delivered, as OpenSpec intends, while its intent holds; archiving lists
 every revision for a person to confirm. `openspec/config.yaml` holds the rules for that and

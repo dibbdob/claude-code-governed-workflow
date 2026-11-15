@@ -53,6 +53,7 @@ flowchart LR
 | **Risk and revisions in OpenSpec's own config**: every proposal states a risk, medium or high ones get mitigations, and requirements revised during delivery are flagged for a person to confirm | [`openspec/config.yaml`](openspec/config.yaml) |
 | **Worked examples in Gherkin**, checked by the build, and shared as data with the C# services | [`specs.mjs`](tools/specs.mjs), [`desk-rules.json`](test/fixtures/desk-rules.json), [ADR 0007](docs/adr/0007-a-scenario-is-an-outline-with-worked-examples.md) |
 | **Claude Code on GitHub, the standard way**: the build on every pull request, and deliveries started by a label through Anthropic's Claude Code action, which runs this project's `/deliver`, subagents and hook as they are | [`build.yml`](.github/workflows/build.yml), [`deliver.yml`](.github/workflows/deliver.yml), [ADR 0008](docs/adr/0008-deliveries-run-on-the-standard-action.md) |
+| **A delivery's steps as tasks**: every change's tasks end with the review, the second review and verify, so a delivery that skips one fails the build | [`config.yaml`](openspec/config.yaml), [`specs.mjs`](tools/specs.mjs), [ADR 0009](docs/adr/0009-a-deliverys-steps-are-tasks.md) |
 | **Human gates**: a change is not ready until its pull request is approved; nothing merges without one | [`deliver.md` step 6](.claude/commands/deliver.md), branch protection (below) |
 
 ## Run it
@@ -65,7 +66,8 @@ missing.
 ```
 
 The build is the whole gate: syntax, the UTC rule, OpenSpec's own validation (including that nothing is
-archived half-done), that OpenSpec's verify skill is installed, scenario coverage, the tests, the plugin's
+archived half-done, a skipped delivery step included), that OpenSpec's verify skill is installed, scenario
+coverage, that every open change's tasks end with the delivery steps, the tests, the plugin's
 drift check, every relative link, and the hook's tests.
 
 OpenSpec's skills in a Claude Code session (`/openspec-propose` and the others) run the `openspec` command, so
