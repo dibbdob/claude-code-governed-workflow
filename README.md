@@ -165,7 +165,7 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
 - **Run on GitHub:** `./build.sh`, by the `build` workflow on every pull request and every push to `main`,
   which main's ruleset requires before a merge.
-- **Run against a live model, on 2026-11-15:** three changes, each from a GitHub issue to a merged pull
+- **Run against a live model, on 2026-11-15:** four changes, each from a GitHub issue to a merged pull
   request.
   - Both were proposed with `/openspec-propose` in an attended session, as pull requests whose build checked
     their scenarios; merging them approved them, and `refined` labelled their issues `ready`.
@@ -184,6 +184,11 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
     one.
   - Issue 8 was that follow-up, delivered by the `deliver` label for $1.67 in 10 turns: the failing test
     first, then the fix, reusing change 1's checks. Review found no defects, so there was one round.
+  - The first three ran on Opus 5.5. Issue 14, naming the known priorities when one is refused, was the
+    first on Claude Sonnet 5.5 with the $1.50 cap and the spec-reader on Haiku: $0.46 in 17 turns, with
+    every step of `/deliver` done, one round of review, and no model above Sonnet used. It was also the
+    smallest change of the four. Its reviewer found an older defect, left for its own change: a priority
+    named like a built-in property, such as `toString`, is not refused.
 - **The plugin, installed and run live, on 2026-11-15:** installed from `./plugin` into a throwaway
   repository, at local scope, for $0.48 in all. With Bash allowed to every agent, so that only the plugin's
   hook could stop a command, the plugin's reviewer ran `git rev-parse` and `git show <rev>:<path>`, and was
