@@ -5,12 +5,6 @@ GitHub issue. `/refine` turns it into a specification with the person who raised
 approves it. `/deliver` then builds it test first, has it reviewed independently, and hands back a pull
 request for a person to merge.
 
-```mermaid
-flowchart LR
-  A["Issue"] -->|"/refine"| B["Spec pull request"]
-  B -->|"/deliver"| C["Code pull request"]
-```
-
 Nothing is built until its specification is merged, and a person merges the result. Both steps run on
 GitHub, started by a label, or on your own machine under your Claude subscription.
 
