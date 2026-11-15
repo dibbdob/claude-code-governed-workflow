@@ -39,7 +39,9 @@ export function priorityOf(ticket) {
  * @param {Date} openedAt when the ticket was opened. Anything but a valid `Date` (an Invalid Date, text, a
  *   number, nothing) is refused with a RangeError saying the opening time is not a date.
  * @param {keyof typeof RESPONSE_HOURS} priority one the desk knows. Any other is refused with a RangeError
- *   naming the priority given and the known ones, from most to least urgent: urgent, high, normal, low.
+ *   naming the priority given and the known ones, from most to least urgent: urgent, high, normal, low. A
+ *   text priority is named as given; one that is not text is described as an opening time is (`a symbol`,
+ *   `an object`, `a number`), never failing while it is refused.
  * @param {string[] | null} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a
  *   whole UTC day. With no list, none are skipped. A list that is not one, or holds anything but a real
  *   `YYYY-MM-DD` date, is refused with a RangeError.
@@ -54,7 +56,7 @@ export function responseDueAt(openedAt, priority, holidays) {
   // Known means one of the table's own: a name every object inherits, such as toString, is not a priority
   if (!Object.hasOwn(RESPONSE_HOURS, priority)) {
     throw new RangeError(
-      `Unknown priority: ${priority}. The priorities the desk knows: ${Object.keys(RESPONSE_HOURS).join(', ')}`,
+      `Unknown priority: ${typeof priority === 'string' ? priority : describe(priority)}. The priorities the desk knows: ${Object.keys(RESPONSE_HOURS).join(', ')}`,
     );
   }
 
