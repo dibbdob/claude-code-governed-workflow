@@ -11,7 +11,8 @@
 # Needs, on the repository:
 #   the Claude GitHub app, installed (https://github.com/apps/claude), whose token pushes the branch and
 #                          comments on the issue. Its pushes start workflows, unlike GitHub's own token's.
-#   secret ANTHROPIC_API_KEY  for Claude Code, from an account with a spend limit.
+#   secret ANTHROPIC_API_KEY  for Claude Code, from an account with a spend limit. Each run is also capped
+#                          at $1.50, on Claude Sonnet 5.5.
 name: deliver
 
 on:
@@ -68,6 +69,10 @@ jobs:
             Run this project's /deliver command (.claude/commands/deliver.md) for the OpenSpec change
             ${{ steps.find.outputs.change }}. You are on its branch already. When it has written the pull
             request description, push the branch, and put the description in your comment on this issue.
+          # Sonnet for the session, and so for the reviewer, which inherits it; the spec-reader names its own
+          # model. A run that reaches the dollar cap stops where it is, and its branch shows how far it got.
           claude_args: >-
+            --model claude-sonnet-5-5
+            --max-budget-usd 1.50
             --max-turns 60
             --allowedTools "${{ steps.find.outputs.tools }}"

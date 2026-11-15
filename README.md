@@ -42,7 +42,7 @@ flowchart LR
 | **CLAUDE.md at three levels**: project, directory (loaded on demand), and a rule as a pointer at its check | [`CLAUDE.md`](CLAUDE.md), [`src/CLAUDE.md`](src/CLAUDE.md), [ADR 0001](docs/adr/0001-a-rule-points-at-what-enforces-it.md) |
 | **Coordinator and subagents**: one command running a lifecycle, with grounding delegated | [`deliver.md`](.claude/commands/deliver.md), [ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md) |
 | **Parallel subagents with isolated context**: spec-reader and Explore in one message | [`deliver.md` step 1](.claude/commands/deliver.md) |
-| **Model routing**: reading on Sonnet, review on the session's model | [`spec-reader.md`](.claude/agents/spec-reader.md), [`independent-reviewer.md`](.claude/agents/independent-reviewer.md) |
+| **Model routing**: reading on Haiku, review on the session's model, and deliveries on GitHub on Sonnet with a dollar cap | [`spec-reader.md`](.claude/agents/spec-reader.md), [`independent-reviewer.md`](.claude/agents/independent-reviewer.md) |
 | **Review without the author's rationale**, pinned to one commit, at most two rounds | [`independent-reviewer.md`](.claude/agents/independent-reviewer.md), [ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md) |
 | **A tool list before a guard, and a guard that fails closed**: the spec-reader has no shell; the reviewer's Bash is held by a PreToolUse hook scoped to it, with its own tests | [`spec-reader.md`](.claude/agents/spec-reader.md), [`read_only_bash.py`](.claude/hooks/read_only_bash.py), [tests](.claude/hooks/test_read_only_bash.py), [ADR 0004](docs/adr/0004-a-restriction-is-a-tool-list-or-a-hook.md) |
 | **Permissions**: allow and deny rules for the project | [`.claude/settings.json`](.claude/settings.json) |
