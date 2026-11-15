@@ -45,7 +45,8 @@ export function priorityOf(ticket) {
  * @returns {Date}
  */
 export function responseDueAt(openedAt, priority, holidays) {
-  if (!(openedAt instanceof Date) || Number.isNaN(openedAt.getTime())) {
+  const opened = timeOf(openedAt);
+  if (Number.isNaN(opened)) {
     throw new RangeError(`The opening time is not a date: ${describe(openedAt)}`);
   }
 
@@ -58,7 +59,7 @@ export function responseDueAt(openedAt, priority, holidays) {
   const isBusinessDay = (date) => isWeekday(date) && !closed.has(utcDate(date));
 
   let remaining = hours * HOUR_MS;
-  let now = nextOpening(new Date(openedAt.getTime()), isBusinessDay);
+  let now = nextOpening(new Date(opened), isBusinessDay);
 
   while (remaining > 0) {
     const close = new Date(now);
@@ -74,18 +75,31 @@ export function responseDueAt(openedAt, priority, holidays) {
   return now;
 }
 
-// What a caller passed, for an error message: never throws, whatever it was given.
-function describe(value) {
-  if (value instanceof Date) {
-    return 'Invalid Date';
+// The moment a Date holds, or NaN for anything that is not one. It asks the value itself rather than its
+// prototype, so a Date from another realm counts and an object dressed as one does not.
+function timeOf(value) {
+  try {
+    return Date.prototype.getTime.call(value);
+  } catch {
+    return NaN;
   }
+}
+
+// What a caller passed that is not a date, for an error message: never throws, whatever it was given.
+function describe(value) {
   if (typeof value === 'string') {
     return JSON.stringify(value);
   }
   if (value === undefined || value === null) {
     return String(value);
   }
-  return `a ${typeof value}`;
+  try {
+    Date.prototype.getTime.call(value);
+    return 'Invalid Date'; // a real Date, so an invalid one
+  } catch {
+    const type = typeof value;
+    return `${/^[aeiou]/.test(type) ? 'an' : 'a'} ${type}`;
+  }
 }
 
 // No list (undefined or null) means no holidays. A holiday that is not a real date written exactly as
