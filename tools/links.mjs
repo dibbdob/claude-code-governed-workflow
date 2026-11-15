@@ -16,12 +16,21 @@ export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // first, since an example there is not a link.
 const LINK = /\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
 
+// A link's path with its %-escapes undone; a stray % that is not an escape is taken as it is written.
+function decoded(path) {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
 export function brokenLinks(file, text, exists) {
   const prose = text.replace(/^(```|~~~)[\s\S]*?^\1/gm, '').replace(/`[^`\n]*`/g, '');
   const broken = [];
   for (const [, target] of prose.matchAll(LINK)) {
     if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#')) continue;
-    const path = decodeURIComponent(target.split('#')[0]);
+    const path = decoded(target.split('#')[0]);
     const full = path.startsWith('/') ? join(root, path) : join(dirname(join(root, file)), path);
     if (!exists(full)) broken.push(target);
   }

@@ -16,9 +16,11 @@ echo "== syntax"
 find src test tools -name '*.js' -o -name '*.mjs' | xargs -n1 node --check
 
 echo "== dates are read in UTC"
-# The local forms pass on a machine set to UTC and fail everywhere else (ADR 0001).
-if grep -rnE '\.(get|set)(Hours|Minutes|Seconds|Day|Date|Month|FullYear)\(' src; then
-  echo "Use the getUTC*/setUTC* form of these Date methods." >&2
+# The local forms pass on a machine set to UTC and fail everywhere else (ADR 0001): the get/set methods, and
+# the ways a moment is made or shown in local time. new Date with more than one argument reads them as local
+# time, Date.parse reads a time with no zone as local, and the toLocale and toDate/TimeString forms show one.
+if grep -rnE '\.(get|set)(Hours|Minutes|Seconds|Milliseconds|Day|Date|Month|FullYear|Year)\(|getTimezoneOffset\(|\.toLocale[A-Za-z]*String\(|\.to(Date|Time)String\(|Date\.parse\(|new Date\([^()]*,' src; then
+  echo "Use the UTC forms: getUTC*/setUTC*, Date.UTC(...) for a moment from parts, and toISOString to show one." >&2
   exit 1
 fi
 

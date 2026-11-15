@@ -11,6 +11,7 @@
 //   node tools/specs.mjs check
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 /** The scenario names in a spec, in order. */
 export function scenarios(text) {
@@ -23,16 +24,25 @@ export function scenarioBlocks(text) {
     .map((m) => ({ name: m[1], body: m[2] }));
 }
 
+// The lines of the first table in a scenario's text: from its first `|` line to the first line that is not one.
+function firstTable(body) {
+  const lines = body.split('\n').map((l) => l.trim());
+  const start = lines.findIndex((l) => l.startsWith('|'));
+  if (start < 0) return [];
+  const end = lines.findIndex((l, i) => i > start && !l.startsWith('|'));
+  return lines.slice(start, end < 0 ? lines.length : end);
+}
+const cells = (line) => line.replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+
 /** The rows of the first table in a scenario's text, without its header and divider. */
 export function exampleRows(body) {
-  const table = body.split('\n').map((l) => l.trim()).filter((l) => l.startsWith('|'));
-  return table.slice(2).map((l) => l.replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+  return firstTable(body).slice(2).map(cells);
 }
 
 /** The column names of the first table in a scenario's text. */
 export function exampleColumns(body) {
-  const header = body.split('\n').map((l) => l.trim()).find((l) => l.startsWith('|'));
-  return header ? header.replace(/^\||\|$/g, '').split('|').map((c) => c.trim()) : [];
+  const [header] = firstTable(body);
+  return header ? cells(header) : [];
 }
 
 /** The `<placeholders>` a scenario's steps use, in order, each once. */
@@ -75,10 +85,13 @@ export function deliveryTasksProblems(changes) {
   });
 }
 
-/** Every `[capability] Scenario name` a test title cites. */
+/**
+ * Every `[capability] Scenario name` a test title cites. The title runs to the quote that opened it, so a
+ * scenario's name may hold the other quotes, or the same one escaped: "A customer's ticket".
+ */
 export function citations(tests) {
-  return [...tests.matchAll(/\btest\(\s*['"`]\[([a-z0-9/-]+)\]\s+([^'"`]+?)['"`]/g)]
-    .map((m) => ({ capability: m[1], scenario: m[2].trim() }));
+  return [...tests.matchAll(/\btest\(\s*(['"`])\[([a-z0-9/-]+)\]\s+((?:\\.|(?!\1)[^\\\n])+?)\1/g)]
+    .map((m) => ({ capability: m[2], scenario: m[3].replace(/\\(.)/g, '$1').trim() }));
 }
 
 /**
@@ -120,7 +133,7 @@ function check() {
   return problems.length === 0 ? 0 : 1;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv[2] !== 'check') {
     console.error('usage: node tools/specs.mjs check');
     process.exit(2);

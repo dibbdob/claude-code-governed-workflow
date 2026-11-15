@@ -72,8 +72,11 @@ def build(out):
 
 
 def differences(a, b):
+    """What differs between two folders, by content: dircmp alone compares a file by its size and time, and
+    the build copies the hook with its time kept, so an edit that left its size alone would be missed."""
     comparison = filecmp.dircmp(a, b)
-    found = [f'{a.name}/{n}' for n in comparison.left_only + comparison.right_only + comparison.diff_files]
+    _, changed, unreadable = filecmp.cmpfiles(a, b, comparison.common_files, shallow=False)
+    found = [f'{a.name}/{n}' for n in comparison.left_only + comparison.right_only + changed + unreadable]
     for sub in comparison.common_dirs:
         found += differences(a / sub, b / sub)
     return found
