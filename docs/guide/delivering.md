@@ -56,4 +56,10 @@ you when the branch is ready.
 - **Review findings:** points the reviewer left for a person to judge.
 - **Tasks:** the Delivery group's four tasks, each ticked with what it found.
 
+## After the merge
+
+Completed work stays in the project. The change itself, with its proposal, tasks and the record of each
+step, is kept in `openspec/changes/archive/`, in a folder dated the day it was delivered. Its requirements
+are folded into `openspec/specs/`, which always says how the system works now.
+
 What the delivery does, step by step, is in [How it works](../how-it-works.md).

@@ -52,7 +52,8 @@ product, and the **developer**, who reviews and merges. Commands run in your pro
    from the link Claude posts. The issue is now `ready`.
 3. Add the `deliver` label and open the pull request it links to. Or run `./scripts/agent.sh 57`, push the
    branch and open the pull request yourself.
-4. Read the pull request, starting with anything marked *Changed since approval*, and merge it.
+4. Read the pull request, starting with anything marked *Changed since approval*, and merge it. The
+   finished change is kept in `openspec/changes/archive/`.
 
 To see one from start to finish: [the issue](https://github.com/dibbdob/claude-code-governed-workflow/issues/35),
 [its specification](https://github.com/dibbdob/claude-code-governed-workflow/pull/36) and

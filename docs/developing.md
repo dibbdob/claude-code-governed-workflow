@@ -29,7 +29,7 @@ docs/guide/      how to set up, refine and deliver
 docs/adr/        why each decision was made
 openspec/
   specs/         how the system works now, requirement by requirement
-  changes/       approved changes still to deliver, and archive/ for delivered ones
+  changes/       approved changes still to deliver, and archive/, where each delivered change is kept
 .github/         the build check, the ready label and issue summary, and refinements and deliveries
                  started by a label
 plugin/          a marketplace with one plugin, generated from .claude/
