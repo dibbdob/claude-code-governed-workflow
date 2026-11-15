@@ -7,10 +7,8 @@ request for a person to merge.
 
 ```mermaid
 flowchart LR
-  A["Issue<br/>a brief"] --> B["/refine"]
-  B --> C["Spec pull request<br/>reviewed and merged"]
-  C --> D["/deliver"]
-  D --> E["Code pull request<br/>build, then a person"]
+  A["Issue"] -->|"/refine"| B["Spec pull request"]
+  B -->|"/deliver"| C["Code pull request"]
 ```
 
 Nothing is built until its specification is merged, and a person merges the result. Both steps run on
