@@ -75,6 +75,37 @@ export function responseDueAt(openedAt, priority, holidays) {
   return now;
 }
 
+/**
+ * The business hours left between a moment and a ticket's deadline, counted as a deadline is: only Monday to
+ * Friday, 09:00 to 17:00 UTC, on days that are not a public holiday given. Parts of an hour count, so half an
+ * hour left is 0.5. At or past the deadline there are none left: 0, never less.
+ * @param {Date} now
+ * @param {Date} due the deadline, as `responseDueAt` gives it
+ * @param {string[] | null} [holidays] public holidays, as `responseDueAt` takes them, refused as it refuses
+ *   them with a RangeError
+ * @returns {number} hours, or NaN when `now` or `due` is an invalid Date (one that is not a Date at all is
+ *   not handled, and throws a TypeError)
+ */
+export function businessHoursLeft(now, due, holidays) {
+  const closed = holidaySet(holidays);
+  const isBusinessDay = (date) => isWeekday(date) && !closed.has(utcDate(date));
+
+  const end = due.getTime();
+  if (Number.isNaN(now.getTime()) || Number.isNaN(end)) {
+    return NaN;
+  }
+
+  let left = 0;
+  let open = nextOpening(new Date(now.getTime()), isBusinessDay);
+  while (open.getTime() < end) {
+    const close = new Date(open);
+    close.setUTCHours(CLOSE_HOUR, 0, 0, 0);
+    left += Math.min(close.getTime(), end) - open.getTime();
+    open = nextOpening(close, isBusinessDay);
+  }
+  return left / HOUR_MS;
+}
+
 // The moment a Date holds, or NaN for anything that is not one. It asks the value itself rather than its
 // prototype, so a Date from another realm counts and an object dressed as one does not.
 function timeOf(value) {

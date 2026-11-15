@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { priorityOf, responseDueAt } from '../src/sla.js';
+import { businessHoursLeft, priorityOf, responseDueAt } from '../src/sla.js';
 
 // Each row of a priority scenario's worked examples (openspec/specs/response-deadline/spec.md): the row as
 // the spec writes it, the ticket, when it was opened, and the priority and reply deadline agreed for it.
@@ -186,6 +186,68 @@ test('consecutive holidays and a weekend are all skipped', () => {
   // Thursday 16:00 urgent; Friday and the following Monday are holidays = Tuesday 12:00
   const due = responseDueAt(new Date('2026-12-24T16:00:00Z'), 'urgent', ['2026-12-25', '2026-12-28']);
   assert.equal(due.toISOString(), '2026-12-29T12:00:00.000Z');
+});
+
+test('[response-deadline] Business hours left before a deadline', () => {
+  // Each row as the spec writes it: due, public holidays, now, hours left. "none" is checked as no list, a
+  // null one and an empty one.
+  const rows = [
+    ['Mon 16 Nov 2026, 14:00 UTC', '2026-11-16T14:00:00Z', 'none', null, 'Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T10:00:00Z', 4],
+    ['Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T10:00:00Z', 'none', null, 'Fri 13 Nov 2026, 16:00 UTC', '2026-11-13T16:00:00Z', 2],
+    ['Mon 28 Dec 2026, 11:00 UTC', '2026-12-28T11:00:00Z', 'Fri 25 Dec', ['2026-12-25'], 'Thu 24 Dec 2026, 15:00 UTC', '2026-12-24T15:00:00Z', 4],
+    ['Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T10:00:00Z', 'none', null, 'Sat 14 Nov 2026, 12:00 UTC', '2026-11-14T12:00:00Z', 1],
+    ['Mon 16 Nov 2026, 10:30 UTC', '2026-11-16T10:30:00Z', 'none', null, 'Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T10:00:00Z', 0.5],
+    ['Mon 16 Nov 2026, 14:00 UTC', '2026-11-16T14:00:00Z', 'none', null, 'Mon 16 Nov 2026, 14:00 UTC', '2026-11-16T14:00:00Z', 0],
+    ['Mon 16 Nov 2026, 14:00 UTC', '2026-11-16T14:00:00Z', 'none', null, 'Tue 17 Nov 2026, 09:00 UTC', '2026-11-17T09:00:00Z', 0],
+  ];
+  for (const [dueRow, due, holidaysRow, holidays, nowRow, now, hoursLeft] of rows) {
+    const row = `due ${dueRow}, holidays ${holidaysRow}, now ${nowRow}`;
+    const lists = holidays === null ? [undefined, null, []] : [holidays];
+    for (const list of lists) {
+      assert.equal(businessHoursLeft(new Date(now), new Date(due), list), hoursLeft, row);
+    }
+  }
+});
+
+test('business hours left are counted as the deadline was', () => {
+  // For deadlines responseDueAt works out, the hours left at opening are the priority's hours
+  const cases = [
+    ['2026-11-13T16:00:00Z', 'urgent', undefined, 4],
+    ['2026-11-14T11:00:00Z', 'high', undefined, 8],
+    ['2026-11-09T15:00:00Z', 'normal', undefined, 24],
+    ['2026-11-11T10:00:00Z', 'low', undefined, 40],
+    ['2026-12-24T16:00:00Z', 'high', ['2026-12-25', '2026-12-28'], 8],
+    ['2026-12-25T18:00:00Z', 'urgent', ['2026-12-25'], 4],
+  ];
+  for (const [openedAt, priority, holidays, hours] of cases) {
+    const due = responseDueAt(new Date(openedAt), priority, holidays);
+    assert.equal(businessHoursLeft(new Date(openedAt), due, holidays), hours, `${openedAt}, ${priority}`);
+  }
+});
+
+test('the hours left skip evenings, weekends and holidays between now and a deadline outside opening hours', () => {
+  // Friday 15:00 to a deadline on Saturday: only Friday's 2 hours count
+  assert.equal(businessHoursLeft(new Date('2026-11-13T15:00:00Z'), new Date('2026-11-14T12:00:00Z')), 2);
+  // Thursday 16:00 to Friday 12:00 when Friday is a holiday: only Thursday's hour counts
+  assert.equal(businessHoursLeft(new Date('2026-12-24T16:00:00Z'), new Date('2026-12-25T12:00:00Z'), ['2026-12-25']), 1);
+  // From Friday evening to a deadline on Sunday: none
+  assert.equal(businessHoursLeft(new Date('2026-11-13T18:00:00Z'), new Date('2026-11-15T12:00:00Z')), 0);
+});
+
+test('the hours left refuse a holiday list as a deadline does, even past the deadline', () => {
+  const now = new Date('2026-11-17T09:00:00Z');
+  const due = new Date('2026-11-16T14:00:00Z');
+  for (const holidays of ['2026-11-10', {}, ['2026-11-31'], ['10/11/2026'], [new Date('2026-11-10')]]) {
+    assert.throws(() => businessHoursLeft(now, due, holidays), RangeError);
+    assert.throws(() => businessHoursLeft(due, now, holidays), RangeError);
+  }
+});
+
+test('the hours left before or after a moment that is not a date are not a number', () => {
+  const date = new Date('2026-11-16T10:00:00Z');
+  const notADate = new Date('not a date');
+  assert.ok(Number.isNaN(businessHoursLeft(notADate, date)));
+  assert.ok(Number.isNaN(businessHoursLeft(date, notADate)));
 });
 
 // The worked examples agreed for each scenario (openspec/specs/response-deadline/spec.md), row by row: each
