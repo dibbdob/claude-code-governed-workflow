@@ -33,7 +33,8 @@ folder.
 - **On GitHub, the `refine` label starts it and `@claude` comments carry it on.** The `refine` workflow runs
   the action in its standard tag mode. The first run drafts the change from the issue, with its
   assumptions written down and its questions numbered, and the workflow opens the spec pull request with
-  the Claude app's token, so the build runs on it. Each comment that mentions `@claude` on that pull
+  its own token and starts the build on the branch: the action has revoked its token by then, and a pull
+  request opened with the workflow's token starts no workflows of its own. Each comment that mentions `@claude` on that pull
   request is another run on the same branch, which reads the thread and revises. The thread is the
   conversation's memory. Runs are capped at $1.00 and 40 turns on the default model.
 - **The approval is unchanged.** A person reviews the spec pull request and merges it; `refined` labels the

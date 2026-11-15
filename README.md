@@ -260,15 +260,36 @@ request.
   after which the adopted project's starting build passed, actionlint included.
   `scripts/setup-machine.sh` run on one Mac, where it updated OpenSpec from 1.14.1 to the pinned 2.0.0 and
   found the rest in place; its Homebrew installs, `gh auth login` and `--plugin` have not yet been run.
-- **`/refine` and its workflows, as far as can be without GitHub or a model:** `scripts/refinement.sh` run
+- **`/refine` on GitHub, run live on 2026-11-15:** issue 29, a throwaway change (say whether a ticket is
+  overdue), from a two-sentence brief to merged code for $0.56 in all, on Sonnet 5.5.
+  - The `refine` label drafted the change in 11 turns for $0.17: plain terms, four worked examples with the
+    exact-deadline boundary, a low risk, and three numbered questions, each with its assumption.
+  - The run then found three faults, fixed in #30 and each shown working on the next run. The action
+    revokes its token before the next step, so the spec pull request was not opened ("Bad credentials"); it
+    is now opened with the workflow's token, which starts the build itself. `openspec` was not on the PATH,
+    so Claude wrote the change by hand; `refine` and `deliver` now put the pinned copy there. And a
+    `refinement.sh` test read the bare remote in a way the runner's `safe.bareRepository=explicit` refuses.
+  - One `@claude` comment on the spec pull request, answering the questions and asking for a public-holiday
+    example, revised the change in 9 turns for $0.10. Claude answered each point against the change, and
+    flagged two examples it had added itself. Nobody answered that flag before approval, so they went in:
+    checking that the examples are the author's is the reviewer's job, and only a person can do it.
+  - Merging the spec pull request labelled the issue `ready` and wrote the summary below its brief: plain
+    terms, both tables of examples, the risk, and links to the change as approved and to the discussion.
+  - The `deliver` label then delivered it in 20 turns for $0.29: review found no defects, verify found no
+    issues, and the change was archived. It skipped the spec-reader and Explore, said so, and nothing
+    caught it: the build checks the Delivery tasks, not the grounding. `revised` rightly did nothing, since
+    no requirement changed after approval.
+- **`/refine` and its workflows, without GitHub or a model:** `scripts/refinement.sh` run
   for real against a throwaway repository with a local remote and a stand-in `gh`
   ([tests](tools/refinement.test.js)); the summary on an issue, written, replaced and noted
   ([tests](tools/issue-summary.test.js)); and every workflow checked by actionlint, shown failing on a
   planted typo in a step's output.
-- **Not yet run against a live model:** `/refine` itself, by either route, so what a refinement costs is
-  not yet known; the `refine`, `refined` (its summary) and `revised` workflows on GitHub; OpenSpec's
-  `explore` skill; and the archive guidance's "please confirm the intent" question, which only an attended
-  delivery asks.
+- **Not yet run against a live model:** `/refine` in a session, with an author answering as it goes;
+  `revised` on a delivery that rewords a requirement; OpenSpec's `explore` skill; and the archive
+  guidance's "please confirm the intent" question, which only an attended delivery asks.
+- **Known gaps:** the `deliver` and `refine` runs do not install actionlint, so the build Claude runs on
+  GitHub's machine may not check the workflows; the pull request's own build does. And a delivery that
+  skips its grounding is not caught by the build.
 
 ## Layout
 

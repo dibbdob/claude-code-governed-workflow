@@ -8,9 +8,8 @@
 # Each run reads the issue or pull request and its comments afresh: the thread is the conversation's
 # memory. The action answers only people with write access to the repository, as it does by default.
 #
-# Needs what the deliver workflow needs: the Claude GitHub app, whose token pushes the branch and opens the
-# pull request (so the build runs on it), and the secret ANTHROPIC_API_KEY. Each run is capped at $1.00,
-# on the model in scripts/delivery-model.txt.
+# Needs what the deliver workflow needs: the Claude GitHub app, whose token pushes the branch, and the
+# secret ANTHROPIC_API_KEY. Each run is capped at $1.00, on the model in scripts/delivery-model.txt.
 name: refine
 
 on:
