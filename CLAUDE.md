@@ -39,3 +39,19 @@ examples in `test/fixtures/desk-rules.json`, which this repository owns and `bui
 that those repositories also apply changes that file first, and the copies there follow.
 
 `build.sh` runs one at a time per checkout (`.build.lock`).
+
+## Delivering a change
+
+`/deliver <change>` takes an approved change from its own branch to a pull request description, archiving
+the change on the way ([command](.claude/commands/deliver.md)). It uses OpenSpec's `openspec-apply-change`
+skill for the building, with this project's build rules in `openspec/config.yaml`, and adds the gates, the
+reviewer and the archive around it. It reads through the `spec-reader` subagent first
+([ADR 0002](docs/adr/0002-reading-is-delegated-to-a-subagent.md)), and is reviewed by the
+`independent-reviewer` subagent, pinned to one commit and given no rationale
+([ADR 0003](docs/adr/0003-the-reviewer-is-not-told-why.md)). The spec-reader has no shell, and the reviewer's Bash
+is held to read-only commands by a hook in its frontmatter, whose tests run in `build.sh`
+([ADR 0004](docs/adr/0004-a-restriction-is-a-tool-list-or-a-hook.md)). After changing the hook, run
+`./build.sh`; nothing else exercises it outside a session.
+
+`.claude/settings.json` allows the build and read-only git, and denies `git push`, `git reset --hard` and the
+commands that throw away uncommitted work (`git checkout --`, `git restore`, `git clean`, `git stash drop`).

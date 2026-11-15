@@ -34,6 +34,12 @@ echo "== no change is archived with tasks left undone (openspec validate --archi
 node_modules/.bin/openspec validate --archived --no-interactive >/dev/null ||
   node_modules/.bin/openspec validate --archived --no-interactive
 
+echo "== OpenSpec's verify skill is installed (/deliver runs it before archiving)"
+# `openspec update` matches a project's skills to the machine's profile, so a teammate on the default
+# profile would remove it without knowing (README, "Setting it up for a team").
+[[ -f .agents/skills/openspec-verify-change/SKILL.md ]] ||
+  { echo "OpenSpec's verify skill is missing. Add 'verify' to your OpenSpec workflows, then run openspec update." >&2; exit 1; }
+
 echo "== every scenario has a test"
 node tools/specs.mjs check
 
@@ -42,5 +48,8 @@ node --test
 
 echo "== every relative link in the Markdown leads somewhere"
 node tools/links.mjs
+
+echo "== the read-only hook"
+python3 .claude/hooks/test_read_only_bash.py 2>&1 | tail -n 1
 
 echo "== build passed"
