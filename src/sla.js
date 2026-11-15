@@ -79,24 +79,30 @@ export function responseDueAt(openedAt, priority, holidays) {
  * The business hours left between a moment and a ticket's deadline, counted as a deadline is: only Monday to
  * Friday, 09:00 to 17:00 UTC, on days that are not a public holiday given. Parts of an hour count, so half an
  * hour left is 0.5. At or past the deadline there are none left: 0, never less.
- * @param {Date} now
- * @param {Date} due the deadline, as `responseDueAt` gives it
+ * @param {Date} now the moment to count from. Anything but a valid `Date` (an Invalid Date, text, a number,
+ *   nothing) is refused with a RangeError saying the moment is not a date, as `responseDueAt` refuses an
+ *   opening time.
+ * @param {Date} due the deadline, as `responseDueAt` gives it. Anything but a valid `Date` is refused in the
+ *   same way, with a RangeError saying the deadline is not a date.
  * @param {string[] | null} [holidays] public holidays, as `responseDueAt` takes them, refused as it refuses
  *   them with a RangeError
- * @returns {number} hours, or NaN when `now` or `due` is an invalid Date (one that is not a Date at all is
- *   not handled, and throws a TypeError)
+ * @returns {number} hours
  */
 export function businessHoursLeft(now, due, holidays) {
+  const start = timeOf(now);
+  if (Number.isNaN(start)) {
+    throw new RangeError(`The moment is not a date: ${describe(now)}`);
+  }
+  const end = timeOf(due);
+  if (Number.isNaN(end)) {
+    throw new RangeError(`The deadline is not a date: ${describe(due)}`);
+  }
+
   const closed = holidaySet(holidays);
   const isBusinessDay = (date) => isWeekday(date) && !closed.has(utcDate(date));
 
-  const end = due.getTime();
-  if (Number.isNaN(now.getTime()) || Number.isNaN(end)) {
-    return NaN;
-  }
-
   let left = 0;
-  let open = nextOpening(new Date(now.getTime()), isBusinessDay);
+  let open = nextOpening(new Date(start), isBusinessDay);
   while (open.getTime() < end) {
     const close = new Date(open);
     close.setUTCHours(CLOSE_HOUR, 0, 0, 0);

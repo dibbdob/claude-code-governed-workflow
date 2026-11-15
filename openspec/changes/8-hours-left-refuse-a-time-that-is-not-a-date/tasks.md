@@ -9,7 +9,7 @@
 
 ## 2. Refuse it
 
-- [ ] 2.1 Make `businessHoursLeft` refuse a moment or a deadline that is not a valid `Date` with a
+- [x] 2.1 Make `businessHoursLeft` refuse a moment or a deadline that is not a valid `Date` with a
   `RangeError` naming which, judged the way `responseDueAt` judges an opening time, and update its doc
   comment; verify the test from 1.1 passes, the valid row included, and `./build.sh` passes as a whole
 

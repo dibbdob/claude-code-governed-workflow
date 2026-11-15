@@ -283,11 +283,18 @@ test('[response-deadline] Hours left for a time that is not a date', () => {
   assert.equal(businessHoursLeft(now, due), 4);
 });
 
-test('the hours left before or after a moment that is not a date are not a number', () => {
-  const date = new Date('2026-11-16T10:00:00Z');
-  const notADate = new Date('not a date');
-  assert.ok(Number.isNaN(businessHoursLeft(notADate, date)));
-  assert.ok(Number.isNaN(businessHoursLeft(date, notADate)));
+test('the moment and the deadline are judged by what they are, as an opening time is', () => {
+  const now = new Date('2026-11-16T10:00:00Z');
+  const due = new Date('2026-11-16T14:00:00Z');
+  // An object dressed as a Date is refused, naming which of the two it was
+  assert.throws(() => businessHoursLeft(Object.create(Date.prototype), due), { name: 'RangeError', message: /^The moment is not a date: an object$/ });
+  assert.throws(() => businessHoursLeft(now, {}), { name: 'RangeError', message: /^The deadline is not a date: an object$/ });
+  assert.throws(() => businessHoursLeft(now, null), { name: 'RangeError', message: /^The deadline is not a date: null$/ });
+  // A Date from another realm is a Date
+  const foreign = (iso) => vm.runInNewContext(`new Date('${iso}')`);
+  assert.equal(businessHoursLeft(foreign('2026-11-16T10:00:00Z'), foreign('2026-11-16T14:00:00Z')), 4);
+  // Past the deadline, a moment that is not a date is still refused, not answered with 0
+  assert.throws(() => businessHoursLeft(new Date('not a date'), new Date('2026-11-01T00:00:00Z')), { name: 'RangeError', message: /^The moment is not a date: Invalid Date$/ });
 });
 
 // The worked examples agreed for each scenario (openspec/specs/response-deadline/spec.md), row by row: each
