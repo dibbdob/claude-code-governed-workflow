@@ -169,7 +169,7 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
 - **Verified by `claude plugin validate --strict`:** the marketplace and plugin manifests.
 - **Run on GitHub:** `./build.sh`, by the `build` workflow on every pull request and every push to `main`,
   which main's ruleset requires before a merge.
-- **Run against a live model, on 2026-11-15:** five changes, each from a GitHub issue to a merged pull
+- **Run against a live model, on 2026-11-15:** six changes, each from a GitHub issue to a merged pull
   request.
   - Both were proposed with `/openspec-propose` in an attended session, as pull requests whose build checked
     their scenarios; merging them approved them, and `refined` labelled their issues `ready`.
@@ -196,6 +196,11 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
   - Issue 18 fixed that defect, delivered by `scripts/agent.sh` on a laptop with no API key in its
     environment, so under the owner's Claude subscription instead: no dollar cost, 50 turns on the
     subscription's default model, Opus 5.5. The failing test came first; the fix was one line.
+  - Issue 23 was the first delivery with the model read from `scripts/delivery-model.txt`: $0.35 in 12
+    turns on Sonnet 5.5, its pull request saying so. It also skipped two steps `/deliver` requires, the
+    second review after its fixes and OpenSpec's verify, and said so in its report. Both were then run
+    headless on a laptop under the owner's subscription, on the same model, and came back clean. Nothing
+    yet fails a delivery that skips a step; the steps are asked for, not checked.
 - **The plugin, installed and run live, on 2026-11-15:** installed from `./plugin` into a throwaway
   repository, at local scope, for $0.48 in all. With Bash allowed to every agent, so that only the plugin's
   hook could stop a command, the plugin's reviewer ran `git rev-parse` and `git show <rev>:<path>`, and was
