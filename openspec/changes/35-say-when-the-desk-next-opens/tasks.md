@@ -2,10 +2,10 @@
 
 ## 1. When the desk next opens
 
-- [ ] 1.1 Add tests named `[response-deadline] When the desk next opens` and `[response-deadline] When the
+- [x] 1.1 Add tests named `[response-deadline] When the desk next opens` and `[response-deadline] When the
   desk next opens, for a moment that is not a date`, covering every row of their examples, and see them fail
   because the function does not exist yet
-- [ ] 1.2 Add and export the function from `src/sla.js`, using the same business hours and holiday handling
+- [x] 1.2 Add and export the function from `src/sla.js`, using the same business hours and holiday handling
   as a deadline, refusing a moment that is not a date as `businessHoursLeft` does, and refusing holidays as
   `responseDueAt` does; give it a doc comment; verify the tests from 1.1 pass and `./build.sh` passes as a
   whole
