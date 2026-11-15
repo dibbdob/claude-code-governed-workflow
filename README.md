@@ -28,7 +28,7 @@ code, has the work reviewed, archives the change, and writes the pull request de
 anything it reworded since approval.
 
 The [guide](docs/guide/README.md) covers each step: [refining](docs/guide/refining.md),
-[delivering](docs/guide/delivering.md), [models and costs](docs/guide/models-and-costs.md),
+[delivering](docs/guide/delivering.md), [models](docs/guide/models.md),
 [setting up](docs/guide/setting-up.md) and [when something goes wrong](docs/guide/troubleshooting.md).
 
 ## What you can rely on
@@ -52,19 +52,15 @@ The [guide](docs/guide/README.md) covers each step: [refining](docs/guide/refini
 Where an instruction to Claude could be ignored, something else enforces it: a tool list, a hook, or the
 build ([ADR 0001](docs/adr/0001-a-rule-points-at-what-enforces-it.md)).
 
-## What it costs, and what it asks of a project
+## What it asks of a project
 
-A small change delivered on GitHub on Claude Sonnet 5.5 has cost $0.29 to $0.70, and a refinement on GitHub
-about $0.27. On your own machine under a Claude subscription, runs draw on the plan's allowance instead. The
-[costs page](docs/guide/models-and-costs.md) lists every run.
-
-In return, a project needs:
+A project needs:
 
 - **OpenSpec**, pinned, for its specifications;
 - **a `build.sh` that is the whole gate**, which the workflow runs before every commit;
 - **changes named after their issues**, such as `57-bank-holidays`;
 - **tests that name the scenario they cover** in their title;
-- on GitHub, **the Claude GitHub app and an API key**, from an account with a spend limit.
+- on GitHub, **the Claude GitHub app and an API key**.
 
 ## Getting started
 
@@ -98,8 +94,6 @@ actionlint, a build on your machine says the workflows were NOT CHECKED and carr
 - **Not yet run:** `/refine` with an author other than the developer; OpenSpec's `explore` skill; the
   question an attended delivery asks before archiving a reworded change; and a delivery's pull request
   closing its issue on merge.
-
-What each run cost is in [models and costs](docs/guide/models-and-costs.md).
 
 ## Layout
 
