@@ -105,6 +105,12 @@ for f in scripts/agent.sh scripts/refinement.sh scripts/approved-issues.sh scrip
   .github/workflows/revised.yml .github/actions/install-actionlint/action.yml; do
   copy "$f"
 done
+if [[ -e "$target/scripts/test-citations.json" ]]; then
+  echo "  same   scripts/test-citations.json (the project's own)"
+else
+  mkdir -p "$target/scripts" && cp -p "$here/scripts/test-citations.json" "$target/scripts/test-citations.json"
+  echo "  added  scripts/test-citations.json (a starting point: say where the project's tests are)"
+fi
 for f in build.sh .github/workflows/build.yml; do
   if [[ -e "$target/$f" ]]; then
     echo "  KEPT   $f (the project's own; add the checks listed below)"
@@ -169,8 +175,9 @@ Fit these to the project by hand (docs/guide/setting-up.md has the detail):
   - ${config_fit}
   - build.sh: keep the OpenSpec, scenario, link and actionlint checks; put the project's own build and
     tests where it says so. scripts/ and the workflows assume ./build.sh is the whole gate.
-  - Tests: tools/specs.mjs looks for tests in test/*.test.js, titled test('[capability] Scenario name').
-    For tests in another language or place, change the line in it that reads them.
+  - scripts/test-citations.json: where the tests are and how their titles cite a scenario. It starts as
+    test/*.test.js with test('[capability] Scenario name'); for xUnit, Go, pytest and most others, set
+    "dirs" and "suffixes" and use "style": "quoted".
   - GitHub: the ruleset on main and, to start runs with a label, the Claude GitHub app and the
     ANTHROPIC_API_KEY secret. If the project has a general @claude workflow, keep it off refine/ pull
     requests.

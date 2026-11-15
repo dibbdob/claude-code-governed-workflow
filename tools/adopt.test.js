@@ -45,7 +45,7 @@ test('a project gets the scripts, checks, workflows, rules, pin, permissions and
   const dir = project();
   const r = adopt(dir);
   assert.equal(r.status, 0, r.stderr);
-  for (const f of ['scripts/agent.sh', 'scripts/refinement.sh', 'scripts/refine-tools.txt', 'tools/specs.mjs',
+  for (const f of ['scripts/agent.sh', 'scripts/refinement.sh', 'scripts/refine-tools.txt', 'tools/specs.mjs', 'scripts/test-citations.json',
     'tools/issue-summary.mjs', '.github/workflows/refine.yml', '.github/workflows/deliver.yml', 'build.sh',
     '.github/workflows/build.yml', '.github/actions/install-actionlint/action.yml', 'package-lock.json']) {
     assert.ok(existsSync(join(dir, f)), `${f} is added`);
@@ -160,4 +160,13 @@ test('a project that already depends on OpenSpec is not given a second copy', ()
   assert.equal(r.status, 0, r.stderr);
   assert.equal(JSON.parse(read(dir, 'package.json')).devDependencies, undefined);
   assert.match(r.stdout, /KEPT {3}package\.json \(it asks for OpenSpec 1\.9\.0/);
+});
+
+test("a project's own test config is kept, not replaced by this repository's", () => {
+  const own = '{"dirs": ["tests"], "suffixes": [".cs"], "style": "quoted"}\n';
+  const dir = project({ 'scripts/test-citations.json': own });
+  const r = adopt(dir);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(read(dir, 'scripts/test-citations.json'), own);
+  assert.match(r.stdout, /same {3}scripts\/test-citations\.json \(the project's own\)/);
 });

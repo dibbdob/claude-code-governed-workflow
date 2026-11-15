@@ -45,7 +45,8 @@ operations:
       - >-
         Work test first. Before the code for a scenario, write at least one test for it, named after it as
         [<capability>] <scenario name>, for example test('[response-deadline] A ticket opened on a public
-        holiday', ...). The build fails when a scenario in openspec/specs has no test naming it.
+        holiday', ...). Where the tests go and how a title is written is in scripts/test-citations.json. The
+        build fails when a scenario in openspec/specs has no test naming it.
       - >-
         Run ./build.sh, the whole of it, before every commit, and commit in steps a reviewer can read, each
         message starting with the change's name and a colon. Tick a task only when its own check has passed.

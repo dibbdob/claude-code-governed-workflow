@@ -1,0 +1,5 @@
+{
+  "dirs": ["test"],
+  "suffixes": [".test.js"],
+  "style": "node-test"
+}

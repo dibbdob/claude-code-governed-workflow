@@ -6,6 +6,7 @@ Grep
 Agent
 Skill
 Bash(./build.sh)
+Bash(node tools/specs.mjs *)
 Bash(openspec *)
 Bash(git add *)
 Bash(git commit *)

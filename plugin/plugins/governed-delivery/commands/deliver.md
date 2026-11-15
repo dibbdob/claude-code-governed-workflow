@@ -64,12 +64,15 @@ build fails when a scenario has no test. When it reports every task done, go on 
 ## 3. Independent review
 
 With every task ticked, run `./build.sh` and commit. Then pin the review to that commit and collect the
-citations:
+citations, from a tree with nothing uncommitted so that they are the commit's:
 
 ```bash
 git rev-parse HEAD
-git grep -n '\[[a-z0-9/-]*\] ' HEAD -- test
+node tools/specs.mjs citations
 ```
+
+The second lists each test that cites a scenario as `file:line: [capability] scenario`, wherever the
+project's tests are and in whatever language (`scripts/test-citations.json`).
 
 Spawn the `independent-reviewer` agent ([`.claude/agents/independent-reviewer.md`](../agents/independent-reviewer.md))
 with the change name, the commit and the citation lines, and nothing else: not your plan, not your reasons,
