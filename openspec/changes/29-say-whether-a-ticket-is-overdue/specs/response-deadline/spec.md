@@ -20,6 +20,7 @@ is not yet overdue. The answer compares the two moments as they are: weekends an
 | Mon 16 Nov 2026, 14:00 UTC | Mon 16 Nov 2026, 14:00 UTC | no |
 | Mon 16 Nov 2026, 14:00 UTC | Mon 16 Nov 2026, 14:01 UTC | yes |
 | Fri 13 Nov 2026, 16:00 UTC | Sat 14 Nov 2026, 12:00 UTC | yes |
+| Thu 24 Dec 2026, 16:00 UTC | Fri 25 Dec 2026, 10:00 UTC (Fri 25 Dec is a public holiday) | yes |
 
 #### Scenario: Overdue for a time that is not a date
 
