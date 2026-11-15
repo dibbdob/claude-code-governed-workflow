@@ -80,7 +80,11 @@ To see the workflow work, propose a change with `/openspec-propose <what you wan
 
 ```bash
 ./scripts/agent.sh 57                  # unattended: its own branch, /deliver run headless, then the build
+./scripts/agent.sh 57 --model claude-opus-5-5   # the same, on a stronger model than the default
 ```
+
+It runs as the `deliver` workflow on GitHub does, with the same tools, default model and turn limit, under
+your own Claude Code login rather than the API key.
 
 or make the branch yourself and run it in a Claude Code session:
 

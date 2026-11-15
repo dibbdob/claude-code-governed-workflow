@@ -2,6 +2,8 @@
 # A pretend headless `claude -p "/deliver <n>"` for scripts/agent.sh's tests: it does what a finished
 # delivery leaves behind (a commit, and the pull request description) and prints a run's JSON. No model.
 set -euo pipefail
+# FAKE_CLAUDE_ARGS=<file> records the arguments it was given, one per line, so a test can see the model.
+if [[ -n "${FAKE_CLAUDE_ARGS:-}" ]]; then printf '%s\n' "$@" > "$FAKE_CLAUDE_ARGS"; fi
 # FAKE_CLAUDE_FAIL=1 plays a run that fails before doing anything, as an expired login does.
 if [[ -n "${FAKE_CLAUDE_FAIL:-}" ]]; then
   echo '{"num_turns": 1, "total_cost_usd": 0, "is_error": true, "result": "Failed to authenticate"}'
