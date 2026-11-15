@@ -13,7 +13,8 @@ cd ../your-project && git status      # review what it added; nothing is committ
 [`setup-machine.sh`](../../scripts/setup-machine.sh) checks Node 22.12 or later, git, Python 3 and Claude Code,
 and installs what the workflow needs: the pinned OpenSpec (with its `verify` workflow, which `/deliver`
 needs), actionlint, and the GitHub CLI, signing you in if you are not. With `--check` it only says what is
-missing. It asks for no passwords.
+missing. It asks for no passwords. It installs actionlint and the GitHub CLI with Homebrew; on a machine
+without it, it tells you to install them yourself.
 
 ## Each project
 
@@ -36,7 +37,12 @@ It ends by listing what to fit. Most of it needs nothing:
 1. A ruleset on `main` requiring a pull request, the `build` check, and branches up to date before merging.
    Add one approval once there is a second person.
 2. To run Claude on GitHub with a label: the [Claude GitHub app](https://github.com/apps/claude) installed,
-   and the secret `ANTHROPIC_API_KEY`. Not needed if Claude only runs on your machine.
+   the secret `ANTHROPIC_API_KEY`, and the labels `refine` and `deliver`. The `ready` label is made for you.
+   Not needed if Claude only runs on your machine.
+
+   ```bash
+   gh label create refine && gh label create deliver
+   ```
 3. Write access for spec authors who refine on GitHub. The action answers `@claude` only from people with
    write access.
 4. If the project already has a general `@claude` workflow, keep it off pull requests whose branch starts
