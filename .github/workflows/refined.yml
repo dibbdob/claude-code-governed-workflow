@@ -35,11 +35,15 @@ jobs:
         run: |
           gh label create ready --description "Refined: its change is approved on main" --color 0E8A16 2>/dev/null || true
           approved_on="$(date -u '+%-d %b %Y')"
-          pr="$(gh api "repos/${REPO}/commits/${AFTER}/pulls" --jq '.[0].number // empty' 2>/dev/null || true)"
+          # The commits this push brought, to find the pull request each change came through: one push can
+          # carry several, and each issue links its own.
+          if [[ "$BEFORE" =~ ^0+$ ]]; then range="$AFTER"; else range="${BEFORE}..${AFTER}"; fi
           scripts/approved-issues.sh "$BEFORE" "$AFTER" | while read -r issue; do
             gh issue edit "$issue" --add-label ready
             changes=(openspec/changes/"${issue}"-*/)
             change="$(basename "${changes[0]}")"
+            commit="$(git log -1 --format=%H "$range" -- "openspec/changes/${change}/proposal.md")"
+            pr="$(gh api "repos/${REPO}/commits/${commit:-$AFTER}/pulls" --jq '.[0].number // empty' 2>/dev/null || true)"
             node tools/issue-summary.mjs section "openspec/changes/${change}" "$approved_on" \
               "${SERVER}/${REPO}/tree/${AFTER}/openspec/changes/${change}" "${pr:--}" > "$RUNNER_TEMP/section.md"
             gh issue view "$issue" --json body --jq .body > "$RUNNER_TEMP/body.md"

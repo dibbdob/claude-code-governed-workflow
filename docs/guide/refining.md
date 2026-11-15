@@ -21,7 +21,8 @@ answer review comments, run `/refine 57` again.
 1. Write the issue in plain words and add the `refine` label.
 2. Claude drafts the change from the issue alone, writing down each assumption and numbering its questions.
    Claude's comment has the questions, and a second comment links to the spec pull request. **The author
-   opens it** from that link, with the title and description already filled in.
+   opens it** from that link, with the title and description already filled in. A description too long for
+   a link comes in that comment instead, for the author to paste in.
 3. The author answers on the pull request, mentioning `@claude`:
    *"@claude Q1 yes. Q2 bank holidays count as closed days."* Each comment is another run, which revises the
    change and replies. Each run spends API credit, capped at $1.00 and 40 turns.

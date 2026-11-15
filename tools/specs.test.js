@@ -13,6 +13,11 @@ test('a test cites a scenario as [capability] scenario name', () => {
     [{ capability: 'response-deadline', scenario: 'A Friday ticket' }]);
 });
 
+test("a scenario's name may hold a quote of another kind, or the same one escaped", () => {
+  assert.deepEqual(citations(`test("[response-deadline] A customer's ticket", ...)\ntest('[response-deadline] A vendor\\'s ticket', ...)`),
+    [{ capability: 'response-deadline', scenario: "A customer's ticket" }, { capability: 'response-deadline', scenario: "A vendor's ticket" }]);
+});
+
 test('a scenario in the specs with no test naming it is a problem', () => {
   const problems = coverageProblems([{ capability: 'response-deadline', text: spec('Covered', 'Not covered') }], [],
     "test('[response-deadline] Covered', ...)");
@@ -56,6 +61,12 @@ test('a scenario carries its worked examples as the rows of a table under it', (
   assert.equal(first.name, 'A deadline that runs into a public holiday');
   assert.deepEqual(exampleRows(first.body), [['Thu 24 Dec 2026, 15:00', 'urgent', '25 Dec', 'Mon 28 Dec, 11:00']]);
   assert.deepEqual(exampleRows(second.body), []);
+});
+
+test("only a scenario's first table is its worked examples", () => {
+  const body = '\n- **WHEN** <a>\n\n| a |\n|---|\n\nNotes:\n\n| b | c |\n|---|---|\n| 1 | 2 |\n';
+  assert.deepEqual(exampleColumns(body), ['a']);
+  assert.deepEqual(exampleRows(body), []);
 });
 
 test('a scenario in an open change with no worked example is a problem', () => {

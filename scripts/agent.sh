@@ -35,13 +35,20 @@ cd "$root"
 
 [[ -z "$(git status --porcelain)" ]] || { echo "Commit or stash your changes first; the delivery starts from main." >&2; exit 1; }
 
-# An approved change is one on main: it only gets there through a reviewed pull request.
+# An approved change is one on main: it only gets there through a reviewed pull request. It is a folder of its
+# own in openspec/changes/ with a proposal, so neither the archive nor a path inside a change counts.
 if [[ "$wanted" =~ ^[0-9]+$ ]]; then
-  change="$(git ls-tree --name-only main openspec/changes/ | sed -n "s#^openspec/changes/\(${wanted}-[^/]*\)\$#\1#p" | head -n1)"
+  candidates="$(git ls-tree --name-only main openspec/changes/ | sed -n "s#^openspec/changes/\(${wanted}-[^/]*\)\$#\1#p")"
+  (( $(grep -c . <<< "$candidates") <= 1 )) ||
+    { echo "More than one change is named after issue #${wanted}; name the one to deliver:" $candidates >&2; exit 1; }
+  change="$candidates"
+elif [[ "$wanted" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ && "$wanted" != archive ]]; then
+  change="$wanted"
 else
-  change="$(git ls-tree --name-only main "openspec/changes/${wanted}" | sed 's#.*/##')"
+  change=
 fi
-[[ -n "$change" ]] || { echo "'${wanted}' is not an approved change on main." >&2; exit 1; }
+[[ -n "$change" ]] && git cat-file -e "main:openspec/changes/${change}/proposal.md" 2>/dev/null ||
+  { echo "'${wanted}' is not an approved change on main." >&2; exit 1; }
 git switch --quiet -c "deliver/${change}" main
 started="$(git rev-parse HEAD)"
 

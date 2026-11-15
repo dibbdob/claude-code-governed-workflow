@@ -20,3 +20,8 @@ test('links to other sites, anchors, and examples in code are not checked', () =
   const text = '[site](https://example.com) [top](#top) `[eg](nowhere.md)`\n```\n[eg](nowhere.md)\n```\n';
   assert.deepEqual(brokenLinks('README.md', text, () => false), []);
 });
+
+test('a link with a % that is not an escape is checked as written, not a crash', () => {
+  assert.deepEqual(brokenLinks('README.md', '[half](notes/50%.md)', () => false), ['notes/50%.md']);
+  assert.deepEqual(brokenLinks('README.md', '[half](notes/50%.md)', only('notes/50%.md')), []);
+});

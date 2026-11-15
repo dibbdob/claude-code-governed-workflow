@@ -63,17 +63,22 @@ export function section({ proposal, specs, approvedOn, specUrl, pr }) {
   return parts.join('\n');
 }
 
-// The issue's body with the section in place of an earlier one, or after what was asked.
+const REVISED = '**Revised during delivery:**';
+
+// The issue's body with the section in place of an earlier one, or after what was asked. A delivery's note
+// that it reworded the change is kept: it is about the delivery, which writing the summary again does not undo.
 export function apply(body, written) {
   const start = body.indexOf(START);
   const end = body.indexOf(END);
-  if (start >= 0 && end > start) return body.slice(0, start) + written + body.slice(end + END.length);
-  return `${body.trimEnd()}\n\n${written}\n`;
+  if (start < 0 || end < start) return `${body.trimEnd()}\n\n${written}\n`;
+  const notes = body.slice(start, end).split('\n').filter((line) => line.startsWith(REVISED) && !written.includes(line));
+  const kept = notes.length ? written.replace(END, `${notes.join('\n')}\n${END}`) : written;
+  return body.slice(0, start) + kept + body.slice(end + END.length);
 }
 
 // The issue's body with a note that a delivery reworded the approved change, once per pull request.
 export function revised(body, pr) {
-  const line = `**Revised during delivery:** see #${pr}, under "Changed since approval", and confirm the intent is the same.`;
+  const line = `${REVISED} see #${pr}, under "Changed since approval", and confirm the intent is the same.`;
   if (body.includes(`see #${pr},`)) return body;
   const end = body.indexOf(END);
   if (end >= 0) return `${body.slice(0, end)}${line}\n${body.slice(end)}`;
@@ -102,7 +107,7 @@ function main([command, ...args]) {
   throw new Error('usage: issue-summary.mjs section <change-dir> <approved-on> <spec-url> <pr|-> | apply <body> <section> | revised <body> <pr>');
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     process.stdout.write(main(process.argv.slice(2)));
   } catch (error) {

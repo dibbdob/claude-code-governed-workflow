@@ -94,6 +94,14 @@ test('a revision of an issue with no summary gets a section of its own', () => {
   assert.match(body, /Revised during delivery:\*\* see #64,/);
 });
 
+test('writing the summary after a revision keeps the note of the revision', () => {
+  const body = apply(revised('Asked.\n', '64'), written());
+  assert.equal(body.split(START).length, 2);
+  assert.match(body, /Refined: approved/);
+  assert.equal(body.split('see #64,').length, 2);
+  assert.ok(body.indexOf('see #64,') < body.indexOf(END));
+});
+
 test('the command line reads a change folder', () => {
   const dir = mkdtempSync(join(tmpdir(), 'summary-'));
   execFileSync('mkdir', ['-p', join(dir, 'specs/response-deadline')]);

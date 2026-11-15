@@ -126,3 +126,38 @@ test('a project with uncommitted changes is refused, so git diff shows only what
   assert.equal(r.status, 1);
   assert.match(r.stderr, /Commit or stash/);
 });
+
+test('a .gitignore whose last line has no newline keeps that line, and gets ours on lines of their own', () => {
+  const dir = project({ '.gitignore': 'dist/\n.env' });
+  assert.equal(adopt(dir).status, 0);
+  const lines = read(dir, '.gitignore').split('\n');
+  assert.deepEqual(lines.slice(0, 3), ['dist/', '.env', 'node_modules']);
+  assert.ok(lines.includes('.refine/'));
+});
+
+test("an OpenSpec config the project already had is kept, though it has no rules", () => {
+  const config = 'schema: spec-driven\ncontext: |\n  Our own product.\n';
+  const dir = project({ 'openspec/config.yaml': config });
+  const r = adopt(dir);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(read(dir, 'openspec/config.yaml'), config);
+  assert.match(r.stdout, /Kept as they were, because the project already had them: .*openspec\/config\.yaml/);
+  assert.match(r.stdout, /has none of this workflow's rules[\s\S]*fails every change \/refine writes/);
+  assert.doesNotMatch(r.stdout, /the risk rule names what is risky for the example desk/);
+});
+
+test("a project's own config that already has this workflow's rules is only told to fit the risk rule", () => {
+  const config = `${readFileSync('openspec/config.yaml', 'utf8')}\ncontext: |\n  Our own product.\n`;
+  const r = adopt(project({ 'openspec/config.yaml': config }));
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /the risk rule names what is risky for the example desk/);
+  assert.doesNotMatch(r.stdout, /has none of this workflow's rules/);
+});
+
+test('a project that already depends on OpenSpec is not given a second copy', () => {
+  const dir = project({ 'package.json': JSON.stringify({ dependencies: { '@fission-ai/openspec': '1.9.0' } }) });
+  const r = adopt(dir);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(JSON.parse(read(dir, 'package.json')).devDependencies, undefined);
+  assert.match(r.stdout, /KEPT {3}package\.json \(it asks for OpenSpec 1\.9\.0/);
+});

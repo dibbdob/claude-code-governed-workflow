@@ -16,9 +16,16 @@ echo "== syntax"
 find src test tools -name '*.js' -o -name '*.mjs' | xargs -n1 node --check
 
 echo "== dates are read in UTC"
-# The local forms pass on a machine set to UTC and fail everywhere else (ADR 0001).
-if grep -rnE '\.(get|set)(Hours|Minutes|Seconds|Day|Date|Month|FullYear)\(' src; then
-  echo "Use the getUTC*/setUTC* form of these Date methods." >&2
+# The local forms pass on a machine set to UTC and fail everywhere else (ADR 0001): the get/set methods, and
+# the ways a moment is made or shown in local time. new Date with more than one argument reads them as local
+# time, as does a date and time written with no zone (new Date('2026-03-02T09:00'), and Date.parse, which reads
+# text the same way), and the toLocale and toDate/TimeString forms show one. Text built at run time is beyond
+# a grep: a date and time made from text must end in Z or an offset.
+local_forms='\.(get|set)(Hours|Minutes|Seconds|Milliseconds|Day|Date|Month|FullYear|Year)\(|getTimezoneOffset\(|\.toLocale[A-Za-z]*String\(|\.to(Date|Time)String\(|Date\.parse\(|new Date\(([^()]|\([^()]*\))*,'
+quote="['\"\`]"
+text_with_no_zone="new Date\\(${quote}[^'\"\`]*[T ][0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]+)?)?${quote}"
+if grep -rnE "${local_forms}|${text_with_no_zone}" src; then
+  echo "Use the UTC forms: getUTC*/setUTC*, Date.UTC(...) for a moment from parts, and toISOString to show one." >&2
   exit 1
 fi
 

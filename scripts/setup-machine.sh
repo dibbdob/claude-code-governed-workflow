@@ -51,7 +51,9 @@ has claude && ok "Claude Code" || todo "Claude Code (https://claude.com/claude-c
 echo "== OpenSpec"
 want="$(node -p 'require(process.argv[1]).devDependencies["@fission-ai/openspec"]' "$root/package.json" 2>/dev/null)"
 have="$(OPENSPEC_TELEMETRY=0 openspec --version 2>/dev/null | tr -d '[:space:]')"
-if [[ -n "$want" && "$have" == "$want" ]]; then
+if [[ -z "$want" ]]; then
+  todo "OpenSpec's pinned version could not be read from $root/package.json, so it is not installed"
+elif [[ "$have" == "$want" ]]; then
   ok "OpenSpec $have"
 elif $check; then
   todo "OpenSpec ${want:-?} (this machine has ${have:-none})"
@@ -60,9 +62,17 @@ elif npm install --global --ignore-scripts --silent "@fission-ai/openspec@${want
 else
   todo "npm install --global @fission-ai/openspec@${want} failed"
 fi
-workflows='["propose","explore","apply","update","sync","archive","verify"]'
+# The workflows /refine and /deliver use, added to the ones this machine already has rather than put in
+# their place: the setting is the user's, for every project they run openspec update in.
+needed='["propose","explore","apply","update","sync","archive","verify"]'
 current="$(OPENSPEC_TELEMETRY=0 openspec config get workflows 2>/dev/null | tr -d '[:space:]')"
 profile="$(OPENSPEC_TELEMETRY=0 openspec config get profile 2>/dev/null | tr -d '[:space:]')"
+workflows="$(node -e '
+  let have = []; try { have = JSON.parse(process.argv[1]); } catch {}
+  if (!Array.isArray(have)) have = [];
+  const all = [...have, ...JSON.parse(process.argv[2]).filter((w) => !have.includes(w))];
+  console.log(JSON.stringify(all));
+' "$current" "$needed")"
 if [[ "$current" == "$workflows" && "$profile" == custom ]]; then
   ok "OpenSpec's workflows include verify"
 elif $check; then

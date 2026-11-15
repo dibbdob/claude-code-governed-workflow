@@ -156,6 +156,23 @@ jobs:
             body="Refines #${ISSUE}. Merging this approves the change for delivery; it does not close the issue."
           fi
           uri() { jq -rn --arg s "$1" '$s|@uri'; }
-          url="https://github.com/${REPO}/compare/main...${BRANCH}?quick_pull=1&title=$(uri "$title")&body=$(uri "$body")"
-          gh issue comment "$ISSUE" --repo "$REPO" --body "The draft is ready. [Open its spec pull request](${url}),
+          url="https://github.com/${REPO}/compare/main...${BRANCH}?quick_pull=1&title=$(uri "$title")"
+          # The description rides in the link while the link stays short enough for GitHub and browsers to
+          # take. A longer one goes in the comment, to paste in, rather than arriving cut off.
+          full="${url}&body=$(uri "$body")"
+          if (( ${#full} <= 6000 )); then
+            gh issue comment "$ISSUE" --repo "$REPO" --body "The draft is ready. [Open its spec pull request](${full}),
           with the title and description filled in, then answer the questions there in a comment that mentions @claude."
+          else
+            gh issue comment "$ISSUE" --repo "$REPO" --body-file - <<EOF
+          The draft is ready. [Open its spec pull request](${url}), with the title filled in, and paste in the description below; then answer the questions there in a comment that mentions @claude.
+
+          <details><summary>The pull request's description</summary>
+
+          ~~~~markdown
+          ${body}
+          ~~~~
+
+          </details>
+          EOF
+          fi

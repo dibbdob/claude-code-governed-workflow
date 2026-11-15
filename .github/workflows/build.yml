@@ -6,8 +6,7 @@ on:
   pull_request:
   push:
     branches: [main]
-  # The refine workflow starts it on a spec pull request's branch, which it opens with a token whose events
-  # start no workflows.
+  # To run it by hand on any branch, from the Actions tab or with gh workflow run build --ref <branch>.
   workflow_dispatch:
 
 permissions:
@@ -21,10 +20,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # The build reads the tree it is given, not its history, so a shallow checkout is enough.
       - uses: actions/checkout@v4
-        with:
-          # The spec check compares changes with the team's main, so it needs main's history.
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22

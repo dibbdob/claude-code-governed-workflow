@@ -103,6 +103,21 @@ test('a new spec pull request needs its description', () => {
   const r = run(repo, 'publish');
   assert.equal(r.status, 1);
   assert.match(r.stderr, /description to \.refine\/pull-request\.md/);
+  assert.equal(git(repo.dir, '--git-dir', repo.origin, 'branch', '--list', 'refine/*'), '', 'nothing was pushed');
+  assert.equal(git(repo.dir, 'branch', '--show-current').trim(), 'main');
+});
+
+test('a refinement is not published over commits on main that the remote does not have', () => {
+  const repo = repository();
+  writeFileSync(join(repo.dir, 'notes.txt'), 'not a specification');
+  git(repo.dir, 'add', 'notes.txt');
+  git(repo.dir, 'commit', '--quiet', '-m', 'Unpushed work');
+  propose(repo);
+  const r = run(repo, 'publish');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /main has 1 commit\(s\) that origin\/main does not/);
+  assert.equal(git(repo.dir, '--git-dir', repo.origin, 'branch', '--list', 'refine/*'), '', 'nothing was pushed');
+  assert.equal(ghCalls(repo).includes('pr create'), false);
 });
 
 test('a later run picks up the published branch, and its revision updates the open pull request', () => {

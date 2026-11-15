@@ -58,23 +58,34 @@ copy_claude() { # <path under .claude/>
 }
 
 echo "== OpenSpec in the project"
+initialised=false
 if [[ -d "$target/openspec" ]]; then
   echo "  same   openspec/ (already initialised)"
 else
   (cd "$target" && openspec init --tools claude --no-animation >/dev/null) && echo "  added  openspec/, and OpenSpec's skills for Claude Code"
+  initialised=true
 fi
-# A config with no rules is the one openspec init writes; this project's rules take its place.
-if [[ -f "$target/openspec/config.yaml" ]] && grep -q '^rules:' "$target/openspec/config.yaml"; then
-  if cmp -s "$here/openspec/config.yaml" "$target/openspec/config.yaml"; then echo "  same   openspec/config.yaml"
-  else echo "  KEPT   openspec/config.yaml (it has rules of its own; compare with $here/openspec/config.yaml)"; kept+=(openspec/config.yaml); fi
-else
+# The config openspec init has just written has no rules, and this project's take its place. A config the
+# project had before is its own, rules or not, and is kept like any other file.
+if $initialised || [[ ! -f "$target/openspec/config.yaml" ]]; then
   cp "$here/openspec/config.yaml" "$target/openspec/config.yaml" && echo "  added  openspec/config.yaml (this project's rules)"
+elif cmp -s "$here/openspec/config.yaml" "$target/openspec/config.yaml"; then
+  echo "  same   openspec/config.yaml"
+else
+  echo "  KEPT   openspec/config.yaml (yours differs; add this project's rules from $here/openspec/config.yaml)"
+  kept+=(openspec/config.yaml)
 fi
 
 echo "== OpenSpec pinned, for the build and the workflows (npm ci)"
-if [[ -f "$target/package.json" ]] &&
-  [[ "$(node -p 'require(process.argv[1]).devDependencies?.["@fission-ai/openspec"] ?? ""' "$target/package.json")" == "$pinned" ]]; then
+# The version the project already asks for, under either kind of dependency.
+theirs="$( [[ -f "$target/package.json" ]] && node -p '
+  const p = require(process.argv[1]);
+  p.devDependencies?.["@fission-ai/openspec"] ?? p.dependencies?.["@fission-ai/openspec"] ?? ""' "$target/package.json" || true)"
+if [[ "$theirs" == "$pinned" ]]; then
   echo "  same   package.json pins OpenSpec $pinned"
+elif [[ -n "$theirs" ]]; then
+  echo "  KEPT   package.json (it asks for OpenSpec $theirs; this workflow is built and tested on $pinned)"
+  kept+=(package.json)
 else
   [[ -f "$target/package.json" ]] || printf '{\n  "private": true\n}\n' > "$target/package.json"
   node -e '
@@ -131,19 +142,31 @@ node -e '
   console.log("  added  permissions to .claude/settings.json (git push stays denied; refinement.sh is allowed)");
 ' "$here/.claude/settings.json" "$target/.claude/settings.json"
 touch "$target/.gitignore"
+# A last line with no newline would have the first line added joined onto it, and both would stop working.
+[[ ! -s "$target/.gitignore" || -z "$(tail -c 1 "$target/.gitignore")" ]] || echo >> "$target/.gitignore"
 added=0
 for line in node_modules runs/ .build.lock/ .delivery/ .refine/; do
   grep -qxF "$line" "$target/.gitignore" || { echo "$line" >> "$target/.gitignore"; added=1; }
 done
 (( added )) && echo "  added  lines to .gitignore" || echo "  same   .gitignore"
 
+# A config the project kept has rules of its own, or none. Without this workflow's, OpenSpec never ends a
+# change's tasks with the Delivery group, and the build fails every change /refine writes.
+if grep -q 'Grounding:' "$target/openspec/config.yaml" 2>/dev/null; then
+  config_fit="openspec/config.yaml: the risk rule names what is risky for the example desk (a deadline, a
+    priority). Name what is risky for this product."
+else
+  config_fit="openspec/config.yaml is the project's own, kept, and has none of this workflow's rules. Add the
+    rules: and operations: from $here/openspec/config.yaml to it first: until it has the tasks rule, the
+    build fails every change /refine writes, for having no Delivery group."
+fi
+
 cat <<EOF
 
 Done. Nothing is committed: review it with  git -C "$target" diff  and  git -C "$target" status.
 
 Fit these to the project by hand (docs/guide/setting-up.md has the detail):
-  - openspec/config.yaml: the risk rule names what is risky for the example desk (a deadline, a priority).
-    Name what is risky for this product.
+  - ${config_fit}
   - build.sh: keep the OpenSpec, scenario, link and actionlint checks; put the project's own build and
     tests where it says so. scripts/ and the workflows assume ./build.sh is the whole gate.
   - Tests: tools/specs.mjs looks for tests in test/*.test.js, titled test('[capability] Scenario name').

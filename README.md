@@ -27,7 +27,8 @@ scripts/adopt.sh ../your-project      # your project: everything else, nothing c
   every commit.
 - Have each test name the scenario it covers in its title, such as `[response-deadline] A ticket opened
   late on a Friday`.
-- Rewrite the risk rule in `openspec/config.yaml` to name what is risky for your product.
+- Rewrite the risk rule in `openspec/config.yaml` to name what is risky for your product. If the project
+  already had its own config, `adopt.sh` kept it: add this workflow's rules to it first.
 
 Then commit what it added and push it.
 

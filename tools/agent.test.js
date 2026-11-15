@@ -53,6 +53,33 @@ test('a run refuses a change that is not approved onto main', () => {
   assert.match(r.stderr, /not an approved change/);
 });
 
+test('a run refuses the archive, or a path inside a change, as the change to deliver', () => {
+  const dir = repository();
+  mkdirSync(join(dir, 'openspec/changes/archive/2026-01-01-7-old'), { recursive: true });
+  writeFileSync(join(dir, 'openspec/changes/archive/2026-01-01-7-old/proposal.md'), '# Proposal\n');
+  git(dir, 'add', '.');
+  git(dir, 'commit', '--quiet', '-m', 'An archived change');
+  for (const wanted of ['archive', 'archive/2026-01-01-7-old', '42-holidays/proposal.md', '../changes/42-holidays']) {
+    const r = agent(dir, wanted);
+    assert.equal(r.status, 1, `${wanted}: ${r.stderr}`);
+    assert.match(r.stderr, /not an approved change/, wanted);
+    assert.equal(git(dir, 'branch', '--show-current').trim(), 'main', `${wanted} made no branch`);
+  }
+  assert.equal(agent(dir, '42-holidays').status, 0, 'the change named in full is delivered');
+});
+
+test('a run refuses an issue number that more than one change is named after', () => {
+  const dir = repository();
+  mkdirSync(join(dir, 'openspec/changes/42-weekends'), { recursive: true });
+  writeFileSync(join(dir, 'openspec/changes/42-weekends/proposal.md'), '# Proposal\n');
+  git(dir, 'add', '.');
+  git(dir, 'commit', '--quiet', '-m', 'A second change for 42');
+  const r = agent(dir, '42');
+  assert.equal(r.status, 1);
+  assert.match(r.stderr, /More than one change is named after issue #42.*42-holidays 42-weekends/);
+  assert.equal(git(dir, 'branch', '--show-current').trim(), 'main');
+});
+
 test('a run refuses to start over uncommitted changes', () => {
   const dir = repository();
   writeFileSync(join(dir, 'notes.txt'), 'half-finished');
@@ -119,4 +146,9 @@ test('the deliver workflow reads the same default model and tool list as agent.s
   assert.match(workflow, /--model \$\{\{ steps\.find\.outputs\.model \}\}/);
   assert.match(workflow, /scripts\/headless-tools\.txt/);
   assert.doesNotMatch(workflow, /--model claude-/, 'no model is written into the workflow itself');
+});
+
+test('an unattended run may ask which branch it is on, but not delete or move one', () => {
+  const tools = readFileSync('scripts/headless-tools.txt', 'utf8').split('\n');
+  assert.deepEqual(tools.filter((t) => t.startsWith('Bash(git branch')), ['Bash(git branch --show-current)']);
 });
