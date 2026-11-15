@@ -46,6 +46,9 @@ node tools/specs.mjs check
 echo "== tests"
 node --test
 
+echo "== the plugin is generated from .claude/"
+python3 tools/package_plugin.py --check
+
 echo "== every relative link in the Markdown leads somewhere"
 node tools/links.mjs
 

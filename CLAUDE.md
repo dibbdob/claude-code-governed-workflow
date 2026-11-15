@@ -55,3 +55,13 @@ is held to read-only commands by a hook in its frontmatter, whose tests run in `
 
 `.claude/settings.json` allows the build and read-only git, and denies `git push`, `git reset --hard` and the
 commands that throw away uncommitted work (`git checkout --`, `git restore`, `git clean`, `git stash drop`).
+
+A delivery runs on a branch of its own. `./scripts/agent.sh <issue-or-change>` makes one from main and runs
+`/deliver` headless on it, then checks it is committed, archived and builds. The tools it allows are listed
+in `scripts/headless-tools.txt`.
+
+## The plugin
+
+`plugin/` is a marketplace holding one plugin, `governed-delivery`, generated from `.claude/` by
+`python3 tools/package_plugin.py`. Edit `.claude/`, regenerate, and commit both; `build.sh` fails when they
+differ ([ADR 0005](docs/adr/0005-the-plugin-is-generated-from-the-project.md)).
