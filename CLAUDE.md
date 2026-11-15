@@ -60,7 +60,8 @@ A delivery runs on a branch of its own ([ADR 0008](docs/adr/0008-deliveries-run-
 `./scripts/agent.sh <issue-or-change>` makes one from main and runs `/deliver` headless on it, then checks it
 is committed, archived and builds. On GitHub, the `deliver` label runs it through Anthropic's Claude Code
 action, set up the standard way ([`deliver.yml`](.github/workflows/deliver.yml)). Both read the tools they
-allow from `scripts/headless-tools.txt`, so a change to that list is one edit.
+allow from `scripts/headless-tools.txt` and the model from `scripts/delivery-model.txt`, so a change to either
+is one edit. Only `agent.sh` takes `--model <model>`, for one run on a model other than the default.
 
 ## The plugin
 

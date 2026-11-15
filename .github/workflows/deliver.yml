@@ -12,7 +12,7 @@
 #   the Claude GitHub app, installed (https://github.com/apps/claude), whose token pushes the branch and
 #                          comments on the issue. Its pushes start workflows, unlike GitHub's own token's.
 #   secret ANTHROPIC_API_KEY  for Claude Code, from an account with a spend limit. Each run is also capped
-#                          at $1.50, on Claude Sonnet 5.5.
+#                          at $1.50, on the model in scripts/delivery-model.txt.
 name: deliver
 
 on:
@@ -56,6 +56,9 @@ jobs:
             { echo "No approved change on main is named after issue #${ISSUE} (openspec/changes/${ISSUE}-...)." >&2; exit 1; }
           echo "change=$change" >> "$GITHUB_OUTPUT"
           echo "tools=$(paste -sd, scripts/headless-tools.txt)" >> "$GITHUB_OUTPUT"
+          model="$(tr -d '[:space:]' < scripts/delivery-model.txt)"
+          [[ "$model" =~ ^[a-z0-9][a-z0-9.-]*$ ]] || { echo "Not a model name: '${model}'." >&2; exit 1; }
+          echo "model=$model" >> "$GITHUB_OUTPUT"
 
       # v1, pinned to the commit it named on 14 November 2026. A moving tag would change what runs here
       # without a pull request.
@@ -69,10 +72,13 @@ jobs:
             Run this project's /deliver command (.claude/commands/deliver.md) for the OpenSpec change
             ${{ steps.find.outputs.change }}. You are on its branch already. When it has written the pull
             request description, push the branch, and put the description in your comment on this issue.
-          # Sonnet for the session, and so for the reviewer, which inherits it; the spec-reader names its own
-          # model. A run that reaches the dollar cap stops where it is, and its branch shows how far it got.
+            Start the description's body with the line: Delivered on GitHub on ${{ steps.find.outputs.model }},
+            the default in `scripts/delivery-model.txt`.
+          # The project's default model (scripts/delivery-model.txt, which scripts/agent.sh reads too) for the
+          # session, and so for the reviewer, which inherits it; the spec-reader names its own. A run that
+          # reaches the dollar cap stops where it is, and its branch shows how far it got.
           claude_args: >-
-            --model claude-sonnet-5-5
+            --model ${{ steps.find.outputs.model }}
             --max-budget-usd 1.50
             --max-turns 60
             --allowedTools "${{ steps.find.outputs.tools }}"

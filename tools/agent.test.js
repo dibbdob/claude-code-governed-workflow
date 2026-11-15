@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -26,7 +26,7 @@ function repository() {
   return dir;
 }
 
-const agent = (dir, wanted = '42', env = {}) => spawnSync('bash', [AGENT, wanted], {
+const agent = (dir, wanted = '42', env = {}, extra = []) => spawnSync('bash', [AGENT, wanted, ...extra], {
   cwd: dir,
   encoding: 'utf8',
   env: { ...process.env, PATH: `${FAKE_CLAUDE}:${process.env.PATH}`, RUNS_DIR: `${dir}-runs`, ...env },
@@ -76,4 +76,47 @@ test('a run that fails after committing keeps its branch', () => {
   const r = agent(dir, '42', { FAKE_CLAUDE_FAIL_AFTER_COMMIT: '1' });
   assert.equal(r.status, 1);
   assert.match(git(dir, 'log', '--oneline', 'deliver/42-holidays'), /Deliver it/);
+});
+
+// The model Claude Code was started with, from the arguments the stand-in recorded.
+const modelGiven = (file) => {
+  const args = readFileSync(file, 'utf8').split('\n');
+  return args[args.indexOf('--model') + 1];
+};
+const DEFAULT_MODEL = readFileSync('scripts/delivery-model.txt', 'utf8').trim();
+
+test('a run uses the model the deliver workflow uses, and says so in the pull request', () => {
+  const dir = repository();
+  const r = agent(dir, '42', { FAKE_CLAUDE_ARGS: `${dir}-args` });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(modelGiven(`${dir}-args`), DEFAULT_MODEL);
+  const description = readFileSync(join(dir, '.delivery/pull-request.md'), 'utf8').split('\n');
+  assert.match(description[0], /^Merge deliver\/42-holidays: /, 'the title line stays first');
+  assert.equal(description[2], `Delivered by \`scripts/agent.sh\` on ${DEFAULT_MODEL}, the default in \`scripts/delivery-model.txt\`.`);
+});
+
+test('--model runs one delivery on another model, and the pull request says it was chosen', () => {
+  const dir = repository();
+  const r = agent(dir, '42', { FAKE_CLAUDE_ARGS: `${dir}-args` }, ['--model', 'claude-opus-5-5']);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(modelGiven(`${dir}-args`), 'claude-opus-5-5');
+  assert.match(readFileSync(join(dir, '.delivery/pull-request.md'), 'utf8'),
+    new RegExp(`on claude-opus-5-5, chosen for this run in place of the default, ${DEFAULT_MODEL}\\.`));
+});
+
+test('a model that is not a plain name, or a flag it does not know, is refused before anything starts', () => {
+  for (const extra of [['--model', 'opus; rm -rf .'], ['--model', ''], ['--model'], ['--modle', 'claude-opus-5-5']]) {
+    const dir = repository();
+    const r = agent(dir, '42', {}, extra);
+    assert.equal(r.status, 1, `${extra.join(' ')}: ${r.stderr}`);
+    assert.equal(git(dir, 'branch', '--show-current').trim(), 'main', `${extra.join(' ')} made no branch`);
+  }
+});
+
+test('the deliver workflow reads the same default model and tool list as agent.sh', () => {
+  const workflow = readFileSync('.github/workflows/deliver.yml', 'utf8');
+  assert.match(workflow, /scripts\/delivery-model\.txt/);
+  assert.match(workflow, /--model \$\{\{ steps\.find\.outputs\.model \}\}/);
+  assert.match(workflow, /scripts\/headless-tools\.txt/);
+  assert.doesNotMatch(workflow, /--model claude-/, 'no model is written into the workflow itself');
 });

@@ -3,6 +3,13 @@
 # label does the same through Anthropic's Claude Code action (.github/workflows/deliver.yml).
 #
 #   ./scripts/agent.sh 57                  the change for issue #57, or name it: 57-bank-holidays
+#   ./scripts/agent.sh 57 --model claude-opus-5-5
+#                                          the same on another model, for a change the default cannot do
+#
+# It runs as the deliver workflow on GitHub does: the same tools (headless-tools.txt), the same default model
+# (delivery-model.txt), the same turn limit. Two things differ: on a laptop it runs under the person's own
+# Claude Code login, and the model can be chosen for one run. There is no dollar cap here; the person's plan
+# has its own limits, and the cap on GitHub would stop a stronger model before it finished.
 #
 # Makes the delivery's branch from main, runs /deliver headless on it, and checks what it left: no
 # uncommitted changes, the change archived, and the build passing. The work stays on its branch for a person
@@ -11,7 +18,16 @@
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(git rev-parse --show-toplevel)"
-wanted="${1:?usage: scripts/agent.sh <issue-number | change-name>}"
+usage='usage: scripts/agent.sh <issue-number | change-name> [--model <model>]'
+wanted="${1:?$usage}"
+default_model="$(tr -d '[:space:]' < "$here/delivery-model.txt")"
+model="$default_model"
+if (( $# > 1 )); then
+  [[ "$2" == "--model" && $# -eq 3 ]] || { echo "$usage" >&2; exit 1; }
+  model="$3"
+fi
+# A model is a name such as claude-opus-5-5: nothing a shell or Claude Code's arguments would read as more.
+[[ "$model" =~ ^[a-z0-9][a-z0-9.-]*$ ]] || { echo "Not a model name: '${model}'." >&2; exit 1; }
 runs="${RUNS_DIR:-$root/runs}"
 # OpenSpec from the project's own pinned copy, with its usage reporting off.
 export PATH="$root/node_modules/.bin:$PATH" OPENSPEC_TELEMETRY=0
@@ -54,6 +70,7 @@ mkdir -p "$runs"
 status=0
 claude -p "/deliver ${change}" \
   --output-format json \
+  --model "$model" \
   --permission-mode dontAsk \
   --allowedTools "$(paste -sd, "$here/headless-tools.txt")" \
   --max-turns 60 \
@@ -72,4 +89,16 @@ node -e '
 [[ ! -e "openspec/changes/${change}" ]] ||
   { echo "The change is not archived; /deliver's last step is openspec archive ${change} --yes." >&2; exit 1; }
 ./build.sh
-echo "Delivered on deliver/${change}. Push it and open a pull request with .delivery/pull-request.md." >&2
+
+# The pull request says which model delivered it, so a reviewer can see when a change needed more than the
+# default, and the default can be changed when that keeps happening. The title line stays first.
+if [[ -f .delivery/pull-request.md ]]; then
+  if [[ "$model" == "$default_model" ]]; then
+    note="Delivered by \`scripts/agent.sh\` on ${model}, the default in \`scripts/delivery-model.txt\`."
+  else
+    note="Delivered by \`scripts/agent.sh\` on ${model}, chosen for this run in place of the default, ${default_model}."
+  fi
+  { head -n 1 .delivery/pull-request.md; printf '\n%s\n' "$note"; tail -n +2 .delivery/pull-request.md; } > .delivery/pull-request.md.new
+  mv .delivery/pull-request.md.new .delivery/pull-request.md
+fi
+echo "Delivered on deliver/${change}, on ${model}. Push it and open a pull request with .delivery/pull-request.md." >&2
