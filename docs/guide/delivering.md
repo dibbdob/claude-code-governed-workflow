@@ -11,7 +11,8 @@ change, so assign the issue to yourself first.
 1. Add `deliver` to the issue. If there is no approved change for it, the run fails at once, in the Actions
    tab.
 2. Claude builds the change on a `deliver/…` branch and keeps a progress comment on the issue.
-3. When it finishes, **you open the pull request** from the link in the comment, using the description there.
+3. When it finishes, **you open the pull request** from the *Create PR* link in the comment. The link fills in
+   only the start of the description, so paste the full one from the comment as the body.
 4. The `build` check runs, and a person reviews and merges.
 
 A run stops at $1.50 or 60 turns, and its branch keeps whatever it committed. Remove and re-add the label,
