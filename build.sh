@@ -52,6 +52,20 @@ python3 tools/package_plugin.py --check
 echo "== every relative link in the Markdown leads somewhere"
 node tools/links.mjs
 
+echo "== the GitHub workflows (actionlint)"
+# The workflows spend money, push branches and edit issues, and a mistake in one shows only when someone adds
+# a label. actionlint checks their expressions, outputs and triggers, and shellcheck's view of each step. On
+# GitHub it is installed, pinned, before the build, so a missing one fails there; on a laptop the build says
+# it did not check them, rather than passing quietly.
+if command -v actionlint >/dev/null; then
+  actionlint
+elif [[ -n "${CI:-}" ]]; then
+  echo "actionlint is not installed, and on CI the workflows must be checked." >&2
+  exit 1
+else
+  echo "   NOT CHECKED: actionlint is not installed (brew install actionlint, or see github.com/rhysd/actionlint). CI checks them."
+fi
+
 echo "== the read-only hook"
 python3 .claude/hooks/test_read_only_bash.py 2>&1 | tail -n 1
 

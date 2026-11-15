@@ -51,7 +51,8 @@ jobs:
         env:
           ISSUE: ${{ github.event.issue.number }}
         run: |
-          change="$(ls -d openspec/changes/"${ISSUE}"-*/ 2>/dev/null | head -n1 | xargs -r basename)"
+          changes=(openspec/changes/"${ISSUE}"-*/)
+          change="$( [[ -d "${changes[0]}" ]] && basename "${changes[0]}" || true )"
           [[ -n "$change" ]] ||
             { echo "No approved change on main is named after issue #${ISSUE} (openspec/changes/${ISSUE}-...)." >&2; exit 1; }
           echo "change=$change" >> "$GITHUB_OUTPUT"

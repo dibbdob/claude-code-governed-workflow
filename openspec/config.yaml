@@ -6,6 +6,10 @@ schema: spec-driven
 rules:
   proposal:
     - >-
+      Begin the proposal with a "## In plain terms" section: two or three sentences, in the words of the
+      people who use the product, saying what will be true once the change is delivered. No code, file or
+      function names. When the change is approved, it is copied onto its issue (ADR 0010).
+    - >-
       End the proposal with a "## Risk" section: a level (low, medium or high) and one or two sentences on
       what could go wrong for customers or for the desk if this change is wrong. Rate it medium or high when
       it changes a deadline, a priority, stored data, or what another capability relies on.

@@ -1,6 +1,8 @@
-# Show on each issue when its change has been refined (ADR 0006). A change reaches main only through a
-# reviewed pull request, so when a change's proposal lands on main, its issue is labelled 'ready': the status
-# people see on GitHub follows the review, rather than being set by hand.
+# Show on each issue when its change has been refined (ADRs 0006 and 0010). A change reaches main only
+# through a reviewed pull request, so when a change's proposal lands on main, its issue is labelled 'ready',
+# and a summary of the change as approved is written below what the issue asked: its plain terms, its worked
+# examples, its risk, and links to the specification and the discussion. The status and the summary follow
+# the review, rather than being set by hand, and the specification stays the authority.
 name: refined
 
 on:
@@ -11,6 +13,7 @@ on:
 permissions:
   contents: read
   issues: write
+  pull-requests: read
 
 jobs:
   label:
@@ -19,13 +22,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Label the issues of newly approved changes
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Label the issues of newly approved changes, and summarise each change on its issue
         env:
           GH_TOKEN: ${{ github.token }}
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          SERVER: ${{ github.server_url }}
         run: |
           gh label create ready --description "Refined: its change is approved on main" --color 0E8A16 2>/dev/null || true
+          approved_on="$(date -u '+%-d %b %Y')"
+          pr="$(gh api "repos/${REPO}/commits/${AFTER}/pulls" --jq '.[0].number // empty' 2>/dev/null || true)"
           scripts/approved-issues.sh "$BEFORE" "$AFTER" | while read -r issue; do
             gh issue edit "$issue" --add-label ready
+            changes=(openspec/changes/"${issue}"-*/)
+            change="$(basename "${changes[0]}")"
+            node tools/issue-summary.mjs section "openspec/changes/${change}" "$approved_on" \
+              "${SERVER}/${REPO}/tree/${AFTER}/openspec/changes/${change}" "${pr:--}" > "$RUNNER_TEMP/section.md"
+            gh issue view "$issue" --json body --jq .body > "$RUNNER_TEMP/body.md"
+            node tools/issue-summary.mjs apply "$RUNNER_TEMP/body.md" "$RUNNER_TEMP/section.md" > "$RUNNER_TEMP/new-body.md"
+            gh issue edit "$issue" --body-file "$RUNNER_TEMP/new-body.md"
           done

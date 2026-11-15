@@ -3,6 +3,8 @@
     "allow": [
       "Bash(./build.sh)",
       "Bash(openspec *)",
+      "Bash(./scripts/refinement.sh *)",
+      "Bash(gh issue view *)",
       "Bash(node tools/specs.mjs *)",
       "Bash(git status)",
       "Bash(git diff *)",
