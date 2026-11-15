@@ -184,9 +184,15 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
     one.
   - Issue 8 was that follow-up, delivered by the `deliver` label for $1.67 in 10 turns: the failing test
     first, then the fix, reusing change 1's checks. Review found no defects, so there was one round.
-- **Not yet run against a live model:** the packaged plugin's hook in a live session; OpenSpec's `explore`
-  skill; and the archive guidance's "please confirm the intent" question, which only an attended delivery
-  asks.
+- **The plugin, installed and run live, on 2026-11-15:** installed from `./plugin` into a throwaway
+  repository, at local scope, for $0.48 in all. With Bash allowed to every agent, so that only the plugin's
+  hook could stop a command, the plugin's reviewer ran `git rev-parse` and `git show <rev>:<path>`, and was
+  refused `touch`, a `>` redirect and a bare `git log` (whose message the review must not read), each with
+  the hook's reason and the plugin's name; neither file it tried to write exists. The main session was not
+  held, and the spec-reader had no shell to try. The plugin's `/deliver`, given a change that does not
+  exist, stopped at its gates and changed nothing.
+- **Not yet run against a live model:** OpenSpec's `explore` skill, and the archive guidance's "please
+  confirm the intent" question, which only an attended delivery asks.
 
 ## Layout
 
