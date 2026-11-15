@@ -11,7 +11,8 @@ on your own machine under your Claude subscription.
 
 ## Getting started
 
-**1. Install.** Needs Node 22.12 or later, git, Python 3 and Claude Code.
+**1. Install.** Needs a project on GitHub, a Claude subscription or API key, and on your machine a bash
+shell, Node 22.12 or later, git, Python 3 and Claude Code.
 
 ```bash
 git clone https://github.com/dibbdob/claude-code-governed-workflow.git
@@ -28,22 +29,33 @@ scripts/adopt.sh ../your-project      # your project: everything else, nothing c
   late on a Friday`.
 - Rewrite the risk rule in `openspec/config.yaml` to name what is risky for your product.
 
+Then commit what it added and push it.
+
 **3. Set up GitHub.**
 
 - A ruleset on `main` requiring a pull request and the `build` check.
 - To start `/refine` and `/deliver` with a label, the [Claude GitHub app](https://github.com/apps/claude)
-  installed and the secret `ANTHROPIC_API_KEY`. Not needed if Claude only runs on your machine.
+  installed, the secret `ANTHROPIC_API_KEY`, and two labels, `refine` and `deliver`. Not needed if Claude
+  only runs on your machine.
 
 [Setting up](docs/guide/setting-up.md) has the detail: what each script does, the full list to fit, and
 the GitHub settings in full.
 
 ## Your first change
 
+Two people take part, and one person can be both: the **author**, who raised the issue and knows the
+product, and the **developer**, who reviews and merges. Commands run in your project.
+
 1. Write the issue in plain words. Add the `refine` label, or run `/refine 57` in a session. The change it
    writes is named after the issue, such as `57-bank-holidays`.
 2. Answer Claude's questions, review the spec pull request, and merge it. The issue is now `ready`.
-3. Add the `deliver` label, or run `./scripts/agent.sh 57`.
+3. Add the `deliver` label and open the pull request it links to. Or run `./scripts/agent.sh 57`, push the
+   branch and open the pull request yourself.
 4. Read the pull request, starting with anything marked *Changed since approval*, and merge it.
+
+To see one from start to finish: [the issue](https://github.com/dibbdob/claude-code-governed-workflow/issues/35),
+[its specification](https://github.com/dibbdob/claude-code-governed-workflow/pull/36) and
+[the delivery](https://github.com/dibbdob/claude-code-governed-workflow/pull/37).
 
 ## More
 
@@ -51,3 +63,5 @@ the GitHub settings in full.
 - [Reference](docs/guide/reference.md): labels, models and switching, troubleshooting
 - [How it works](docs/how-it-works.md): what you can rely on, how it is tested, and the repository layout
 - [Decision records](docs/adr): why each part is built as it is
+
+Released under the [MIT licence](LICENSE).
