@@ -35,9 +35,9 @@ folder.
   assumptions written down and its questions numbered, and the workflow comments a link that opens the
   spec pull request, filled in, for the author to open, as a delivery does. Opening it with the workflow's
   token would need the repository to let GitHub Actions create and approve pull requests, one setting that
-  would let any workflow approve one; the first trial in an adopted project found it off by default. Each comment that mentions `@claude` on that pull
-  request is another run on the same branch, which reads the thread and revises. The thread is the
-  conversation's memory. Runs are capped at $1.00 and 40 turns on the default model.
+  would let any workflow approve one, and it is off by default. Each comment that mentions `@claude` on
+  that pull request is another run on the same branch, which reads the thread and revises. The thread is
+  the conversation's memory. Runs are capped at $1.00 and 40 turns on the default model.
 - **The approval is unchanged.** A person reviews the spec pull request and merges it; `refined` labels the
   issue `ready`.
 - **`refined` also writes a summary of the approved change on its issue,** below what was asked, between
