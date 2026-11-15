@@ -36,7 +36,8 @@ export function priorityOf(ticket) {
 
 /**
  * The moment a ticket's first response is due, counting business hours only.
- * @param {Date} openedAt
+ * @param {Date} openedAt when the ticket was opened. Anything but a valid `Date` (an Invalid Date, text, a
+ *   number, nothing) is refused with a RangeError saying the opening time is not a date.
  * @param {keyof typeof RESPONSE_HOURS} priority
  * @param {string[] | null} [holidays] public holidays as UTC dates, `YYYY-MM-DD`; each is skipped as a
  *   whole UTC day. With no list, none are skipped. A list that is not one, or holds anything but a real
@@ -44,6 +45,10 @@ export function priorityOf(ticket) {
  * @returns {Date}
  */
 export function responseDueAt(openedAt, priority, holidays) {
+  if (!(openedAt instanceof Date) || Number.isNaN(openedAt.getTime())) {
+    throw new RangeError(`The opening time is not a date: ${describe(openedAt)}`);
+  }
+
   const hours = RESPONSE_HOURS[priority];
   if (hours === undefined) {
     throw new RangeError(`Unknown priority: ${priority}`);
@@ -67,6 +72,20 @@ export function responseDueAt(openedAt, priority, holidays) {
   }
 
   return now;
+}
+
+// What a caller passed, for an error message: never throws, whatever it was given.
+function describe(value) {
+  if (value instanceof Date) {
+    return 'Invalid Date';
+  }
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+  if (value === undefined || value === null) {
+    return String(value);
+  }
+  return `a ${typeof value}`;
 }
 
 // No list (undefined or null) means no holidays. A holiday that is not a real date written exactly as

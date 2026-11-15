@@ -143,10 +143,9 @@ test('[response-deadline] No list of holidays', () => {
     }
   }
 
-  // An opening time that is not a date gave an invalid date before, and still does
+  // An opening time that is not a date is refused, with no list and with an empty one
   for (const holidays of [undefined, null, []]) {
-    const due = responseDueAt(new Date('not a date'), 'urgent', holidays);
-    assert.ok(Number.isNaN(due.getTime()));
+    assert.throws(() => responseDueAt(new Date('not a date'), 'urgent', holidays), RangeError);
   }
 });
 
@@ -163,9 +162,8 @@ test('a real holiday before the year 1000 is accepted', () => {
   assert.equal(due.toISOString(), '0999-12-26T12:00:00.000Z');
 });
 
-test('an opening time that is not a date, with holidays, still gives an invalid deadline', () => {
-  const due = responseDueAt(new Date('not a date'), 'urgent', ['2026-11-10']);
-  assert.ok(Number.isNaN(due.getTime()));
+test('an opening time that is not a date, with holidays, is refused', () => {
+  assert.throws(() => responseDueAt(new Date('not a date'), 'urgent', ['2026-11-10']), RangeError);
 });
 
 test('a ticket opened at 16:00 UTC the day before a holiday is due after the holiday', () => {

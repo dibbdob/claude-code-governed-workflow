@@ -9,7 +9,7 @@
 
 ## 2. Refuse it
 
-- [ ] 2.1 Make `responseDueAt` refuse an opening time that is not a valid `Date` with a `RangeError` saying
+- [x] 2.1 Make `responseDueAt` refuse an opening time that is not a valid `Date` with a `RangeError` saying
   so, before any counting, and update its doc comment; verify the test from 1.1 passes, the valid row
   included, and `./build.sh` passes as a whole
 
