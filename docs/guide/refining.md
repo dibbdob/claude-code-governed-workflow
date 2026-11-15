@@ -4,19 +4,6 @@
 nothing of OpenSpec, git or the code: they answer questions about the product and give worked examples. The
 result is the specification's own pull request, and merging it is the approval.
 
-```mermaid
-sequenceDiagram
-  participant A as Spec author
-  participant G as GitHub
-  participant D as Developer
-  A->>G: Issue, then /refine or the refine label
-  G->>D: Spec pull request
-  D->>A: Review comments
-  A->>G: Answers
-  D->>G: Approve and merge
-  G->>G: Issue labelled ready
-```
-
 ## Run it
 
 **In a session**, on the author's own Claude plan:

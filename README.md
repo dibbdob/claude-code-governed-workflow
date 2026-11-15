@@ -5,8 +5,9 @@ GitHub issue. `/refine` turns it into a specification with the person who raised
 approves it. `/deliver` then builds it test first, has it reviewed independently, and hands back a pull
 request for a person to merge.
 
-Nothing is built until its specification is merged, and a person merges the result. Both steps run on
-GitHub, started by a label, or on your own machine under your Claude subscription.
+Nothing is built until its specification is merged, and a person merges the result. The project lives on
+GitHub, which holds the issues and pull requests. Claude does its part either there, started by a label, or
+on your own machine under your Claude subscription.
 
 ## Getting started
 
@@ -27,11 +28,11 @@ scripts/adopt.sh ../your-project      # your project: everything else, nothing c
   late on a Friday`.
 - Rewrite the risk rule in `openspec/config.yaml` to name what is risky for your product.
 
-**3. Set up GitHub**, if you use it:
+**3. Set up GitHub.**
 
 - A ruleset on `main` requiring a pull request and the `build` check.
-- The [Claude GitHub app](https://github.com/apps/claude) installed, and the secret `ANTHROPIC_API_KEY`.
-- Write access for anyone who refines on GitHub.
+- To start `/refine` and `/deliver` with a label, the [Claude GitHub app](https://github.com/apps/claude)
+  installed and the secret `ANTHROPIC_API_KEY`. Not needed if Claude only runs on your machine.
 
 [Setting up](docs/guide/setting-up.md) has the detail: what each script does, the full list to fit, and
 the GitHub settings in full.
