@@ -35,6 +35,6 @@ hand, that any other implementation of the rules can be run against.
 - Nothing checks that every row has a test; `/deliver`'s test-first rule and the reviewer are what do.
 - A rule that changes changes the examples file too, and a copy elsewhere follows by copying it.
 - Kept out on purpose: copying the criteria into the GitHub issue, labels for each step, codes on criteria
-  and a required acceptance check. They would make the repository a project-management tool, which is not
-  what it demonstrates; the proposal's pull request is where a change is agreed, and a person merging the
+  and a required acceptance check. They would make the repository a project-management tool, which it is
+  not meant to be; the proposal's pull request is where a change is agreed, and a person merging the
   delivery is where it is accepted.
