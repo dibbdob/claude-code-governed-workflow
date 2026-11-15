@@ -130,6 +130,8 @@ Write it, in this shape, to `.delivery/pull-request.md` (git ignores that folder
 ```
 Merge deliver/$1: <what is now true, in plain words>
 
+Closes #<n>.
+
 ## Changed since approval: please confirm the intent is the same
 (only when step 5 found revisions: each one, with why, and its risk)
 ## In plain terms
@@ -140,6 +142,9 @@ Merge deliver/$1: <what is now true, in plain words>
 ## Review findings
 (the reviewer's, and OpenSpec verify's warnings and suggestions)
 ```
+
+`<n>` is the issue the change is named after, the number `$1` starts with. That line is what closes the
+issue when the pull request is merged; leave it out and the issue stays open with its work done.
 
 Do not push, and do not open the pull request, unless the instructions you were started with say to; on
 GitHub, the `deliver` workflow's do. In a session, tell me the branch is ready to push. In a headless run on
