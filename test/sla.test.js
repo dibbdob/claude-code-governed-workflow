@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { businessHoursLeft, priorityOf, responseDueAt } from '../src/sla.js';
 
@@ -73,6 +74,41 @@ test('[response-deadline] A priority the desk does not know', () => {
   assert.throws(() => responseDueAt(new Date(), 'whenever'), RangeError);
 });
 
+test('[response-deadline] An opening time that is not a date', () => {
+  // Each row of the scenario's worked examples, priority urgent: the row as the spec writes it, and the
+  // opening time. The refused rows are checked with no holidays and with some, the valid row with none
+  const refused = [
+    ['a date that is not a real one (Invalid Date)', new Date('not a date')],
+    ['the text "2026-11-16T10:00:00Z", not a date', '2026-11-16T10:00:00Z'],
+    ['nothing at all', undefined],
+    // Not a row of the examples, but named by the proposal: a number is not a date either
+    ['a number', Date.UTC(2026, 10, 16, 10)],
+  ];
+  // What each row gives, side by side, so a failure shows every row and not just the first
+  const outcome = (opened, holidays) => {
+    try {
+      return `due ${responseDueAt(opened, 'urgent', holidays)}`;
+    } catch (error) {
+      return error instanceof RangeError && /opening time is not a date/i.test(error.message)
+        ? 'refused: the opening time is not a date'
+        : `${error.name}: ${error.message}`;
+    }
+  };
+  const given = [];
+  const wanted = [];
+  for (const [row, opened] of refused) {
+    for (const holidays of [undefined, ['2026-11-10']]) {
+      const where = `${row}, ${holidays ? 'with holidays' : 'no holidays'}`;
+      given.push(`${where}: ${outcome(opened, holidays)}`);
+      wanted.push(`${where}: refused: the opening time is not a date`);
+    }
+  }
+  assert.deepEqual(given, wanted);
+
+  // Mon 16 Nov 2026, 10:00 UTC: due Mon 16 Nov, 14:00 UTC, as before this change
+  assert.equal(responseDueAt(new Date('2026-11-16T10:00:00Z'), 'urgent').toISOString(), '2026-11-16T14:00:00.000Z');
+});
+
 test('[response-deadline] A deadline that runs into a public holiday', () => {
   // Monday 10:00 + 8 business hours: 7 on Monday, Tuesday is a holiday, 1 on Wednesday = Wednesday 10:00
   const due = responseDueAt(new Date('2026-11-09T10:00:00Z'), 'high', ['2026-11-10']);
@@ -108,10 +144,9 @@ test('[response-deadline] No list of holidays', () => {
     }
   }
 
-  // An opening time that is not a date gave an invalid date before, and still does
+  // An opening time that is not a date is refused, with no list and with an empty one
   for (const holidays of [undefined, null, []]) {
-    const due = responseDueAt(new Date('not a date'), 'urgent', holidays);
-    assert.ok(Number.isNaN(due.getTime()));
+    assert.throws(() => responseDueAt(new Date('not a date'), 'urgent', holidays), RangeError);
   }
 });
 
@@ -128,9 +163,17 @@ test('a real holiday before the year 1000 is accepted', () => {
   assert.equal(due.toISOString(), '0999-12-26T12:00:00.000Z');
 });
 
-test('an opening time that is not a date, with holidays, still gives an invalid deadline', () => {
-  const due = responseDueAt(new Date('not a date'), 'urgent', ['2026-11-10']);
-  assert.ok(Number.isNaN(due.getTime()));
+test('an opening time is judged by what it is, not by what it claims to be', () => {
+  // Something dressed as a Date is still refused with a RangeError, not a TypeError
+  assert.throws(() => responseDueAt(Object.create(Date.prototype), 'urgent'), { name: 'RangeError', message: /opening time is not a date: an object/ });
+  assert.throws(() => responseDueAt({}, 'urgent'), { name: 'RangeError', message: /opening time is not a date: an object/ });
+  // A real Date made elsewhere (another realm) is a date: Mon 16 Nov 2026, 10:00 UTC, due 14:00 UTC
+  const elsewhere = vm.runInNewContext("new Date('2026-11-16T10:00:00Z')");
+  assert.equal(responseDueAt(elsewhere, 'urgent').toISOString(), '2026-11-16T14:00:00.000Z');
+});
+
+test('an opening time that is not a date, with holidays, is refused', () => {
+  assert.throws(() => responseDueAt(new Date('not a date'), 'urgent', ['2026-11-10']), RangeError);
 });
 
 test('a ticket opened at 16:00 UTC the day before a holiday is due after the holiday', () => {
