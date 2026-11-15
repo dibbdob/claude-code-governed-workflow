@@ -35,7 +35,8 @@ It ends by listing what to fit. Most of it needs nothing:
 
 1. A ruleset on `main` requiring a pull request, the `build` check, and branches up to date before merging.
    Add one approval once there is a second person.
-2. The [Claude GitHub app](https://github.com/apps/claude) installed, and the secret `ANTHROPIC_API_KEY`.
+2. To run Claude on GitHub with a label: the [Claude GitHub app](https://github.com/apps/claude) installed,
+   and the secret `ANTHROPIC_API_KEY`. Not needed if Claude only runs on your machine.
 3. Write access for spec authors who refine on GitHub. The action answers `@claude` only from people with
    write access.
 4. If the project already has a general `@claude` workflow, keep it off pull requests whose branch starts
