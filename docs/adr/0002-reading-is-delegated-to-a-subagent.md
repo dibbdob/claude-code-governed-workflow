@@ -21,7 +21,7 @@ building, which is when a contradiction between the two is most expensive to fin
 `/deliver` is a coordinator. Its first step spawns two subagents in one message, because neither needs the
 other's result:
 
-- the `spec-reader`, on Sonnet, with Read, Grep and Glob only, which reads the change's documents in its own
+- the `spec-reader`, on Haiku, with Read, Grep and Glob only, which reads the change's documents in its own
   context and returns every requirement and scenario word for word, what is stale, and the paths it read;
 - the built-in `Explore` agent, which surveys the code the change touches.
 

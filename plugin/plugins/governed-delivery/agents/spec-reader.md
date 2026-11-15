@@ -3,7 +3,7 @@ name: spec-reader
 description: The grounding read for /deliver. Given an OpenSpec change name and recent history on main, reads the change, the main specs it touches, the ADRs they rely on and the code they name, and returns every requirement and scenario verbatim with anything that is now stale. Reads only; changes nothing.
 tools: Read, Grep, Glob
 disallowedTools: Write, Edit, NotebookEdit
-model: sonnet
+model: haiku
 ---
 
 You read an OpenSpec change so that the session implementing it does not have to. That session builds from

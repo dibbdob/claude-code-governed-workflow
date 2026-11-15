@@ -22,7 +22,8 @@ is code to maintain.
 
 - **On GitHub, the `deliver` label runs the action in its standard tag mode.** It runs `/deliver` on a
   `deliver/` branch the action makes, with the tools `scripts/headless-tools.txt` lists, and its default
-  permission mode. Setting it up is installing the Claude GitHub app and adding `ANTHROPIC_API_KEY`.
+  permission mode. It runs on Claude Sonnet 5.5, capped at $1.50 a run (`--max-budget-usd`) as well as
+  by the turn limit. Setting it up is installing the Claude GitHub app and adding `ANTHROPIC_API_KEY`.
 - **On a laptop, `scripts/agent.sh` runs `/deliver` headless** on a `deliver/<change>` branch made from main,
   with `--permission-mode dontAsk` and the same tool list, then checks what it left: nothing uncommitted, the
   change archived, the build passing. A person pushes the branch and opens the pull request.
@@ -37,6 +38,10 @@ is code to maintain.
   than `dontAsk`. The build on the pull request and a person's review are what check the result.
 - Nothing on GitHub checks the change was archived before the pull request is opened; the reviewer of the
   pull request sees it. `scripts/agent.sh` checks it on a laptop.
+- A delivery that reaches the cap stops part-way: its branch keeps what it committed, and a person labels
+  the issue again or finishes it. The first three deliveries, on Opus 5.5, cost $1.67 to $2.06 each.
+- `agent.sh` keeps the session's own model and has no dollar cap: on a laptop it runs under the person's
+  Claude Code login, which is usually a plan rather than the API.
 - `agent.sh` works in the person's own checkout, so two local deliveries at once need two clones.
 - `dontAsk` refuses what the list does not name, but not every command: Claude Code runs an in-place
   `sed -i` unlisted. The build and the review check what a run leaves.
