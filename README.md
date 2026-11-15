@@ -16,7 +16,7 @@ on your own machine under your Claude subscription.
 ```bash
 git clone https://github.com/dibbdob/claude-code-governed-workflow.git
 cd claude-code-governed-workflow
-scripts/setup-machine.sh --plugin     # this machine: the tools, and the plugin
+scripts/setup-machine.sh              # this machine: the tools
 scripts/adopt.sh ../your-project      # your project: everything else, nothing committed
 ```
 

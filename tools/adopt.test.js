@@ -6,6 +6,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { brokenLinks, root } from './links.mjs';
 
 const ADOPT = resolve('scripts/adopt.sh');
 const git = (cwd, ...args) =>
@@ -58,6 +59,35 @@ test('a project gets the scripts, checks, workflows, rules, pin, permissions and
   assert.match(read(dir, '.gitignore'), /^\.refine\/$/m);
   assert.match(r.stdout, /Nothing is committed/);
   assert.match(r.stdout, /the risk rule/);
+});
+
+test('a project gets /refine and /deliver, their agents and the hook, so a run on GitHub has them', () => {
+  const dir = project();
+  const r = adopt(dir);
+  assert.equal(r.status, 0, r.stderr);
+  for (const f of ['.claude/commands/refine.md', '.claude/commands/deliver.md', '.claude/agents/spec-reader.md',
+    '.claude/agents/independent-reviewer.md', '.claude/hooks/read_only_bash.py']) {
+    assert.ok(existsSync(join(dir, f)), `${f} is added`);
+  }
+  // Every command a workflow names is one the project now has.
+  for (const workflow of ['refine', 'deliver']) {
+    const [, command] = read(dir, `.github/workflows/${workflow}.yml`).match(/\((\.claude\/commands\/[a-z]+\.md)\)/);
+    assert.ok(existsSync(join(dir, command)), `${workflow}.yml runs ${command}`);
+  }
+  // The reviewer keeps the hook that holds it to read-only commands, and the hook is where it points.
+  assert.match(read(dir, '.claude/agents/independent-reviewer.md'), /\$CLAUDE_PROJECT_DIR\/\.claude\/hooks\/read_only_bash\.py/);
+  assert.equal(read(dir, '.claude/hooks/read_only_bash.py'), read(process.cwd(), '.claude/hooks/read_only_bash.py'));
+});
+
+test('the copied commands and agents have no link the project cannot follow', () => {
+  const dir = project();
+  assert.equal(adopt(dir).status, 0);
+  for (const f of ['.claude/commands/refine.md', '.claude/commands/deliver.md', '.claude/agents/spec-reader.md',
+    '.claude/agents/independent-reviewer.md']) {
+    const broken = brokenLinks(f, read(dir, f), (path) => existsSync(path.replace(root, dir)));
+    assert.deepEqual(broken, [], f);
+  }
+  assert.match(read(dir, '.claude/commands/deliver.md'), /\]\(https:\/\/github\.com\/[^)]*\/docs\/adr\/0006-/);
 });
 
 test('a file the project already has is kept, and listed', () => {

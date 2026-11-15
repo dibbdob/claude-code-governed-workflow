@@ -5,9 +5,9 @@
 #
 #   scripts/setup-machine.sh            set the machine up
 #   scripts/setup-machine.sh --check    say what is missing, and change nothing
-#   scripts/setup-machine.sh --plugin   also install the governed-delivery plugin for your user, for working
-#                                       in another project that uses /refine and /deliver (not needed here,
-#                                       where .claude/ already has them)
+#   scripts/setup-machine.sh --plugin   also install the governed-delivery plugin for your user, for trying
+#                                       /refine and /deliver in a project that has not been adopted (not
+#                                       needed here or in an adopted project, where .claude/ has them)
 #
 # It installs with npm and, where it is available, Homebrew. It does not sign you in to anything: where a
 # login is needed it says so, and `gh auth login` is started for you only when you run it in a terminal.

@@ -3,7 +3,7 @@
 Two scripts do it. Both run from a clone of this repository, are safe to run again, and say what they did.
 
 ```bash
-scripts/setup-machine.sh --plugin     # each person's machine, once
+scripts/setup-machine.sh              # each person's machine, once
 scripts/adopt.sh ../your-project      # each project, once, by one developer
 cd ../your-project && git status      # review what it added; nothing is committed
 ```
@@ -12,15 +12,15 @@ cd ../your-project && git status      # review what it added; nothing is committ
 
 [`setup-machine.sh`](../../scripts/setup-machine.sh) checks Node 22.12 or later, git, Python 3 and Claude Code,
 and installs what the workflow needs: the pinned OpenSpec (with its `verify` workflow, which `/deliver`
-needs), actionlint, and the GitHub CLI, signing you in if you are not. With `--plugin` it installs the
-plugin, which brings `/refine` and `/deliver` into every project. With `--check` it only says what is
+needs), actionlint, and the GitHub CLI, signing you in if you are not. With `--check` it only says what is
 missing. It asks for no passwords.
 
 ## Each project
 
-[`adopt.sh`](../../scripts/adopt.sh) copies in the scripts, the checks and the workflows, sets up OpenSpec
-with this workflow's rules, and keeps `git push` denied. It never overwrites a file the project already has,
-and it commits nothing.
+[`adopt.sh`](../../scripts/adopt.sh) copies in `/refine` and `/deliver` with their agents and hook, the
+scripts, the checks and the workflows. It sets up OpenSpec with this workflow's rules, and keeps `git push`
+denied. The commands live in the project, so a run on GitHub and every person's session use the same ones.
+It never overwrites a file the project already has, and it commits nothing.
 
 It ends by listing what to fit. Most of it needs nothing:
 
