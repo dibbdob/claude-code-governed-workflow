@@ -140,6 +140,26 @@ export function isOverdue(now, due) {
   return at > deadline;
 }
 
+/**
+ * When the desk next opens after a moment: that moment itself if the desk is open then, otherwise the next
+ * 09:00 UTC on a business day, Monday to Friday, that is not a public holiday given. Closing time, 17:00, is
+ * closed. It counts days as a deadline does.
+ * @param {Date} moment when a customer writes in. Anything but a valid `Date` (an Invalid Date, text, a
+ *   number, nothing) is refused with a RangeError saying the moment is not a date, as `businessHoursLeft`
+ *   refuses it.
+ * @param {string[] | null} [holidays] public holidays, as `responseDueAt` takes them, refused as it refuses
+ *   them with a RangeError
+ * @returns {Date}
+ */
+export function nextOpenAt(moment, holidays) {
+  const at = timeOf(moment);
+  if (Number.isNaN(at)) {
+    throw new RangeError(`The moment is not a date: ${describe(moment)}`);
+  }
+  const closed = holidaySet(holidays);
+  return nextOpening(new Date(at), (date) => isWeekday(date) && !closed.has(utcDate(date)));
+}
+
 // The moment a Date holds, or NaN for anything that is not one. It asks the value itself rather than its
 // prototype, so a Date from another realm counts and an object dressed as one does not.
 function timeOf(value) {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { businessHoursLeft, isOverdue, priorityOf, responseDueAt } from '../src/sla.js';
+import { businessHoursLeft, isOverdue, nextOpenAt, priorityOf, responseDueAt } from '../src/sla.js';
 
 // Each row of a priority scenario's worked examples (openspec/specs/response-deadline/spec.md): the row as
 // the spec writes it, the ticket, when it was opened, and the priority and reply deadline agreed for it.
@@ -431,4 +431,30 @@ test('[response-deadline] Overdue for a time that is not a date', () => {
   // Not rows of the examples, but refused as businessHoursLeft refuses them
   assert.throws(() => isOverdue('2026-11-16T10:00:00Z', good), { name: 'RangeError', message: /moment is not a date/i });
   assert.throws(() => isOverdue(good, undefined), { name: 'RangeError', message: /deadline is not a date/i });
+});
+
+test('[response-deadline] When the desk next opens', () => {
+  // Each row of the scenario's worked examples: the moment, the public holidays, and when the desk next opens
+  const rows = [
+    ['Fri 13 Nov 2026, 17:30 UTC', '2026-11-13T17:30:00Z', undefined, '2026-11-16T09:00:00.000Z'],
+    ['Mon 16 Nov 2026, 07:00 UTC', '2026-11-16T07:00:00Z', undefined, '2026-11-16T09:00:00.000Z'],
+    ['Mon 16 Nov 2026, 10:00 UTC', '2026-11-16T10:00:00Z', undefined, '2026-11-16T10:00:00.000Z'],
+    ['Mon 16 Nov 2026, 17:00 UTC', '2026-11-16T17:00:00Z', undefined, '2026-11-17T09:00:00.000Z'],
+    ['Thu 24 Dec 2026, 17:30 UTC', '2026-12-24T17:30:00Z', ['2026-12-25'], '2026-12-28T09:00:00.000Z'],
+  ];
+  for (const [row, moment, holidays, opens] of rows) {
+    assert.equal(nextOpenAt(new Date(moment), holidays).toISOString(), opens, row);
+  }
+  // A bad holiday list is refused, as a deadline refuses it
+  assert.throws(() => nextOpenAt(new Date('2026-11-16T10:00:00Z'), ['10/11/2026']), RangeError);
+});
+
+test('[response-deadline] When the desk next opens, for a moment that is not a date', () => {
+  const refused = [
+    ['a date that is not a real one (Invalid Date)', new Date('not a date')],
+    ['nothing at all', undefined],
+  ];
+  for (const [row, moment] of refused) {
+    assert.throws(() => nextOpenAt(moment), { name: 'RangeError', message: /moment is not a date/i }, row);
+  }
 });
