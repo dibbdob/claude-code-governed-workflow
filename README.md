@@ -202,7 +202,9 @@ request merged, then the `deliver` label, or `scripts/agent.sh` on a laptop, and
     turns on Sonnet 5.5, its pull request saying so. It also skipped two steps `/deliver` requires, the
     second review after its fixes and OpenSpec's verify, and said so in its report. Both were then run
     headless on a laptop under the owner's subscription, on the same model, and came back clean. Nothing
-    yet fails a delivery that skips a step; the steps are asked for, not checked.
+    then failed a delivery that skipped a step; ADR 0009 made the steps tasks of the change, so one skipped
+    now fails the build. Shown on a planted change: no Delivery group failed `tools/specs.mjs`, and one
+    archived with its second review unticked failed `openspec validate --archived`.
 - **The plugin, installed and run live, on 2026-11-15:** installed from `./plugin` into a throwaway
   repository, at local scope, for $0.48 in all. With Bash allowed to every agent, so that only the plugin's
   hook could stop a command, the plugin's reviewer ran `git rev-parse` and `git show <rev>:<path>`, and was
