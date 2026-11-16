@@ -69,8 +69,9 @@ is held to read-only commands by a hook in its frontmatter, whose tests run in `
 commands that throw away uncommitted work (`git checkout --`, `git restore`, `git clean`, `git stash drop`).
 
 A delivery runs on a branch of its own ([ADR 0008](docs/adr/0008-deliveries-run-on-the-standard-action.md)).
-`./scripts/agent.sh <issue-or-change>` makes one from main and runs `/deliver` headless on it, then checks it
-is committed, archived and builds. On GitHub, the `deliver` label runs it through Anthropic's Claude Code
+`./scripts/agent.sh <issue-or-change>` makes one from main in a worktree of its own, beside the checkout, and
+runs `/deliver` headless there, then checks it is committed, archived and builds
+([ADR 0013](docs/adr/0013-a-local-delivery-has-a-worktree-of-its-own.md)). On GitHub, the `deliver` label runs it through Anthropic's Claude Code
 action, set up the standard way ([`deliver.yml`](.github/workflows/deliver.yml)). Both read the tools they
 allow from `scripts/headless-tools.txt` and the model from `scripts/delivery-model.txt`, so a change to either
 is one edit. Only `agent.sh` takes `--model <model>`, for one run on a model other than the default.

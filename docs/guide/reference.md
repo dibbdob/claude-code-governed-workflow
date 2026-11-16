@@ -41,7 +41,9 @@ GitHub has no per-run override, so a change that needs a stronger model is deliv
 | A refinement run posts no link to a spec pull request | The run pushed nothing. Claude's comment on the issue says why. |
 | No reply to an `@claude` comment | The commenter lacks write access, the branch does not start `refine/`, or the comment was edited rather than new. |
 | `/deliver` stops because it is on `main` | Make a branch first: `git switch -c deliver/<change>`. |
-| *Commit or stash your changes first* | `agent.sh` and `refinement.sh start` need a clean checkout. |
+| *Commit or stash your changes first* | `refinement.sh start` needs a clean checkout. |
+| *deliver/&lt;change&gt; already exists*, from `agent.sh` | A delivery of it has run, or is running. Read the branch; delete it to deliver again. |
+| *Its worktree is kept at …* | The run left changes uncommitted there. Read them, then `git worktree remove --force` the path it gives. |
 | A GitHub run stops part-way | It reached its cap: $1.50 or 60 turns for a delivery, $1.00 or 40 turns for a refinement. Read the branch, then re-label, comment again, or finish locally. |
 | *The change is not archived* | The run skipped the archive step. Run `/deliver` again on the branch. |
 | A command was refused in an unattended run | Anything not in `scripts/headless-tools.txt` is refused. Add a tool only if every delivery needs it. |

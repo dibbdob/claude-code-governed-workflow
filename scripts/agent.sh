@@ -11,10 +11,13 @@
 # Claude Code login, and the model can be chosen for one run. There is no dollar cap here; the person's plan
 # has its own limits, and the cap on GitHub would stop a stronger model before it finished.
 #
-# Makes the delivery's branch from main, runs /deliver headless on it, and checks what it left: no
-# uncommitted changes, the change archived, and the build passing. The work stays on its branch for a person
-# to push and open as a pull request, with the description /deliver wrote in .delivery/pull-request.md. The
-# run's JSON is kept in runs/ (ignored by git) so it can be read later.
+# Makes the delivery's branch from main in a worktree of its own (ADR 0013), runs /deliver headless there,
+# and checks what it left: no uncommitted changes, the change archived, and the build passing. The person's
+# own checkout is not touched, so they can keep working in it, and two changes can be delivered at once from
+# two terminals. The worktree is <checkout>-deliveries/<change> (DELIVERIES_DIR moves it) and is removed when
+# the run ends with nothing uncommitted in it. The work stays on its branch for a person to push and open as a
+# pull request, with the description /deliver wrote, kept as runs/<change>.md beside the run's JSON in
+# runs/ (ignored by git) so both can be read later.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(git rev-parse --show-toplevel)"
@@ -29,11 +32,8 @@ fi
 # A model is a name such as claude-opus-5-5: nothing a shell or Claude Code's arguments would read as more.
 [[ "$model" =~ ^[a-z0-9][a-z0-9.-]*$ ]] || { echo "Not a model name: '${model}'." >&2; exit 1; }
 runs="${RUNS_DIR:-$root/runs}"
-# OpenSpec from the project's own pinned copy, with its usage reporting off.
-export PATH="$root/node_modules/.bin:$PATH" OPENSPEC_TELEMETRY=0
+[[ "$runs" == /* ]] || runs="$PWD/$runs"
 cd "$root"
-
-[[ -z "$(git status --porcelain)" ]] || { echo "Commit or stash your changes first; the delivery starts from main." >&2; exit 1; }
 
 # An approved change is one on main: it only gets there through a reviewed pull request. It is a folder of its
 # own in openspec/changes/ with a proposal, so neither the archive nor a path inside a change counts.
@@ -49,21 +49,43 @@ else
 fi
 [[ -n "$change" ]] && git cat-file -e "main:openspec/changes/${change}/proposal.md" 2>/dev/null ||
   { echo "'${wanted}' is not an approved change on main." >&2; exit 1; }
-git switch --quiet -c "deliver/${change}" main
-started="$(git rev-parse HEAD)"
+branch="deliver/${change}"
+! git show-ref --verify --quiet "refs/heads/${branch}" ||
+  { echo "${branch} already exists: a delivery of ${change} has run, or is running. Delete the branch to deliver it again." >&2; exit 1; }
 
-# A run that fails before it commits anything (an expired login, say) goes back to main and removes its empty
-# branch, so that running it again simply works. One that has committed keeps its branch: that work is worth
-# reading.
+# The delivery's own checkout of main. A worktree whose folder was deleted by hand is forgotten first, so its
+# path can be used again.
+wt="${DELIVERIES_DIR:-${root}-deliveries}/${change}"
+git worktree prune
+mkdir -p "$(dirname "$wt")"
+git worktree add --quiet -b "$branch" "$wt" main
+started="$(git -C "$wt" rev-parse HEAD)"
+
+# A worktree with nothing uncommitted is removed: what was committed is on the branch. One with uncommitted
+# changes is kept for a person to read. A run that fails before it commits anything (an expired login, say)
+# also removes its empty branch, so that running it again simply works; one that has committed keeps it.
 tidy() {
   local status=$?
-  if (( status != 0 )) && [[ "$(git rev-parse HEAD)" == "$started" && -z "$(git status --porcelain)" ]]; then
-    git switch --quiet main && git branch --quiet -D "deliver/${change}" &&
-      echo "Nothing was delivered, so its branch is removed. Run it again when the cause is fixed." >&2
+  cd "$root"
+  if [[ -z "$(git -C "$wt" status --porcelain)" ]] && git worktree remove "$wt"; then
+    if (( status != 0 )) && [[ "$(git rev-parse "$branch")" == "$started" ]]; then
+      git branch --quiet -D "$branch" &&
+        echo "Nothing was delivered, so its branch is removed. Run it again when the cause is fixed." >&2
+    fi
+  else
+    echo "Its worktree is kept at ${wt}, with what was left uncommitted. Remove it with: git worktree remove --force ${wt}" >&2
   fi
   return "$status"
 }
 trap tidy EXIT
+
+cd "$wt"
+# OpenSpec from the project's own pinned copy, with its usage reporting off. The worktree has no node_modules
+# of its own; it shares the checkout's when both pin the same versions, and the build installs them otherwise.
+if [[ -d "$root/node_modules" && ! -e node_modules ]] && cmp -s "$root/package-lock.json" package-lock.json; then
+  ln -s "$root/node_modules" node_modules
+fi
+export PATH="$wt/node_modules/.bin:$PATH" OPENSPEC_TELEMETRY=0
 
 # The commands /deliver and its subagents may run are in scripts/headless-tools.txt, which the deliver
 # workflow on GitHub reads too, and dontAsk refuses the rest: a headless run has nobody to approve them. It is
@@ -92,7 +114,7 @@ node -e '
 (( status == 0 )) || exit "$status"
 
 # The run's own account of itself is a claim. What it committed, and the build on it, are the evidence.
-[[ -z "$(git status --porcelain)" ]] || { echo "The run left uncommitted changes on deliver/${change}." >&2; exit 1; }
+[[ -z "$(git status --porcelain)" ]] || { echo "The run left uncommitted changes on ${branch}." >&2; exit 1; }
 [[ ! -e "openspec/changes/${change}" ]] ||
   { echo "The change is not archived; /deliver's last step is openspec archive ${change} --yes." >&2; exit 1; }
 ./build.sh
@@ -107,5 +129,6 @@ if [[ -f .delivery/pull-request.md ]]; then
   fi
   { head -n 1 .delivery/pull-request.md; printf '\n%s\n' "$note"; tail -n +2 .delivery/pull-request.md; } > .delivery/pull-request.md.new
   mv .delivery/pull-request.md.new .delivery/pull-request.md
+  cp .delivery/pull-request.md "$runs/${change}.md"
 fi
-echo "Delivered on deliver/${change}, on ${model}. Push it and open a pull request with .delivery/pull-request.md." >&2
+echo "Delivered on ${branch}, on ${model}. Push it and open a pull request with ${runs}/${change}.md." >&2

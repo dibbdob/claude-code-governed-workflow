@@ -51,6 +51,7 @@ is code to maintain.
   model before it finished (the Opus delivery of issue 18 would have cost $1.73 on the API).
 - Changes that keep needing `--model` are visible in their pull requests, and are the case for changing the
   default.
-- `agent.sh` works in the person's own checkout, so two local deliveries at once need two clones.
+- `agent.sh` worked in the person's own checkout, so two local deliveries at once needed two clones. Each
+  now has a worktree of its own ([ADR 0013](0013-a-local-delivery-has-a-worktree-of-its-own.md)).
 - `dontAsk` refuses what the list does not name, but not every command: Claude Code runs an in-place
   `sed -i` unlisted. The build and the review check what a run leaves.
